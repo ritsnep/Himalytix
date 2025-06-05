@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 
 from .views import (
     components_bootstrap_alerts_view,
@@ -48,6 +49,7 @@ from .views import (
     components_maps_vectormaps_view,
     components_maps_leaflet_view,
 )
+from . import example_views
 
 app_name = "components"
 
@@ -284,5 +286,18 @@ urlpatterns = [
         "maps/leaflet",
         view=components_maps_leaflet_view,
         name="components.maps.leaflet",
+    ),
+    # Example HTMX Table View
+    path(
+        "examples/user-table/",
+        example_views.UserTableView.as_view(),
+        name="user_table",
+    ),
+    path(
+        "examples/user-table/template/",
+        TemplateView.as_view(
+            template_name="components/examples/user_table.html"
+        ),
+        name="user_table_example",
     ),
 ]

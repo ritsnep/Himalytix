@@ -1,0 +1,37 @@
+{% extends 'accounting/_list_base.html' %}
+{% block title %}Cost Center List{% endblock %}
+
+{% block list_header %}
+<h4 class="card-title">Cost Center</h4>
+<a href="{% url 'accounting:costcenter_create' %}" class="btn btn-success mb-2">
+    <i class="mdi mdi-plus me-1"></i> New Cost Center
+</a>
+{% endblock %}
+
+{% block table_head %}
+<thead>
+  <tr>
+    <th>Code</th>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Action</th>
+  </tr>
+</thead>
+{% endblock %}
+
+{% block table_body %}
+<tbody>
+  {% for cc in cost_centers %}
+  <tr>
+    <td>{{ cc.code }}</td>
+    <td>{{ cc.name }}</td>
+    <td>{{ cc.description }}</td>
+    <td>
+      <a href="{% url 'accounting:costcenter_update' cc.cost_center_id %}" class="btn btn-sm btn-primary">Edit</a>
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="4">No cost centers found.</td></tr>
+  {% endfor %}
+</tbody>
+{% endblock %}

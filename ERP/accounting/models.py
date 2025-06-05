@@ -3,20 +3,76 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from usermanagement.models import CustomUser, Organization
+from django.utils.crypto import get_random_string
+from django.db.models import Max
+
 User = get_user_model()
 
+def generate_fiscal_year_id():
+    while True:
+        id = get_random_string(10, '0123456789')
+        if not FiscalYear.objects.filter(fiscal_year_id=id).exists():
+            return id
+# Example: Fix for AutoIncrementCodeGenerator
+class AutoIncrementCodeGenerator:
+    def __init__(self, model, field, prefix='', suffix=''):
+        self.model = model
+        self.field = field
+        self.prefix = prefix
+        self.suffix = suffix
+
+    def generate_code(self):
+        from django.db.models import Max
+        import re
+
+        # Find all codes matching the pattern
+        pattern = rf'^{re.escape(self.prefix)}(\d+){re.escape(self.suffix)}$'
+        codes = self.model.objects.values_list(self.field, flat=True)
+        numbers = [
+            int(re.match(pattern, code).group(1))
+            for code in codes if re.match(pattern, code)
+        ]
+        next_number = max(numbers, default=0) + 1
+        return f"{self.prefix}{str(next_number).zfill(2)}{self.suffix}"
+# class AutoIncrementCodeGenerator:
+#     def __init__(self, model, field_name, prefix='', suffix=''):
+#         self.model = model
+#         self.field_name = field_name
+#         self.prefix = prefix
+#         self.suffix = suffix
+
+#     def generate_code(self):
+#         last_code = self.model.objects.order_by(self.field_name).last()
+#         if last_code:
+#             last_code_value = getattr(last_code, self.field_name)
+#             if isinstance(last_code_value, int):
+#                 new_code = last_code_value + 1
+#             elif isinstance(last_code_value, str):
+#                 new_code = int(last_code_value[len(self.prefix):len(last_code_value) - len(self.suffix)]) + 1
+#                 new_code = f"{self.prefix}{new_code}{self.suffix}"
+#             else:
+#                 raise ValueError("Unsupported field type")
+#         else:
+#             new_code = 1 if isinstance(self.model._meta.get_field(self.field_name).default, int) else f"{self.prefix}1{self.suffix}"
+#         return new_code
 class FiscalYear(models.Model):
-    fiscal_year_id = models.BigAutoField(primary_key=True)  # SERIAL IDENTITY
-    organization_id = models.ForeignKey(
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('closed', 'Closed'),
+        ('archived', 'Archived'),
+    ]
+    fiscal_year_id = models.CharField(max_length=10, primary_key=True, default=generate_fiscal_year_id)
+    organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
-        related_name='fiscal_years'
+        related_name='fiscal_years',
     )
+    # organization_id = models.IntegerField(default=1, blank=True,null=True)  # Placeholder for organization ID, change to ForeignKey later
     code = models.CharField(max_length=10)
     name = models.CharField(max_length=100)
     start_date = models.DateField()
     end_date = models.DateField()
-    status = models.CharField(max_length=20, default='open')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
     is_current = models.BooleanField(default=False)
     closed_at = models.DateTimeField(null=True, blank=True)
     closed_by = models.IntegerField(null=True, blank=True)  # You may change to ForeignKey(User) later
@@ -36,6 +92,13 @@ class FiscalYear(models.Model):
     def __str__(self):
         return f"{self.code} - {self.name}"
 
+    def save(self, *args, **kwargs):
+        if not self.code:
+            code_generator = AutoIncrementCodeGenerator(FiscalYear, 'code', prefix='FY', suffix='')
+            self.code = code_generator.generate_code()
+        super(FiscalYear, self).save(*args, **kwargs)
+
+        
 
 class AccountingPeriod(models.Model):
     STATUS_CHOICES = [
@@ -89,8 +152,31 @@ class Project(models.Model):
         
     def __str__(self):
         return f"{self.code} - {self.name}"
+    def save(self, *args, **kwargs):
+        if not self.code:
+            code_generator = AutoIncrementCodeGenerator(Project, 'code', prefix='PRJ', suffix='')
+            self.code = code_generator.generate_code()
+        super(Project, self).save(*args, **kwargs)
 class CostCenter(models.Model):
+    cost_center_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
+    code = models.CharField(max_length=20, unique=True)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='cost_centers',null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        ordering = ['name']
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+    def save(self, *args, **kwargs):
+        if not self.code:
+            code_generator = AutoIncrementCodeGenerator(CostCenter, 'code', prefix='CC', suffix='')
+            self.code = code_generator.generate_code()
+        super(CostCenter, self).save(*args, **kwargs)
     # Add other cost center fields as needed
 
 class AccountType(models.Model):
@@ -101,7 +187,13 @@ class AccountType(models.Model):
         ('income', 'Income'),
         ('expense', 'Expense'),
     ]
-
+    NATURE_CODE_PREFIX = {
+        'asset': 'AST',
+        'liability': 'LIA',
+        'equity': 'EQT',
+        'income': 'INC',
+        'expense': 'EXP',
+    }
     account_type_id = models.AutoField(primary_key=True)
     code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=100)
@@ -123,9 +215,40 @@ class AccountType(models.Model):
     
     def __str__(self):
         return f"{self.code} - {self.name}"
+    def save(self, *args, **kwargs):
+        if not self.code:
+            prefix = self.NATURE_CODE_PREFIX.get(self.nature, 'ACC')
+            # Get max code with the same prefix
+            max_code = (
+                AccountType.objects
+                .filter(code__startswith=prefix)
+                .aggregate(Max('code'))
+                .get('code__max')
+            )
+
+            if max_code:
+                try:
+                    last_num = int(max_code.replace(prefix, ''))
+                except ValueError:
+                    last_num = 0
+            else:
+                last_num = 0
+
+            next_num = last_num + 1
+            self.code = f"{prefix}{next_num:03d}"  # e.g., AST001
+
+        super(AccountType, self).save(*args, **kwargs)
+
 
 
 class ChartOfAccount(models.Model):
+    NATURE_ROOT_CODE = {
+    'asset': '1',
+    'liability': '2',
+    'equity': '3',
+    'income': '4',
+    'expense': '5',
+    }
     account_id = models.AutoField(primary_key=True)
     organization = models.ForeignKey(
         Organization,
@@ -168,6 +291,74 @@ class ChartOfAccount(models.Model):
 
     def __str__(self):
         return f"{self.account_code} - {self.account_name}"
+    def save(self, *args, **kwargs):
+        if not self.account_code:
+            if self.parent_account:
+                # Generate child code
+                siblings = ChartOfAccount.objects.filter(
+                    parent_account=self.parent_account,
+                    organization=self.organization,
+                )
+                sibling_codes = siblings.values_list('account_code', flat=True)
+
+                base_code = self.parent_account.account_code
+                max_suffix = 0
+                for code in sibling_codes:
+                    if code.startswith(base_code + "."):
+                        try:
+                            suffix = int(code.replace(base_code + ".", ""))
+                            if suffix > max_suffix:
+                                max_suffix = suffix
+                        except ValueError:
+                            continue
+
+                next_suffix = max_suffix + 1
+                self.account_code = f"{base_code}.{next_suffix:02d}"
+            else:
+                # Generate top-level code based on account_type nature
+                root_code = self.account_type and self.account_type.nature
+                root_digit = {
+                    'asset': 1,
+                    'liability': 2,
+                    'equity': 3,
+                    'income': 4,
+                    'expense': 5,
+                }.get(root_code, 9)
+
+                top_levels = ChartOfAccount.objects.filter(
+                    parent_account__isnull=True,
+                    organization=self.organization,
+                    account_code__startswith=str(root_digit)
+                )
+                max_code = 0
+                for acc in top_levels:
+                    try:
+                        acc_num = int(acc.account_code)
+                        if acc_num > max_code:
+                            max_code = acc_num
+                    except ValueError:
+                        continue
+
+                self.account_code = str(max_code + 1)
+
+        # Set tree_path for easier hierarchy querying
+        if self.parent_account:
+            self.tree_path = f"{self.parent_account.tree_path}/{self.account_code}" if self.parent_account.tree_path else self.account_code
+        else:
+            self.tree_path = self.account_code
+
+        super(ChartOfAccount, self).save(*args, **kwargs)
+
+
+class Currency(models.Model):
+    currency_code = models.CharField(max_length=3, primary_key=True)
+    currency_name = models.CharField(max_length=100)
+    symbol = models.CharField(max_length=10)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_Currencies')
+    updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_Currencies')
 
 
 class CurrencyExchangeRate(models.Model):
@@ -285,46 +476,6 @@ class Journal(models.Model):
     def __str__(self):
         return f"{self.journal_number} - {self.journal_type.name}"
 
-
-# class JournalLine(models.Model):
-#     journal_line_id = models.AutoField(primary_key=True)
-#     journal = models.ForeignKey(Journal, on_delete=models.CASCADE, related_name='lines')
-#     line_number = models.IntegerField()
-#     account = models.ForeignKey(ChartOfAccount, on_delete=models.PROTECT)
-#     description = models.TextField(null=True, blank=True)
-#     debit_amount = models.DecimalField(max_digits=19, decimal_places=4, default=0)
-#     credit_amount = models.DecimalField(max_digits=19, decimal_places=4, default=0)
-#     currency_code = models.CharField(max_length=3, default='USD')
-#     exchange_rate = models.DecimalField(max_digits=19, decimal_places=6, default=1)
-#     functional_debit_amount = models.DecimalField(max_digits=19, decimal_places=4, default=0)
-#     functional_credit_amount = models.DecimalField(max_digits=19, decimal_places=4, default=0)
-#     department = models.ForeignKey('Department', on_delete=models.SET_NULL, null=True, blank=True)
-#     project =  models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True,related_name='journal_lines_project')
-#     cost_center = models.ForeignKey('CostCenter', on_delete=models.SET_NULL, null=True, blank=True)
-#     tax_code = models.ForeignKey('TaxCode', on_delete=models.SET_NULL, null=True, blank=True)
-#     tax_rate = models.DecimalField(max_digits=8, decimal_places=4, null=True, blank=True)
-#     tax_amount = models.DecimalField(max_digits=19, decimal_places=4, null=True, blank=True)
-#     memo = models.TextField(null=True, blank=True)
-#     reconciled = models.BooleanField(default=False)
-#     reconciled_at = models.DateTimeField(null=True, blank=True)
-#     reconciled_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='reconciled_journal_lines')
-#     created_at = models.DateTimeField(default=timezone.now)
-#     updated_at = models.DateTimeField(null=True, blank=True)
-#     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_journal_lines')
-#     updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_journal_lines')
-#     is_archived = models.BooleanField(default=False)
-#     archived_at = models.DateTimeField(null=True, blank=True)
-#     archived_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_journal_lines')
-    
-#     class Meta:
-#         unique_together = ('journal', 'line_number')
-#         ordering = ['journal', 'line_number']
-
-#     def __str__(self):
-#         return f"Line {self.line_number} of {self.journal.journal_number}"
-
-
-# Fixed JournalLine model - this is where the issue was occurring
 class JournalLine(models.Model):
     journal_line_id = models.AutoField(primary_key=True)
     journal = models.ForeignKey(Journal, on_delete=models.CASCADE, related_name='lines')
@@ -339,6 +490,7 @@ class JournalLine(models.Model):
     functional_credit_amount = models.DecimalField(max_digits=19, decimal_places=4, default=0)
     department = models.ForeignKey('Department', on_delete=models.SET_NULL, null=True, blank=True)
     project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True)  # Fixed: use ForeignKey instead of related_name
+    # cost_center = models.ForeignKey('CostCenter', to_field='cost_center_id', on_delete=models.SET_NULL, null=True, blank=True)
     cost_center = models.ForeignKey('CostCenter', on_delete=models.SET_NULL, null=True, blank=True)
     tax_code = models.ForeignKey('TaxCode', on_delete=models.SET_NULL, null=True, blank=True)
     tax_rate = models.DecimalField(max_digits=8, decimal_places=4, null=True, blank=True)
@@ -361,7 +513,6 @@ class JournalLine(models.Model):
 
     def __str__(self):
         return f"Line {self.line_number} of {self.journal.journal_number}"
-
 
 class TaxAuthority(models.Model):
     authority_id = models.AutoField(primary_key=True)
@@ -396,6 +547,11 @@ class TaxAuthority(models.Model):
         
     def __str__(self):
         return f"{self.code} - {self.name}"
+    def save(self, *args, **kwargs):
+        if not self.code:
+            code_generator = AutoIncrementCodeGenerator(TaxAuthority, 'code', prefix='TA', suffix='')
+            self.code = code_generator.generate_code()
+        super(TaxAuthority, self).save(*args, **kwargs)
 
 
 class TaxType(models.Model):
@@ -433,7 +589,11 @@ class TaxType(models.Model):
 
     def __str__(self):
         return f"{self.code} - {self.name}"
-
+    def save(self, *args, **kwargs):
+        if not self.code:
+            code_generator = AutoIncrementCodeGenerator(TaxType, 'code', prefix='TT', suffix='')
+            self.code = code_generator.generate_code()
+        super(TaxType, self).save(*args, **kwargs)
 
 class TaxCode(models.Model):
     tax_code_id = models.AutoField(primary_key=True)
@@ -473,7 +633,12 @@ class TaxCode(models.Model):
         
     def __str__(self):
         return f"{self.code} - {self.name} ({self.tax_rate}%)"
-
+    
+    def save(self, *args, **kwargs):
+        if not self.code:
+            code_generator = AutoIncrementCodeGenerator(TaxCode, 'code', prefix='TC', suffix='')
+            self.code = code_generator.generate_code()
+        super(TaxCode, self).save(*args, **kwargs)
 
 class VoucherModeConfig(models.Model):
     LAYOUT_CHOICES = [
@@ -515,7 +680,11 @@ class VoucherModeConfig(models.Model):
         
     def __str__(self):
         return f"{self.code} - {self.name}"
-
+    def save(self, *args, **kwargs):
+        if not self.code:
+            code_generator = AutoIncrementCodeGenerator(VoucherModeConfig, 'code', prefix='VM', suffix='')
+            self.code = code_generator.generate_code()
+        super(VoucherModeConfig, self).save(*args, **kwargs)
 
 # Added missing model from second file
 class VoucherModeDefault(models.Model):

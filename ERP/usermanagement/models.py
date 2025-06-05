@@ -17,7 +17,6 @@ from django.conf import settings
     
 
 class Organization(models.Model):
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='organizations')
     parent_organization = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=200)
     code = models.CharField(max_length=50)

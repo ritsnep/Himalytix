@@ -2,10 +2,371 @@
 from django import forms
 from django.forms import inlineformset_factory
 from .models import (
-    AccountType, CostCenter, Department, Journal, JournalLine, JournalType, ChartOfAccount,
-    AccountingPeriod, Project, TaxCode, VoucherModeConfig, VoucherModeDefault
+    AccountType, CostCenter, Currency, Department, Journal, JournalLine, JournalType, ChartOfAccount,
+    AccountingPeriod, Project, TaxAuthority, TaxCode, TaxType, VoucherModeConfig, VoucherModeDefault
 )
+from django import forms
+from .models import FiscalYear
 
+
+# class FiscalYearForm(forms.ModelForm):
+#     class Meta:
+#         model = FiscalYear
+#         fields = ('code',  'name', 'start_date', 'end_date', 'status', 'is_current')
+class FiscalYearForm(forms.ModelForm):
+    code = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'readonly': True,
+        })
+    )
+    
+    class Meta:
+        model = FiscalYear
+        fields = ('code', 'name', 'start_date', 'end_date', 'status', 'is_current','is_default')
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'start_date': forms.TextInput(attrs={'class': 'form-control datepicker'}),
+            'end_date': forms.TextInput(attrs={'class': 'form-control datepicker'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'is_current': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Generate code for new instances
+        if not self.instance.pk:
+            from .models import AutoIncrementCodeGenerator
+            code_generator = AutoIncrementCodeGenerator(FiscalYear, 'code', prefix='FY', suffix='')
+            generated_code = code_generator.generate_code()
+            self.initial['code'] = generated_code
+            self.fields['code'].initial = generated_code
+
+
+# New forms below
+class AccountingPeriodForm(forms.ModelForm):
+    class Meta:
+        model = AccountingPeriod
+        fields = ('name', 'period_number', 'start_date', 'end_date', 'status', 'is_current')
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'period_number': forms.NumberInput(attrs={'class': 'form-control'}),
+            'start_date': forms.TextInput(attrs={'class': 'form-control datepicker'}),
+            'end_date': forms.TextInput(attrs={'class': 'form-control datepicker'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'is_current': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+class DepartmentForm(forms.ModelForm):
+    class Meta:
+        model = Department
+        fields = ('name',)
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class ProjectForm(forms.ModelForm):
+    code = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'readonly': True,
+        })
+    )
+    
+    class Meta:
+        model = Project
+        fields = ('code', 'name', 'description', 'is_active', 'start_date', 'end_date')
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'start_date': forms.TextInput(attrs={'class': 'form-control datepicker'}),
+            'end_date': forms.TextInput(attrs={'class': 'form-control datepicker'}),
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        super().__init__(*args, **kwargs)
+        
+        # Generate code for new instances
+        if not self.instance.pk:
+            from .models import AutoIncrementCodeGenerator
+            code_generator = AutoIncrementCodeGenerator(Project, 'code', prefix='PRJ', suffix='')
+            generated_code = code_generator.generate_code()
+            self.initial['code'] = generated_code
+            self.fields['code'].initial = generated_code
+            
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.organization:
+            instance.organization = self.organization
+        if commit:
+            instance.save()
+        return instance
+
+class CostCenterForm(forms.ModelForm):
+    code = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'readonly': True,
+        })
+    )
+    
+    class Meta:
+        model = CostCenter
+        fields = ('code', 'name', 'description', 'is_active', 'start_date', 'end_date')
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'start_date': forms.TextInput(attrs={'class': 'form-control datepicker'}),
+            'end_date': forms.TextInput(attrs={'class': 'form-control datepicker'}),
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        super().__init__(*args, **kwargs)
+        
+        # Generate code for new instances
+        if not self.instance.pk:
+            from .models import AutoIncrementCodeGenerator
+            code_generator = AutoIncrementCodeGenerator(CostCenter, 'code', prefix='CC', suffix='')
+            generated_code = code_generator.generate_code()
+            self.initial['code'] = generated_code
+            self.fields['code'].initial = generated_code
+            
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.organization:
+            instance.organization = self.organization
+        if commit:
+            instance.save()
+        return instance
+
+class AccountTypeForm(forms.ModelForm):
+    class Meta:
+        model = AccountType
+        fields = ('name', 'nature', 'classification', 'balance_sheet_category', 
+                  'income_statement_category', 'display_order', 'system_type')
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'nature': forms.Select(attrs={'class': 'form-select'}),
+            'classification': forms.TextInput(attrs={'class': 'form-control'}),
+            'balance_sheet_category': forms.TextInput(attrs={'class': 'form-control'}),
+            'income_statement_category': forms.TextInput(attrs={'class': 'form-control'}),
+            'display_order': forms.NumberInput(attrs={'class': 'form-control'}),
+            'system_type': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+class ChartOfAccountForm(forms.ModelForm):
+    class Meta:
+        model = ChartOfAccount
+        fields = ('account_name', 'account_type', 'description', 'is_active', 
+                  'is_bank_account', 'is_control_account', 'currency_code')
+        widgets = {
+            'account_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'account_type': forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_bank_account': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_control_account': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'currency_code': forms.Select(attrs={'class': 'form-select'}),
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter account types by organization if applicable
+        if self.organization:
+            self.fields['account_type'].queryset = AccountType.objects.filter(
+                organization=self.organization
+            )
+            
+        # Populate currency choices
+        self.fields['currency_code'].choices = [
+            (currency.currency_code, f"{currency.currency_code} - {currency.currency_name}") 
+            for currency in Currency.objects.filter(is_active=True)
+        ]
+            
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.organization:
+            instance.organization = self.organization
+        if commit:
+            instance.save()
+        return instance
+
+class CurrencyForm(forms.ModelForm):
+    class Meta:
+        model = Currency
+        fields = ('currency_code', 'currency_name', 'symbol', 'is_active')
+        widgets = {
+            'currency_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'currency_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'symbol': forms.TextInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+class JournalTypeForm(forms.ModelForm):
+    class Meta:
+        model = JournalType
+        fields = ('code', 'name', 'description', 'auto_numbering_prefix', 
+                  'auto_numbering_suffix', 'auto_numbering_next', 
+                  'is_system_type', 'requires_approval', 'is_active')
+        widgets = {
+            'code': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'auto_numbering_prefix': forms.TextInput(attrs={'class': 'form-control'}),
+            'auto_numbering_suffix': forms.TextInput(attrs={'class': 'form-control'}),
+            'auto_numbering_next': forms.NumberInput(attrs={'class': 'form-control'}),
+            'is_system_type': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'requires_approval': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        super().__init__(*args, **kwargs)
+            
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.organization:
+            instance.organization = self.organization
+        if commit:
+            instance.save()
+        return instance
+
+class TaxAuthorityForm(forms.ModelForm):
+    class Meta:
+        model = TaxAuthority
+        fields = ('name', 'country_code', 'description', 'is_active', 'is_default')
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'country_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        super().__init__(*args, **kwargs)
+            
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.organization:
+            instance.organization = self.organization
+        if commit:
+            instance.save()
+        return instance
+
+class TaxTypeForm(forms.ModelForm):
+    class Meta:
+        model = TaxType
+        fields = ('name', 'authority', 'description', 'filing_frequency', 'is_active')
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'authority': forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'filing_frequency': forms.Select(attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter tax authorities by organization
+        if self.organization:
+            self.fields['authority'].queryset = TaxAuthority.objects.filter(
+                organization=self.organization
+            )
+            
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.organization:
+            instance.organization = self.organization
+        if commit:
+            instance.save()
+        return instance
+
+class TaxCodeForm(forms.ModelForm):
+    class Meta:
+        model = TaxCode
+        fields = ('name', 'tax_type', 'tax_authority', 'tax_rate', 'rate',
+                  'description', 'is_active', 'is_recoverable', 'effective_from')
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'tax_type': forms.Select(attrs={'class': 'form-select'}),
+            'tax_authority': forms.Select(attrs={'class': 'form-select'}),
+            'tax_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_recoverable': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'effective_from': forms.TextInput(attrs={'class': 'form-control datepicker'}),
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter related models by organization
+        if self.organization:
+            self.fields['tax_type'].queryset = TaxType.objects.filter(
+                organization=self.organization
+            )
+            self.fields['tax_authority'].queryset = TaxAuthority.objects.filter(
+                organization=self.organization
+            )
+            
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.organization:
+            instance.organization = self.organization
+        if commit:
+            instance.save()
+        return instance
+
+class VoucherModeConfigForm(forms.ModelForm):
+    class Meta:
+        model = VoucherModeConfig
+        fields = ('name', 'description', 'is_default', 'layout_style', 
+                  'show_account_balances', 'show_tax_details', 'show_dimensions', 
+                  'allow_multiple_currencies', 'require_line_description', 'default_currency')
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'layout_style': forms.Select(attrs={'class': 'form-select'}),
+            'show_account_balances': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'show_tax_details': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'show_dimensions': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'allow_multiple_currencies': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'require_line_description': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'default_currency': forms.Select(attrs={'class': 'form-select'}),
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        super().__init__(*args, **kwargs)
+        
+        # Populate currency choices
+        self.fields['default_currency'].choices = [
+            (currency.currency_code, f"{currency.currency_code} - {currency.currency_name}") 
+            for currency in Currency.objects.filter(is_active=True)
+        ]
+            
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.organization:
+            instance.organization = self.organization
+        if commit:
+            instance.save()
+        return instance
 class JournalForm(forms.ModelForm):
     class Meta:
         model = Journal

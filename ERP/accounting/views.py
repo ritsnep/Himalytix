@@ -2,13 +2,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DetailView
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.http import JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.utils import timezone
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import FiscalYear
+from .forms import CostCenterForm, DepartmentForm, FiscalYearForm
+
 from .models import (
-    GeneralLedger, Journal, JournalLine, JournalType, ChartOfAccount, 
+    FiscalYear, GeneralLedger, Journal, JournalLine, JournalType, ChartOfAccount, 
     AccountingPeriod, TaxCode, Department, Project, CostCenter,
     VoucherModeConfig, VoucherModeDefault
 )
@@ -17,6 +22,111 @@ from .forms import (
     VoucherModeConfigForm, VoucherModeDefaultForm
 )
 
+
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic.edit import CreateView
+from .models import FiscalYear
+from .forms import FiscalYearForm
+
+class FiscalYearCreateView(LoginRequiredMixin, CreateView):
+    model = FiscalYear
+    form_class = FiscalYearForm
+    template_name = 'accounting/fiscal_year_form.html'
+    success_url = reverse_lazy('accounting:fiscal_year_list')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        from .models import AutoIncrementCodeGenerator
+        code_generator = AutoIncrementCodeGenerator(FiscalYear, 'code', prefix='FY', suffix='')
+        initial['code'] = code_generator.generate_code()
+        return initial
+
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        return super().form_valid(form)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Fiscal Year'
+        context['back_url'] = reverse('accounting:fiscal_year_list')
+        return context
+# views.py
+
+class FiscalYearUpdateView(LoginRequiredMixin, UpdateView):
+    model = FiscalYear
+    form_class = FiscalYearForm
+    template_name = 'accounting/fiscal_year_form.html'
+    success_url = reverse_lazy('accounting:fiscal_year_list')
+    
+    slug_field = 'fiscal_year_id'          # use custom primary key
+    slug_url_kwarg = 'fiscal_year_id'      # match with URL parameter
+
+    def get_queryset(self):
+        # ensures only fiscal years from the user's organization can be edited
+        return FiscalYear.objects.filter(organization_id=self.request.user.organization)
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            FiscalYear,
+            fiscal_year_id=self.kwargs['fiscal_year_id'],
+            organization_id=self.request.user.organization
+        )
+    def form_valid(self, form):
+        form.instance.organization_id = self.request.user.organization
+        return super().form_valid(form)
+
+class FiscalYearListView(LoginRequiredMixin, ListView):
+    model = FiscalYear
+    template_name = 'accounting/fiscal_year_list.html'
+    context_object_name = 'fiscal_years'
+
+    def get_queryset(self):
+        return FiscalYear.objects.filter(organization_id=self.request.user.organization)
+class CostCenterListView(LoginRequiredMixin, ListView):
+    model = CostCenter
+    template_name = 'accounting/costcenter_list.html'
+    context_object_name = 'cost_centers'
+
+    def get_queryset(self):
+        return CostCenter.objects.filter(organization_id=self.request.user.organization)
+class CostCenterCreateView(LoginRequiredMixin, CreateView):
+    model = CostCenter
+    form_class = CostCenterForm
+    template_name = 'accounting/costcenter_form.html'
+    success_url = reverse_lazy('accounting:costcenter_list')
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization 
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Cost Center'
+        context['back_url'] = reverse('accounting:costcenter_list')
+        return context
+
+class CostCenterUpdateView(LoginRequiredMixin, UpdateView):
+    model = CostCenter
+    form_class = CostCenterForm
+    template_name = 'accounting/costcenter_form.html'
+    success_url = reverse_lazy('accounting:costcenter_list')
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+    def get_queryset(self):
+        return CostCenter.objects.filter(organization=self.request.user.organization)
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        return super().form_valid(form)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Update Cost Center'
+        context['back_url'] = reverse('accounting:costcenter_list')
+        return context
+    
 class JournalListView(LoginRequiredMixin, ListView):
     model = Journal
     template_name = 'accounting/journal_list.html'
@@ -251,6 +361,7 @@ class VoucherModeDefaultDeleteView(LoginRequiredMixin, View):
         return redirect('voucher_config_detail', pk=config_id)
 
 class VoucherEntryView(LoginRequiredMixin, View):
+
     template_name = 'accounting/voucher_entry.html'
     
     def get(self, request, config_id=None):
@@ -330,3 +441,32 @@ class VoucherEntryView(LoginRequiredMixin, View):
         }
         
         return render(request, self.template_name, context)
+    
+    # Example for Department
+
+class DepartmentListView(LoginRequiredMixin, ListView):
+    model = Department
+    template_name = 'accounting/department_list.html'
+    context_object_name = 'departments'
+    def get_queryset(self):
+        return Department.objects.filter(organization=self.request.user.organization)
+
+class DepartmentCreateView(LoginRequiredMixin, CreateView):
+    model = Department
+    form_class = DepartmentForm
+    template_name = 'accounting/department_form.html'
+    success_url = reverse_lazy('accounting:department_list')
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        return super().form_valid(form)
+
+class DepartmentUpdateView(LoginRequiredMixin, UpdateView):
+    model = Department
+    form_class = DepartmentForm
+    template_name = 'accounting/department_form.html'
+    success_url = reverse_lazy('accounting:department_list')
+    def get_queryset(self):
+        return Department.objects.filter(organization=self.request.user.organization)
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        return super().form_valid(form)

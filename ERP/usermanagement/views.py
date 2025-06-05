@@ -1,30 +1,33 @@
 # usermanagement/views.py
 from uuid import UUID
+from django.urls import reverse
 from django.utils import timezone
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.views import LoginView
 from .models import  Module, Entity, CustomUser
-from .forms import  ModuleForm, EntityForm, CustomUserCreationForm
+from .forms import  DasonLoginForm, ModuleForm, EntityForm, CustomUserCreationForm
 from django.contrib.auth.decorators import login_required
 # accounts/views.py or usermanagement/views.py
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import LoginLog
+from django.contrib.auth.forms import AuthenticationForm
+
+class CustomLoginView(LoginView):
+    template_name = "account/login.html"
+    form_class = DasonLoginForm
 def custom_login(request):
-    if request.method == "POST":
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user,)
-            # return redirect('dashboard')  # Or whatever landing page
-            return render(request, 'dashboard.html')  # Redirect to the dashboard
-        else:
-            messages.error(request, 'Invalid username or password.')
-    # return render(request, 'usermanagement/login.html')
-    return render(request, 'account/login.html')
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('/')
+    else:
+        form = AuthenticationForm(request)
+    return render(request, 'account/login.html', {'form': form})
 @login_required
 
 def logout_view(request):
@@ -49,7 +52,7 @@ def logout_view(request):
             login_log.save(update_fields=["logout_time", "session_time"])
 
     logout(request)
-    return redirect('login')
+    return redirect(reverse('account_login'))
 # def logout_view(request):
 #     currentsession = request.session.get('session_id')
 

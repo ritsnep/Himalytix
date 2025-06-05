@@ -1,0 +1,35 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'libs/flatpickr/dist/flatpickr.min.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="main-content">
+  <div class="page-content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="card">
+            <div class="card-body">
+              <h4 class="card-title">Fiscal Year Form</h4>
+
+              <form method="post" novalidate>
+                {% csrf_token %}
+            {{ form.as_p }}
+            <div class="d-flex justify-content-between">
+                  <a href="{{ back_url }}" class="btn btn-secondary">Back</a>
+                  
+                  <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+        </form>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

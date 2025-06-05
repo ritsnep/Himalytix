@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from dashboard import views
 from django.contrib.auth.decorators import login_required
-
+from usermanagement.views import CustomLoginView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -27,6 +27,8 @@ urlpatterns = [
     path('accounting/', include('accounting.urls')),
     # path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),  # Important!
+    path("accounts/login/", CustomLoginView.as_view(), name="account_login"),
+    
     path("", views.DashboardView.as_view(), name="dashboard"),
     path("settings", views.Settings.as_view(), name="settings"),
     # # Custum change password done page redirect

@@ -1,0 +1,33 @@
+{% extends 'accounting/_list_base.html' %}
+{% block title %}Department List{% endblock %}
+
+{% block list_header %}
+<h4 class="card-title">Department</h4>
+<a href="{% url 'accounting:department_create' %}" class="btn btn-success mb-2">
+    <i class="mdi mdi-plus me-1"></i> New Department
+</a>
+{% endblock %}
+
+{% block table_head %}
+<thead>
+  <tr>
+    <th>Name</th>
+    <th>Action</th>
+  </tr>
+</thead>
+{% endblock %}
+
+{% block table_body %}
+<tbody>
+  {% for d in departments %}
+  <tr>
+    <td>{{ d.name }}</td>
+    <td>
+      <a href="{% url 'accounting:department_update' d.id %}" class="btn btn-sm btn-primary">Edit</a>
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="2">No departments found.</td></tr>
+  {% endfor %}
+</tbody>
+{% endblock %}

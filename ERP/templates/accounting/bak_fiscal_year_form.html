@@ -1,0 +1,61 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+
+{% block title %}Fiscal Year Form{% endblock title %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'libs/flatpickr/dist/flatpickr.min.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="main-content">
+  <div class="page-content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="card">
+            <div class="card-body">
+              <h4 class="card-title">Fiscal Year Form</h4>
+
+              <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% for field in form %}
+                <div class="mb-3 {% if field.errors %}has-error{% endif %}">
+                  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}
+                    {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                  </label>
+                  {{ field }}
+                  {% if field.errors %}
+                  <div class="text-danger">{{ field.errors|join:", " }}</div>
+                  {% endif %}
+                </div>
+                {% endfor %}
+
+                <!-- <button type="submit" class="btn btn-primary">Save</button> -->
+
+                <div class="d-flex justify-content-between">
+                  <a href="{% url 'accounting:fiscal_year_list' %}" class="btn btn-secondary">Back</a>
+                  <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'libs/flatpickr/dist/flatpickr.min.js' %}"></script>
+<script>
+  $(document).ready(function () {
+    $('.datepicker').flatpickr({
+      dateFormat: 'Y-m-d',
+    });
+  });
+</script>
+{% endblock extra_js %}

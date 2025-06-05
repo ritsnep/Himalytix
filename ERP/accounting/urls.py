@@ -2,6 +2,7 @@
 from django.urls import path
 from . import views
 
+app_name = "accounting"
 urlpatterns = [
     # Journal URLs
     path('journals/', views.JournalListView.as_view(), name='journal_list'),
@@ -26,4 +27,18 @@ urlpatterns = [
     
     path('voucher-entry/', views.VoucherEntryView.as_view(), name='voucher_entry'),
     path('voucher-entry/<int:config_id>/', views.VoucherEntryView.as_view(), name='voucher_entry_config'),
+    path('fiscal_year/', views.FiscalYearCreateView.as_view(), name='fiscal_year_create'),
+    # path('fiscal_year/<pk>/', views.FiscalYearUpdateView.as_view(), name='fiscal_year_update'),
+    path('fiscal_year/list/', views.FiscalYearListView.as_view(), name='fiscal_year_list'),  # urls.py
+
+    path('fiscal_year/<str:fiscal_year_id>/', views.FiscalYearUpdateView.as_view(), name='fiscal_year_update'),
+    path('costcenters/', views.CostCenterListView.as_view(), name='costcenter_list'),
+    path('costcenters/create/', views.CostCenterCreateView.as_view(), name='costcenter_create'),
+    path('costcenters/<int:pk>/edit/', views.CostCenterUpdateView.as_view(), name='costcenter_update'),
+
+  # Department
+    path('departments/', views.DepartmentListView.as_view(), name='department_list'),
+    path('departments/create/', views.DepartmentCreateView.as_view(), name='department_create'),
+    path('departments/<int:pk>/edit/', views.DepartmentUpdateView.as_view(), name='department_update'),
+
 ]

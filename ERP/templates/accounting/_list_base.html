@@ -1,0 +1,67 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <!-- DataTables + Buttons CSS -->
+    <link href="{% static 'libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'libs/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'libs/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css' %}" rel="stylesheet" type="text/css" />
+{% endblock extra_css %}
+
+{% block content %}
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <div class="card">
+                    <div class="card-body">
+                        {% block list_header %}
+                        {% endblock list_header %}
+                        <div class="table-responsive mb-0">
+                            <table id="datatable-buttons" class="table table-bordered dt-responsive nowrap w-100">
+                                {% block table_head %}{% endblock table_head %}
+                                {% block table_body %}{% endblock table_body %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block extra_js %}
+<!-- DataTables core -->
+<script src="{% static 'libs/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+<!-- DataTables Buttons -->
+<script src="{% static 'libs/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+<script src="{% static 'libs/datatables.net-buttons-bs4/js/buttons.bootstrap4.min.js' %}"></script>
+<script src="{% static 'libs/jszip/jszip.min.js' %}"></script>
+<script src="{% static 'libs/pdfmake/build/pdfmake.min.js' %}"></script>
+<script src="{% static 'libs/pdfmake/build/vfs_fonts.js' %}"></script>
+<script src="{% static 'libs/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+<script src="{% static 'libs/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+<script src="{% static 'libs/datatables.net-buttons/js/buttons.colVis.min.js' %}"></script>
+<!-- DataTables Responsive -->
+<script src="{% static 'libs/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'libs/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js' %}"></script>
+
+<script>
+$(document).ready(function() {
+    // If there are multiple datatables on one page, add a more specific selector
+    $('#datatable-buttons').DataTable({
+        dom: 'Bfrtip',
+        buttons: [
+            { extend: 'copy', className: 'btn btn-light btn-sm' },
+            { extend: 'csv', className: 'btn btn-light btn-sm' },
+            { extend: 'excel', className: 'btn btn-light btn-sm' },
+            { extend: 'pdf', className: 'btn btn-light btn-sm' },
+            { extend: 'print', className: 'btn btn-light btn-sm' },
+            { extend: 'colvis', className: 'btn btn-light btn-sm' }
+        ],
+        responsive: true,
+        // Optional: custom language, ordering, etc.
+    });
+});
+</script>
+{% endblock extra_js %}

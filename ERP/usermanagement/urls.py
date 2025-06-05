@@ -8,6 +8,7 @@ urlpatterns = [
     path('users/delete/<int:pk>/', views.delete_user, name='user_delete'),
 # usermanagement/urls.py
     path('login/', views.custom_login, name='login'),
+    # path('login/', views.login_view, name='login'),
 
     path("logout/", views.logout_view, name="logout"),
     # path('companies/', views.company_list, name='company_list'),

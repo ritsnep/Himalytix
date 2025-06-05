@@ -1,0 +1,91 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+
+{% block title %}Voucher Configurations{% endblock title %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0 font-size-18">Voucher Configurations</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Accounting</a></li>
+                                <li class="breadcrumb-item active">Voucher Configurations</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="card-title">Voucher Configurations</h4>
+                                <a href="{% url 'accounting:voucher_config_create' %}" class="btn btn-primary">
+                                    <i class="bx bx-plus me-1"></i> Add New Configuration
+                                </a>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-centered table-nowrap mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Name</th>
+                                            <th>Journal Type</th>
+                                            <th>Status</th>
+                                            <th>Default</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for config in configs %}
+                                        <tr>
+                                            <td>{{ config.code }}</td>
+                                            <td>{{ config.name }}</td>
+                                            <td>{{ config.journal_type.name }}</td>
+                                            <td>
+                                                {% if config.is_active %}
+                                                <span class="badge badge-soft-success">Active</span>
+                                                {% else %}
+                                                <span class="badge badge-soft-danger">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if config.is_default %}
+                                                <span class="badge badge-soft-primary">Default</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'accounting:voucher_config_detail' config.pk %}" class="btn btn-sm btn-info">
+                                                    <i class="bx bx-show"></i>
+                                                </a>
+                                                <a href="{% url 'accounting:voucher_config_update' config.pk %}" class="btn btn-sm btn-primary">
+                                                    <i class="bx bx-edit"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center">No voucher configurations found.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -79,12 +79,26 @@ WSGI_APPLICATION = 'dashboard.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'mssql',
+        'NAME': 'erptest1',
+        'USER': 'erpuser',
+        'PASSWORD': 'user@123',
+        'HOST': 'localhost',
+        'PORT': '1433',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',  # Make sure this driver is installed
+            'Trusted_Connection': 'no',
+        },
     }
-}
+}    
 AUTH_USER_MODEL = 'usermanagement.CustomUser'
     
 
@@ -136,7 +150,7 @@ MESSAGE_TAGS = {
     messages.WARNING: "alert-warning",
     messages.ERROR: "alert-danger",
 }
-LOGIN_URL = '/manage/login/'  # or whatever your login URL is
+LOGIN_URL = '/accounts/login/'  # or whatever your login URL is
 
 # LOGIN_URL = "/authentication/login/"
 # Default primary key field type
@@ -154,13 +168,16 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 # Redirects
 LOGIN_REDIRECT_URL = "/"
-ACCOUNT_LOGOUT_REDIRECT_URL = "/login/"
+ACCOUNT_LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 # Signup/Login behavior
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
+# ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "none"  # or "mandatory" if you handle emails
+ACCOUNT_FORMS = {
+    'login': 'usermanagement.forms.DasonLoginForm',
+}
 
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']

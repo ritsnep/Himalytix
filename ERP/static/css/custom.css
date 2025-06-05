@@ -1,0 +1,5 @@
+#tab-bar {
+    position: relative;
+    z-index: 1041; /* higher than .navbar (Bootstrap default is 1030) */
+    margin-top: 56px; /* adjust to your header height */
+}
