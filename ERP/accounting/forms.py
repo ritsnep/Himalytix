@@ -3,7 +3,7 @@ from django import forms
 from django.forms import inlineformset_factory
 from .models import (
     AccountType, CostCenter, Currency, Department, Journal, JournalLine, JournalType, ChartOfAccount,
-    AccountingPeriod, Project, TaxAuthority, TaxCode, TaxType, VoucherModeConfig, VoucherModeDefault
+    AccountingPeriod, Project, TaxAuthority, TaxCode, TaxType, VoucherModeConfig, VoucherModeDefault, CurrencyExchangeRate
 )
 from django import forms
 from .models import FiscalYear
@@ -162,8 +162,7 @@ class AccountTypeForm(forms.ModelForm):
 class ChartOfAccountForm(forms.ModelForm):
     class Meta:
         model = ChartOfAccount
-        fields = ('account_name', 'account_type', 'description', 'is_active', 
-                  'is_bank_account', 'is_control_account', 'currency_code')
+        fields = ['account_name', 'account_type', 'description', 'is_active', 'is_bank_account', 'is_control_account', 'currency_code']
         widgets = {
             'account_name': forms.TextInput(attrs={'class': 'form-control'}),
             'account_type': forms.Select(attrs={'class': 'form-select'}),
@@ -173,30 +172,17 @@ class ChartOfAccountForm(forms.ModelForm):
             'is_control_account': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'currency_code': forms.Select(attrs={'class': 'form-select'}),
         }
-        
+
     def __init__(self, *args, **kwargs):
-        self.organization = kwargs.pop('organization', None)
         super().__init__(*args, **kwargs)
+        # Filter account types
+        self.fields['account_type'].queryset = AccountType.objects.filter(is_archived=False)
         
-        # Filter account types by organization if applicable
-        if self.organization:
-            self.fields['account_type'].queryset = AccountType.objects.filter(
-                organization=self.organization
-            )
-            
         # Populate currency choices
         self.fields['currency_code'].choices = [
-            (currency.currency_code, f"{currency.currency_code} - {currency.currency_name}") 
+            (currency.code, f"{currency.code} - {currency.name}") 
             for currency in Currency.objects.filter(is_active=True)
         ]
-            
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        if self.organization:
-            instance.organization = self.organization
-        if commit:
-            instance.save()
-        return instance
 
 class CurrencyForm(forms.ModelForm):
     class Meta:
@@ -208,6 +194,37 @@ class CurrencyForm(forms.ModelForm):
             'symbol': forms.TextInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+class CurrencyExchangeRateForm(forms.ModelForm):
+    class Meta:
+        model = CurrencyExchangeRate
+        fields = ('from_currency', 'to_currency', 'rate_date', 'exchange_rate', 'is_average_rate', 'source')
+        widgets = {
+            'from_currency': forms.Select(attrs={'class': 'form-select'}),
+            'to_currency': forms.Select(attrs={'class': 'form-select'}),
+            'rate_date': forms.TextInput(attrs={'class': 'form-control datepicker'}),
+            'exchange_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
+            'is_average_rate': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'source': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+        
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        super().__init__(*args, **kwargs)
+        
+        # Populate currency choices
+        currencies = Currency.objects.filter(is_active=True)
+        currency_choices = [(c.currency_code, f"{c.currency_code} - {c.currency_name}") for c in currencies]
+        self.fields['from_currency'].choices = currency_choices
+        self.fields['to_currency'].choices = currency_choices
+            
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.organization:
+            instance.organization = self.organization
+        if commit:
+            instance.save()
+        return instance
 
 class JournalTypeForm(forms.ModelForm):
     class Meta:

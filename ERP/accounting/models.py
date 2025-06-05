@@ -5,8 +5,11 @@ from django.contrib.auth import get_user_model
 from usermanagement.models import CustomUser, Organization
 from django.utils.crypto import get_random_string
 from django.db.models import Max
+import logging
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
+
 
 def generate_fiscal_year_id():
     while True:
@@ -34,28 +37,11 @@ class AutoIncrementCodeGenerator:
         ]
         next_number = max(numbers, default=0) + 1
         return f"{self.prefix}{str(next_number).zfill(2)}{self.suffix}"
-# class AutoIncrementCodeGenerator:
-#     def __init__(self, model, field_name, prefix='', suffix=''):
-#         self.model = model
-#         self.field_name = field_name
-#         self.prefix = prefix
-#         self.suffix = suffix
-
-#     def generate_code(self):
-#         last_code = self.model.objects.order_by(self.field_name).last()
-#         if last_code:
-#             last_code_value = getattr(last_code, self.field_name)
-#             if isinstance(last_code_value, int):
-#                 new_code = last_code_value + 1
-#             elif isinstance(last_code_value, str):
-#                 new_code = int(last_code_value[len(self.prefix):len(last_code_value) - len(self.suffix)]) + 1
-#                 new_code = f"{self.prefix}{new_code}{self.suffix}"
-#             else:
-#                 raise ValueError("Unsupported field type")
-#         else:
-#             new_code = 1 if isinstance(self.model._meta.get_field(self.field_name).default, int) else f"{self.prefix}1{self.suffix}"
-#         return new_code
+    
 class FiscalYear(models.Model):
+    """
+    Represents a fiscal year for an organization.
+    """
     STATUS_CHOICES = [
         ('open', 'Open'),
         ('closed', 'Closed'),
@@ -93,6 +79,7 @@ class FiscalYear(models.Model):
         return f"{self.code} - {self.name}"
 
     def save(self, *args, **kwargs):
+        logger.info(f"Saving FiscalYear: {self.code}")
         if not self.code:
             code_generator = AutoIncrementCodeGenerator(FiscalYear, 'code', prefix='FY', suffix='')
             self.code = code_generator.generate_code()

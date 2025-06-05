@@ -14,8 +14,16 @@
             <div class="container-fluid">
                 <div class="card">
                     <div class="card-body">
-                        {% block list_header %}
-                        {% endblock list_header %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="card-title mb-0">
+                                {{ page_title|default:"List" }}
+                            </h4>
+                            {% if create_url and create_button_text %}
+                            <a href="{{ create_url }}" class="btn btn-success">
+                                <i class="mdi mdi-plus me-1"></i> {{ create_button_text }}
+                            </a>
+                            {% endif %}
+                        </div>
                         <div class="table-responsive mb-0">
                             <table id="datatable-buttons" class="table table-bordered dt-responsive nowrap w-100">
                                 {% block table_head %}{% endblock table_head %}
@@ -48,7 +56,6 @@
 
 <script>
 $(document).ready(function() {
-    // If there are multiple datatables on one page, add a more specific selector
     $('#datatable-buttons').DataTable({
         dom: 'Bfrtip',
         buttons: [
@@ -60,7 +67,6 @@ $(document).ready(function() {
             { extend: 'colvis', className: 'btn btn-light btn-sm' }
         ],
         responsive: true,
-        // Optional: custom language, ordering, etc.
     });
 });
 </script>

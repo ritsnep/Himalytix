@@ -1,0 +1,44 @@
+{% extends 'accounting/_list_base.html' %}
+{% load static %}
+
+{% block title %}Account Types{% endblock %}
+{% block breadcrumb %}Account Types{% endblock %}
+{% block add_url %}{% url 'accounting:account_type_create' %}{% endblock %}
+
+{% block list_header %}
+<h4 class="card-title">Account Types</h4>
+{% endblock %}
+
+{% block create_button %}
+<a href="{% url 'accounting:account_type_create' %}" class="btn btn-success mb-2">
+    <i class="mdi mdi-plus me-1"></i> New Account Type
+</a>
+{% endblock %}
+
+{% block table_head %}
+<thead>
+    <tr>
+        <th>Code</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Action</th>
+    </tr>
+</thead>
+{% endblock %}
+
+{% block table_body %}
+<tbody>
+    {% for type in account_types %}
+    <tr>
+        <td>{{ type.code }}</td>
+        <td>{{ type.name }}</td>
+        <td>{{ type.description }}</td>
+        <td>
+            <a href="{% url 'accounting:account_type_update' type.pk %}" class="btn btn-sm btn-primary">Edit</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">No account types found.</td></tr>
+    {% endfor %}
+</tbody>
+{% endblock %} 

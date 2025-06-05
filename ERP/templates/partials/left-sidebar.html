@@ -18,27 +18,89 @@
                                 <span data-key="t-dashboard">Dashboard</span>
                             </a>
                         </li>
-                         <li>
-                            <a href="{% url 'accounting:fiscal_year_list'%}">
-                                <i data-feather="home"></i>
-                                <span class="badge rounded-pill bg-soft-success text-success float-end">9+</span>
-                                <span data-key="t-dashboard">FiscalYear</span>
-                            </a>
-                        </li>
+
+                        <!-- Accounting Section -->
                         <li>
-                            <a href="{% url 'accounting:costcenter_list'%}">
-                                <i data-feather="home"></i>
-                                <span class="badge rounded-pill bg-soft-success text-success float-end">9+</span>
-                                <span data-key="t-dashboard">CostCenter</span>
+                            <a href="javascript: void(0);" class="has-arrow">
+                                <i data-feather="book"></i>
+                                <span data-key="t-accounting">Accounting</span>
                             </a>
+                            <ul class="sub-menu" aria-expanded="false">
+                                <!-- Chart of Accounts -->
+                                <li>
+                                    <a href="{% url 'accounting:chart_of_accounts_list' %}">
+                                        <span>Chart of Accounts</span>
+                                    </a>
+                                </li>
+                                <!-- Account Types -->
+                                <li>
+                                    <a href="{% url 'accounting:account_type_list' %}">
+                                        <span>Account Types</span>
+                                    </a>
+                                </li>
+                                <!-- Currencies -->
+                                <li>
+                                    <a href="{% url 'accounting:currency_list' %}">
+                                        <span>Currencies</span>
+                                    </a>
+                                </li>
+                                <!-- Exchange Rates -->
+                                <li>
+                                    <a href="{% url 'accounting:exchange_rate_list' %}">
+                                        <span>Exchange Rates</span>
+                                    </a>
+                                </li>
+                                <!-- Fiscal Years -->
+                                <li>
+                                    <a href="{% url 'accounting:fiscal_year_list' %}">
+                                        <span>Fiscal Years</span>
+                                    </a>
+                                </li>
+                                <!-- Cost Centers -->
+                                <li>
+                                    <a href="{% url 'accounting:costcenter_list' %}">
+                                        <span>Cost Centers</span>
+                                    </a>
+                                </li>
+                                <!-- Departments -->
+                                <li>
+                                    <a href="{% url 'accounting:department_list' %}">
+                                        <span>Departments</span>
+                                    </a>
+                                </li>
+                                <!-- Journals -->
+                                <li>
+                                    <a href="{% url 'accounting:journal_list' %}">
+                                        <span>Journals</span>
+                                    </a>
+                                </li>
+                                <!-- Voucher Configurations -->
+                                <li>
+                                    <a href="{% url 'accounting:voucher_config_list' %}">
+                                        <span>Voucher Configurations</span>
+                                    </a>
+                                </li>
+                                <!-- Tax Authorities -->
+                                <li>
+                                    <a href="{% url 'accounting:tax_authority_list' %}">
+                                        <span>Tax Authorities</span>
+                                    </a>
+                                </li>
+                                <!-- Tax Types -->
+                                <li>
+                                    <a href="{% url 'accounting:tax_type_list' %}">
+                                        <span>Tax Types</span>
+                                    </a>
+                                </li>
+                                <!-- Projects -->
+                                <li>
+                                    <a href="{% url 'accounting:project_list' %}">
+                                        <span>Projects</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                         <li>
-                            <a href="{% url 'accounting:department_list'%}">
-                                <i data-feather="home"></i>
-                                <span class="badge rounded-pill bg-soft-success text-success float-end">9+</span>
-                                <span data-key="t-dashboard">Departments</span>
-                            </a>
-                        </li>
+
                         <li class="menu-title" data-key="t-apps">Apps</li>
 
                         <li>

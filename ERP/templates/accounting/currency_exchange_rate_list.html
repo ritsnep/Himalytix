@@ -1,0 +1,32 @@
+{% extends 'accounting/_list_base.html' %}
+{% load static %}
+
+{% block title %}Currency Exchange Rates{% endblock %}
+
+{% block table_headers %}
+    <th>From Currency</th>
+    <th>To Currency</th>
+    <th>Rate</th>
+    <th>Effective Date</th>
+    <th>Actions</th>
+{% endblock %}
+
+{% block table_body %}
+    {% for rate in exchange_rates %}
+    <tr>
+        <td>{{ rate.from_currency.code }} - {{ rate.from_currency.name }}</td>
+        <td>{{ rate.to_currency.code }} - {{ rate.to_currency.name }}</td>
+        <td>{{ rate.rate }}</td>
+        <td>{{ rate.effective_date|date:"Y-m-d" }}</td>
+        <td>
+            <a href="{% url 'accounting:currency_exchange_rate_update' rate.pk %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5" class="text-center">No exchange rates found.</td>
+    </tr>
+    {% endfor %}
+{% endblock %} 

@@ -1,0 +1,62 @@
+{% extends 'accounting/_list_base.html' %}
+{% load static %}
+
+{% block title %}Journals{% endblock %}
+{% block breadcrumb %}Journals{% endblock %}
+{% block add_url %}{% url 'accounting:journal_create' %}{% endblock %}
+
+{% block list_header %}
+<h4 class="card-title">Journals</h4>
+{% endblock %}
+
+{% block create_button %}
+<a href="{% url 'accounting:journal_create' %}" class="btn btn-success mb-2">
+    <i class="mdi mdi-plus me-1"></i> New Journal
+</a>
+{% endblock %}
+
+{% block table_head %}
+<thead>
+  <tr>
+    <th>Journal Number</th>
+    <th>Date</th>
+    <th>Description</th>
+    <th>Status</th>
+    <th>Actions</th>
+  </tr>
+</thead>
+{% endblock %}
+
+{% block table_body %}
+<tbody>
+  {% for journal in journals %}
+  <tr>
+    <td>{{ journal.journal_number }}</td>
+    <td>{{ journal.date|date:"Y-m-d" }}</td>
+    <td>{{ journal.description }}</td>
+    <td>
+      {% if journal.is_posted %}
+        <span class="badge bg-success">Posted</span>
+      {% else %}
+        <span class="badge bg-warning">Draft</span>
+      {% endif %}
+    </td>
+    <td>
+      <a href="{% url 'accounting:journal_detail' journal.pk %}" class="btn btn-sm btn-info">
+        <i class="fas fa-eye"></i> View
+      </a>
+      <a href="{% url 'accounting:journal_update' journal.pk %}" class="btn btn-sm btn-primary">
+        <i class="fas fa-edit"></i> Edit
+      </a>
+      {% if not journal.is_posted %}
+      <a href="{% url 'accounting:journal_post' journal.pk %}" class="btn btn-sm btn-success">
+        <i class="fas fa-check"></i> Post
+      </a>
+      {% endif %}
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="5">No journals found.</td></tr>
+  {% endfor %}
+</tbody>
+{% endblock %} 
