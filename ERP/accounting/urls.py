@@ -36,7 +36,7 @@ urlpatterns = [
     # Cost Center URLs
     path('cost-centers/', views.CostCenterListView.as_view(), name='costcenter_list'),
     path('cost-centers/create/', views.CostCenterCreateView.as_view(), name='costcenter_create'),
-    path('cost-centers/<int:pk>/update/', views.CostCenterUpdateView.as_view(), name='costcenter_update'),
+    path('cost-centers/<int:pk>/edit/', views.CostCenterUpdateView.as_view(), name='costcenter_update'),
 
     # Department URLs
     path('departments/', views.DepartmentListView.as_view(), name='department_list'),
@@ -46,12 +46,12 @@ urlpatterns = [
     # Chart of Accounts URLs
     path('chart-of-accounts/', views.ChartOfAccountListView.as_view(), name='chart_of_accounts_list'),
     path('chart-of-accounts/create/', views.ChartOfAccountCreateView.as_view(), name='chart_of_accounts_create'),
-    path('chart-of-accounts/<int:pk>/update/', views.ChartOfAccountUpdateView.as_view(), name='chart_of_accounts_update'),
+    path('chart-of-accounts/<int:pk>/edit/', views.ChartOfAccountUpdateView.as_view(), name='chart_of_accounts_update'),
 
     # Account Type URLs
     path('account-types/', views.AccountTypeListView.as_view(), name='account_type_list'),
     path('account-types/create/', views.AccountTypeCreateView.as_view(), name='account_type_create'),
-    path('account-types/<int:pk>/update/', views.AccountTypeUpdateView.as_view(), name='account_type_update'),
+    path('account-types/<int:pk>/edit/', views.AccountTypeUpdateView.as_view(), name='account_type_update'),
 
     # Currency URLs
     path('currencies/', views.CurrencyListView.as_view(), name='currency_list'),

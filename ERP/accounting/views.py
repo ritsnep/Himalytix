@@ -32,6 +32,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import CreateView
 from .models import FiscalYear
 from .forms import FiscalYearForm
+from usermanagement.utils import require_permission
+from usermanagement.utils import PermissionUtils
 
 class FiscalYearCreateView(LoginRequiredMixin, CreateView):
     model = FiscalYear
@@ -87,11 +89,30 @@ class FiscalYearListView(LoginRequiredMixin, ListView):
     context_object_name = 'fiscal_years'
     paginate_by = 20
 
+    @require_permission('accounting', 'fiscalyear', 'view')
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
-        return FiscalYear.objects.filter(organization_id=self.request.user.organization)
+        organization = self.request.user.get_active_organization()
+        if not organization:
+            return FiscalYear.objects.none()
+        return FiscalYear.objects.filter(organization_id=organization)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user = self.request.user
+        org = user.get_active_organization()
+        
+        if not org:
+            context['can_add'] = False
+            context['can_change'] = False
+            context['can_delete'] = False
+        else:
+            context['can_add'] = PermissionUtils.has_permission(user, org, 'accounting', 'fiscalyear', 'add')
+            context['can_change'] = PermissionUtils.has_permission(user, org, 'accounting', 'fiscalyear', 'change')
+            context['can_delete'] = PermissionUtils.has_permission(user, org, 'accounting', 'fiscalyear', 'delete')
+        
         context['create_url'] = reverse('accounting:fiscal_year_create')
         context['create_button_text'] = 'New Fiscal Year'
         context['page_title'] = 'Fiscal Years'

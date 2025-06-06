@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.views import LoginView
-from .models import  Module, Entity, CustomUser
+from .models import  Module, Entity, CustomUser, Organization
 from .forms import  DasonLoginForm, ModuleForm, EntityForm, CustomUserCreationForm
 from django.contrib.auth.decorators import login_required
 # accounts/views.py or usermanagement/views.py
@@ -84,3 +84,17 @@ def delete_user(request, pk):
     user = get_object_or_404(CustomUser, pk=pk)
     user.delete()
     return redirect('user_list')
+
+@login_required
+def select_organization(request):
+    if request.method == 'POST':
+        org_id = request.POST.get('organization')
+        if org_id:
+            org = Organization.objects.get(id=org_id)
+            request.user.set_active_organization(org)
+            return redirect(request.GET.get('next', '/'))
+    
+    organizations = request.user.userorganization_set.all()
+    return render(request, 'usermanagement/select_organization.html', {
+        'organizations': organizations
+    })

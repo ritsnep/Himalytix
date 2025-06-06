@@ -15,4 +15,5 @@ urlpatterns = [
     # path('companies/create/', views.company_create, name='company_create'),
     # path('companies/edit/<int:pk>/', views.company_edit, name='company_edit'),
     # path('companies/delete/<int:pk>/', views.company_delete, name='company_delete'),
+    path('select-organization/', views.select_organization, name='select_organization'),
 ]

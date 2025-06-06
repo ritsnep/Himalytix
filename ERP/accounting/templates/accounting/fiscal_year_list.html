@@ -1,0 +1,67 @@
+{% load permission_tags %}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Fiscal Years</h3>
+        {% if can_add %}
+        <div class="card-tools">
+            <a href="{% url 'accounting:fiscal_year_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if not fiscal_years %}
+            <div class="alert alert-info">
+                {% if not request.user.get_active_organization %}
+                    Please select an active organization to view fiscal years.
+                {% else %}
+                    No fiscal years found.
+                {% endif %}
+            </div>
+        {% else %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        {% if can_change or can_delete %}
+                        <th>Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fiscal_year in fiscal_years %}
+                    <tr>
+                        <td>{{ fiscal_year.code }}</td>
+                        <td>{{ fiscal_year.name }}</td>
+                        <td>{{ fiscal_year.start_date }}</td>
+                        <td>{{ fiscal_year.end_date }}</td>
+                        <td>{{ fiscal_year.status }}</td>
+                        {% if can_change or can_delete %}
+                        <td>
+                            {% if can_change %}
+                            <a href="{% url 'accounting:fiscal_year_update' fiscal_year.fiscal_year_id %}" 
+                               class="btn btn-sm btn-info">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% endif %}
+                            {% if can_delete %}
+                            <button class="btn btn-sm btn-danger delete-btn" 
+                                    data-id="{{ fiscal_year.fiscal_year_id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div> 

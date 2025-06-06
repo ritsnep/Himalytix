@@ -96,7 +96,28 @@ class CustomUser(AbstractUser):
         return self.userorganization_set.all()
 
     def get_active_organization(self):
-        return self.organizations().first()  # or session-based logic
+        # First try to get from session
+        from django.contrib.sessions.models import Session
+        session = Session.objects.filter(session_key=self.last_login_at).first()
+        if session:
+            active_org_id = session.get('active_organization_id')
+            if active_org_id:
+                return Organization.objects.filter(id=active_org_id).first()
+        
+        # If not in session, get from user's organizations
+        user_org = self.userorganization_set.filter(is_active=True).first()
+        if user_org:
+            return user_org.organization
+            
+        # If still not found, get the first organization
+        return self.userorganization_set.first().organization if self.userorganization_set.exists() else None
+
+    def set_active_organization(self, organization):
+        from django.contrib.sessions.models import Session
+        session = Session.objects.filter(session_key=self.last_login_at).first()
+        if session:
+            session['active_organization_id'] = organization.id
+            session.save()
 
 # class Company(models.Model):
 #     name = models.CharField(max_length=255)
@@ -110,6 +131,7 @@ class UserOrganization(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     is_owner = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     role = models.CharField(max_length=50, default='member')
     date_joined = models.DateTimeField(auto_now_add=True)
 
@@ -122,7 +144,16 @@ class UserOrganization(models.Model):
 
 class Module(models.Model):
     name = models.CharField(max_length=255)
+    code = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    display_order = models.IntegerField(default=0)
+    icon = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_order', 'name']
 
     def __str__(self):
         return self.name
@@ -131,7 +162,16 @@ class Module(models.Model):
 class Entity(models.Model):
     module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='entities')
     name = models.CharField(max_length=255)
+    code = models.CharField(max_length=50)
     description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    display_order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('module', 'code')
+        ordering = ['module', 'display_order', 'name']
 
     def __str__(self):
         return f"{self.module.name} - {self.name}"
@@ -165,3 +205,71 @@ class LoginLog(models.Model):
         return (timezone.now() - self.password_changed_at) > timezone.timedelta(days=90)
     def __str__(self):
         return f"{self.user.username} - {self.login_datetime}"
+
+class Permission(models.Model):
+    name = models.CharField(max_length=100)
+    codename = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='permissions')
+    entity = models.ForeignKey(Entity, on_delete=models.CASCADE, related_name='permissions')
+    action = models.CharField(max_length=20, choices=[
+        ('view', 'View'),
+        ('add', 'Add'),
+        ('change', 'Change'),
+        ('delete', 'Delete'),
+        ('approve', 'Approve'),
+        ('reject', 'Reject'),
+        ('special', 'Special')
+    ])
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('codename', 'module', 'entity')
+        ordering = ['module', 'entity', 'action']
+        
+    def __str__(self):
+        return f"{self.name} ({self.codename})"
+
+    def save(self, *args, **kwargs):
+        if not self.codename:
+            self.codename = f"{self.module.code}_{self.entity.code}_{self.action}"
+        super().save(*args, **kwargs)
+
+class Role(models.Model):
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=50)
+    description = models.TextField(blank=True)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='roles')
+    permissions = models.ManyToManyField(Permission, related_name='roles')
+    is_system = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_roles')
+    updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='updated_roles')
+    
+    class Meta:
+        unique_together = ('code', 'organization')
+        ordering = ['name']
+        
+    def __str__(self):
+        return f"{self.name} ({self.organization.name})"
+
+class UserRole(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='user_roles')
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='user_roles')
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='user_roles')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_user_roles')
+    updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='updated_user_roles')
+    
+    class Meta:
+        unique_together = ('user', 'role', 'organization')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role.name} ({self.organization.name})"
