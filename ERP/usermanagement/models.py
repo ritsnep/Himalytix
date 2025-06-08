@@ -206,6 +206,11 @@ class LoginLog(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.login_datetime}"
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'login_datetime']),
+            models.Index(fields=['session_id']),
+        ]
 class Permission(models.Model):
     name = models.CharField(max_length=100)
     codename = models.CharField(max_length=100)

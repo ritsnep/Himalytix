@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.views import LoginView
-from .models import  Module, Entity, CustomUser, Organization
+from .models import  Module, Entity, CustomUser, Organization, Role
 from .forms import  DasonLoginForm, ModuleForm, EntityForm, CustomUserCreationForm
 from django.contrib.auth.decorators import login_required
 # accounts/views.py or usermanagement/views.py
@@ -14,7 +14,19 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import LoginLog
 from django.contrib.auth.forms import AuthenticationForm
-
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .models import Module, Entity, CustomUser, Organization, Role, Permission, UserRole
+from .forms import (
+    DasonLoginForm,
+    ModuleForm,
+    EntityForm,
+    CustomUserCreationForm,
+    RoleForm,
+    PermissionForm,
+    UserRoleForm,
+)
+from django.views.generic import ListView, CreateView, UpdateView
+from django.urls import reverse_lazy
 class CustomLoginView(LoginView):
     template_name = "account/login.html"
     form_class = DasonLoginForm
@@ -98,3 +110,62 @@ def select_organization(request):
     return render(request, 'usermanagement/select_organization.html', {
         'organizations': organizations
     })
+
+class RoleListView(LoginRequiredMixin, ListView):
+    model = Role
+    template_name = 'usermanagement/role_list.html'
+    context_object_name = 'roles'
+
+
+class RoleCreateView(LoginRequiredMixin, CreateView):
+    model = Role
+    form_class = RoleForm
+    template_name = 'usermanagement/role_form.html'
+    success_url = reverse_lazy('role_list')
+
+
+class RoleUpdateView(LoginRequiredMixin, UpdateView):
+    model = Role
+    form_class = RoleForm
+    template_name = 'usermanagement/role_form.html'
+    success_url = reverse_lazy('role_list')
+
+
+class PermissionListView(LoginRequiredMixin, ListView):
+    model = Permission
+    template_name = 'usermanagement/permission_list.html'
+    context_object_name = 'permissions'
+
+
+class PermissionCreateView(LoginRequiredMixin, CreateView):
+    model = Permission
+    form_class = PermissionForm
+    template_name = 'usermanagement/permission_form.html'
+    success_url = reverse_lazy('permission_list')
+
+
+class PermissionUpdateView(LoginRequiredMixin, UpdateView):
+    model = Permission
+    form_class = PermissionForm
+    template_name = 'usermanagement/permission_form.html'
+    success_url = reverse_lazy('permission_list')
+
+
+class UserRoleListView(LoginRequiredMixin, ListView):
+    model = UserRole
+    template_name = 'usermanagement/userrole_list.html'
+    context_object_name = 'userroles'
+
+
+class UserRoleCreateView(LoginRequiredMixin, CreateView):
+    model = UserRole
+    form_class = UserRoleForm
+    template_name = 'usermanagement/userrole_form.html'
+    success_url = reverse_lazy('userrole_list')
+
+
+class UserRoleUpdateView(LoginRequiredMixin, UpdateView):
+    model = UserRole
+    form_class = UserRoleForm
+    template_name = 'usermanagement/userrole_form.html'
+    success_url = reverse_lazy('userrole_list')

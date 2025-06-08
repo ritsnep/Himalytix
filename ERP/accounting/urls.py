@@ -41,12 +41,14 @@ urlpatterns = [
     # Department URLs
     path('departments/', views.DepartmentListView.as_view(), name='department_list'),
     path('departments/create/', views.DepartmentCreateView.as_view(), name='department_create'),
-    path('departments/<int:pk>/edit/', views.DepartmentUpdateView.as_view(), name='department_update'),
+    path('departments/<int:pk>/update/', views.DepartmentUpdateView.as_view(), name='department_update'),
+    # path('departments/<int:pk>/delete/', views.DepartmentDeleteView.as_view(), name='department_delete'),
 
     # Chart of Accounts URLs
     path('chart-of-accounts/', views.ChartOfAccountListView.as_view(), name='chart_of_accounts_list'),
     path('chart-of-accounts/create/', views.ChartOfAccountCreateView.as_view(), name='chart_of_accounts_create'),
-    path('chart-of-accounts/<int:pk>/edit/', views.ChartOfAccountUpdateView.as_view(), name='chart_of_accounts_update'),
+    path('chart-of-accounts/<int:pk>/update/', views.ChartOfAccountUpdateView.as_view(), name='chart_of_accounts_update'),
+    # path('chart-of-accounts/<int:pk>/delete/', views.ChartOfAccountDeleteView.as_view(), name='chart_of_accounts_delete'),
 
     # Account Type URLs
     path('account-types/', views.AccountTypeListView.as_view(), name='account_type_list'),

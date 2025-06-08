@@ -22,7 +22,8 @@ ALLOWED_HOSTS = []
 CRISPY_TEMPLATE_PACK = 'bootstrap4'  # or 'bootstrap5' if you're using it
 
 # Application definition
-
+# Add or confirm this setting is True
+APPEND_SLASH = True
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,11 +43,16 @@ INSTALLED_APPS = [
     'crispy_forms',
     'tenancy',
     'accounting',
+    # 'api',
+    # 'rest_framework',
+    # 'rest_framework_simplejwt',
+    # 'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'tenancy.middleware.ActiveTenantMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -199,3 +205,12 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     ),
+#     'DEFAULT_PERMISSION_CLASSES': (
+#         'rest_framework.permissions.IsAuthenticated',
+#     ),
+# }

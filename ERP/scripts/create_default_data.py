@@ -158,6 +158,7 @@ def create_default_data():
     
     for dept_name in departments_data:
         department, created = Department.objects.get_or_create(
+            organization=organization,
             name=dept_name
         )
         if created:

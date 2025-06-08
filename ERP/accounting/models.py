@@ -120,6 +120,11 @@ class AccountingPeriod(models.Model):
         return f"{self.fiscal_year.name} - {self.name}"
 
 class Department(models.Model):
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='departments'
+    )
     name = models.CharField(max_length=100)
     # Add other department fields as needed
 class Project(models.Model):

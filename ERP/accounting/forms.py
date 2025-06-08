@@ -7,6 +7,7 @@ from .models import (
 )
 from django import forms
 from .models import FiscalYear
+from .utils import get_active_currency_choices
 
 
 # class FiscalYearForm(forms.ModelForm):
@@ -162,27 +163,52 @@ class AccountTypeForm(forms.ModelForm):
 class ChartOfAccountForm(forms.ModelForm):
     class Meta:
         model = ChartOfAccount
-        fields = ['account_name', 'account_type', 'description', 'is_active', 'is_bank_account', 'is_control_account', 'currency_code']
+        fields = [
+            'account_code', 'account_name', 'account_type', 'parent_account',
+            'description', 'is_active', 'is_bank_account', 'is_control_account',
+            'control_account_type', 'require_cost_center', 'require_project',
+            'require_department', 'default_tax_code', 'currency_code',
+            'allow_manual_journal'
+        ]
         widgets = {
+            'account_code': forms.TextInput(attrs={'class': 'form-control'}),
             'account_name': forms.TextInput(attrs={'class': 'form-control'}),
             'account_type': forms.Select(attrs={'class': 'form-select'}),
+            'parent_account': forms.Select(attrs={'class': 'form-select'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_bank_account': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_control_account': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'control_account_type': forms.TextInput(attrs={'class': 'form-control'}),
+            'require_cost_center': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'require_project': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'require_department': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'default_tax_code': forms.TextInput(attrs={'class': 'form-control'}),
             'currency_code': forms.Select(attrs={'class': 'form-select'}),
+            'allow_manual_journal': forms.CheckboxInput(attrs={'class': 'form-check-input'})
         }
 
     def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
         super().__init__(*args, **kwargs)
-        # Filter account types
-        self.fields['account_type'].queryset = AccountType.objects.filter(is_archived=False)
         
-        # Populate currency choices
-        self.fields['currency_code'].choices = [
-            (currency.code, f"{currency.code} - {currency.name}") 
-            for currency in Currency.objects.filter(is_active=True)
-        ]
+        if self.organization:
+            # Filter parent choices to only show accounts from the same organization
+            self.fields['parent_account'].queryset = ChartOfAccount.objects.filter(
+                organization=self.organization,
+                is_active=True
+            )
+            # Filter account type choices
+            self.fields['account_type'].queryset = AccountType.objects.filter(
+                is_archived=False
+            )
+            
+            # Set up currency choices
+            self.fields['currency_code'].widget = forms.Select(attrs={'class': 'form-select'})
+            self.fields['currency_code'].choices = [
+                (currency.code, f"{currency.code} - {currency.name}") 
+                for currency in Currency.objects.filter(is_active=True)
+            ]
 
 class CurrencyForm(forms.ModelForm):
     class Meta:
@@ -213,8 +239,8 @@ class CurrencyExchangeRateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         # Populate currency choices
-        currencies = Currency.objects.filter(is_active=True)
-        currency_choices = [(c.currency_code, f"{c.currency_code} - {c.currency_name}") for c in currencies]
+        
+        currency_choices = get_active_currency_choices()
         self.fields['from_currency'].choices = currency_choices
         self.fields['to_currency'].choices = currency_choices
             

@@ -6,9 +6,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="main-content">
+<div class="main-content mt-4"><!-- Added mt-4 for margin-top -->
     <div class="page-content">
-        <div class="container-fluid">
+        <div class="container-fluid"><!-- Ensure full width -->
             <!-- start page title -->
             <div class="row">
                 <div class="col-12">
@@ -18,7 +18,7 @@
                         </h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="{% url 'voucher_config_list' %}">Voucher Configurations</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'accounting:voucher_config_list' %}">Voucher Configurations</a></li>
                                 <li class="breadcrumb-item active">{% if object %}Edit{% else %}Create{% endif %}</li>
                             </ol>
                         </div>
@@ -157,7 +157,7 @@
                                         <button type="submit" class="btn btn-primary">
                                             {% if object %}Update{% else %}Create{% endif %}
                                         </button>
-                                        <a href="{% url 'voucher_config_list' %}" class="btn btn-secondary">Cancel</a>
+                                        <a href="{% url 'accounting:voucher_config_list' %}" class="btn btn-secondary">Cancel</a>
                                     </div>
                                 </div>
                             </form>

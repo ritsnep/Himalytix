@@ -36,7 +36,14 @@ class PermissionUtils:
                 cache.set(cache_key, permissions, 300)  # Cache for 5 minutes
                 
         return permissions
-
+    def has_permission(permission_codename):
+        def decorator(view_func):
+            def wrapper(request, *args, **kwargs):
+                if not request.user.has_perm(permission_codename):
+                    return HttpResponseForbidden()
+                return view_func(request, *args, **kwargs)
+            return wrapper
+        return decorator
     @staticmethod
     def has_permission(user, organization, module, entity, action):
         # Super admin has all permissions
@@ -73,3 +80,19 @@ def require_permission(module, entity, action):
             return view_func(self, request, *args, **kwargs)
         return _wrapped_view
     return decorator 
+
+
+def get_menu(user):
+    menu = []
+    for permission in user.get_all_permissions():
+        if permission.codename.startswith('menu_'):
+            menu.append({'label': permission.name, 'url': permission.codename.split('_')[1]})
+    return menu 
+
+
+def get_form_fields(user, form):
+    fields = []
+    for field in form.fields:
+        if user.has_perm(f'edit_{field}'):
+            fields.append(field)
+    return fields 

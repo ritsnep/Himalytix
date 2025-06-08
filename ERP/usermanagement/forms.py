@@ -1,6 +1,6 @@
 # usermanagement/forms.py
 from django import forms
-from .models import CustomUser, Module, Entity
+from .models import CustomUser, Module, Entity, Permission, Role, UserRole
 from django.contrib.auth.forms import UserCreationForm
 
 from django import forms
@@ -54,3 +54,43 @@ class EntityForm(forms.ModelForm):
     class Meta:
         model = Entity
         fields = '__all__'
+
+
+
+class RoleForm(forms.ModelForm):
+    class Meta:
+        model = Role
+        fields = [
+            'name',
+            'code',
+            'description',
+            'organization',
+            'permissions',
+            'is_system',
+            'is_active',
+        ]
+
+
+class PermissionForm(forms.ModelForm):
+    class Meta:
+        model = Permission
+        fields = [
+            'name',
+            'codename',
+            'description',
+            'module',
+            'entity',
+            'action',
+            'is_active',
+        ]
+
+
+class UserRoleForm(forms.ModelForm):
+    class Meta:
+        model = UserRole
+        fields = [
+            'user',
+            'role',
+            'organization',
+            'is_active',
+        ]
