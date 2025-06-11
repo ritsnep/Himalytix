@@ -127,6 +127,11 @@ class Department(models.Model):
     )
     name = models.CharField(max_length=100)
     # Add other department fields as needed
+
+    def __str__(self):
+        # This will make Department objects display their name in dropdowns and elsewhere
+        return self.name 
+
 class Project(models.Model):
     project_id = models.AutoField(primary_key=True)  # Add this line
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='projects')  # Add organization relationship
@@ -232,6 +237,23 @@ class AccountType(models.Model):
         super(AccountType, self).save(*args, **kwargs)
 
 
+class Currency(models.Model):
+    currency_code = models.CharField(max_length=3, primary_key=True)
+    currency_name = models.CharField(max_length=100)
+    symbol = models.CharField(max_length=10)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_currencies')
+    updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_currencies')
+
+    class Meta:
+        verbose_name_plural = "Currencies"
+        ordering = ['currency_code']
+
+    def __str__(self):
+        return f"{self.currency_code} - {self.currency_name}"
+
 
 class ChartOfAccount(models.Model):
     NATURE_ROOT_CODE = {
@@ -260,7 +282,7 @@ class ChartOfAccount(models.Model):
     require_project = models.BooleanField(default=False)
     require_department = models.BooleanField(default=False)
     default_tax_code = models.CharField(max_length=50, null=True, blank=True)
-    currency_code = models.CharField(max_length=3, default='USD')
+    currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, null=True, blank=True, related_name='accounts')
     opening_balance = models.DecimalField(max_digits=19, decimal_places=4, default=0)
     current_balance = models.DecimalField(max_digits=19, decimal_places=4, default=0)
     reconciled_balance = models.DecimalField(max_digits=19, decimal_places=4, default=0)
@@ -342,17 +364,6 @@ class ChartOfAccount(models.Model):
         super(ChartOfAccount, self).save(*args, **kwargs)
 
 
-class Currency(models.Model):
-    currency_code = models.CharField(max_length=3, primary_key=True)
-    currency_name = models.CharField(max_length=100)
-    symbol = models.CharField(max_length=10)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(null=True, blank=True)
-    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_Currencies')
-    updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_Currencies')
-
-
 class CurrencyExchangeRate(models.Model):
     rate_id = models.AutoField(primary_key=True)
     organization = models.ForeignKey(
@@ -360,15 +371,14 @@ class CurrencyExchangeRate(models.Model):
         on_delete=models.PROTECT,
         related_name='currency_exchange_rates'
     )
-    from_currency = models.CharField(max_length=3)
-    to_currency = models.CharField(max_length=3)
+    from_currency = models.ForeignKey('Currency', on_delete=models.PROTECT, related_name='exchange_rates_from')
+    to_currency = models.ForeignKey('Currency', on_delete=models.PROTECT, related_name='exchange_rates_to')
     rate_date = models.DateField()
     exchange_rate = models.DecimalField(max_digits=19, decimal_places=6)
     is_average_rate = models.BooleanField(default=False)
     source = models.CharField(max_length=50, default='manual')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(null=True, blank=True)
-    # Add related_name to fix the reverse accessor conflicts
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_exchange_rates')
     updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_exchange_rates')
     is_archived = models.BooleanField(default=False)
@@ -377,9 +387,10 @@ class CurrencyExchangeRate(models.Model):
     
     class Meta:
         unique_together = ('organization', 'from_currency', 'to_currency', 'rate_date')
+        ordering = ['-rate_date']
 
     def __str__(self):
-        return f"{self.from_currency}/{self.to_currency} @ {self.exchange_rate} on {self.rate_date}"
+        return f"{self.from_currency.currency_code}/{self.to_currency.currency_code} @ {self.exchange_rate} on {self.rate_date}"
 
 
 class JournalType(models.Model):

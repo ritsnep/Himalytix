@@ -35,6 +35,7 @@ class FiscalYearForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
         super().__init__(*args, **kwargs)
         # Generate code for new instances
         if not self.instance.pk:
@@ -164,11 +165,29 @@ class ChartOfAccountForm(forms.ModelForm):
     class Meta:
         model = ChartOfAccount
         fields = [
-            'account_code', 'account_name', 'account_type', 'parent_account',
-            'description', 'is_active', 'is_bank_account', 'is_control_account',
-            'control_account_type', 'require_cost_center', 'require_project',
-            'require_department', 'default_tax_code', 'currency_code',
-            'allow_manual_journal'
+            'organization',
+            'parent_account',
+            'account_type',
+            'account_code',
+            'account_name',
+            'description',
+            'is_active',
+            'is_bank_account',
+            'is_control_account',
+            'control_account_type',
+            'require_cost_center',
+            'require_project',
+            'require_department',
+            'default_tax_code',
+            'currency',
+            'opening_balance',
+            'current_balance',
+            'reconciled_balance',
+            'last_reconciled_date',
+            'allow_manual_journal',
+            'account_level',
+            'tree_path',
+            'display_order'
         ]
         widgets = {
             'account_code': forms.TextInput(attrs={'class': 'form-control'}),
@@ -184,7 +203,7 @@ class ChartOfAccountForm(forms.ModelForm):
             'require_project': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'require_department': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'default_tax_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'currency_code': forms.Select(attrs={'class': 'form-select'}),
+            'currency': forms.Select(attrs={'class': 'form-select'}),
             'allow_manual_journal': forms.CheckboxInput(attrs={'class': 'form-check-input'})
         }
 
@@ -204,53 +223,109 @@ class ChartOfAccountForm(forms.ModelForm):
             )
             
             # Set up currency choices
-            self.fields['currency_code'].widget = forms.Select(attrs={'class': 'form-select'})
-            self.fields['currency_code'].choices = [
-                (currency.code, f"{currency.code} - {currency.name}") 
-                for currency in Currency.objects.filter(is_active=True)
-            ]
+            currency_choices = [(currency.currency_code, f"{currency.currency_code} - {currency.currency_name}") 
+                               for currency in Currency.objects.filter(is_active=True)]
+            self.fields['currency'].widget = forms.Select(attrs={'class': 'form-select'})
+            self.fields['currency'].choices = currency_choices
 
 class CurrencyForm(forms.ModelForm):
     class Meta:
         model = Currency
         fields = ('currency_code', 'currency_name', 'symbol', 'is_active')
         widgets = {
-            'currency_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'currency_code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'maxlength': '3',
+                'style': 'text-transform: uppercase;'
+            }),
             'currency_name': forms.TextInput(attrs={'class': 'form-control'}),
             'symbol': forms.TextInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
+    def clean_currency_code(self):
+        code = self.cleaned_data['currency_code']
+        return code.upper()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:  # If editing existing currency
+            self.fields['currency_code'].widget.attrs['readonly'] = True
+
 class CurrencyExchangeRateForm(forms.ModelForm):
+    from_currency = forms.ModelChoiceField(
+        queryset=Currency.objects.filter(is_active=True),
+        empty_label="Select From Currency",
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'required': 'required',
+            'data-pristine-required-message': "Please select a 'from' currency."
+        })
+    )
+    to_currency = forms.ModelChoiceField(
+        queryset=Currency.objects.filter(is_active=True),
+        empty_label="Select To Currency",
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'required': 'required',
+            'data-pristine-required-message': "Please select a 'to' currency."
+        })
+    )
+    rate_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'class': 'form-control datepicker',
+            'required': 'required',
+            'data-pristine-required-message': "Please select a rate date."
+        })
+    )
+    exchange_rate = forms.DecimalField(
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'required': 'required',
+            'data-pristine-required-message': "Please enter an exchange rate.",
+            'step': '0.000001'
+        })
+    )
+    is_average_rate = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    source = forms.ChoiceField(
+        choices=[('manual', 'Manual'), ('api', 'API')],
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
     class Meta:
         model = CurrencyExchangeRate
-        fields = ('from_currency', 'to_currency', 'rate_date', 'exchange_rate', 'is_average_rate', 'source')
-        widgets = {
-            'from_currency': forms.Select(attrs={'class': 'form-select'}),
-            'to_currency': forms.Select(attrs={'class': 'form-select'}),
-            'rate_date': forms.TextInput(attrs={'class': 'form-control datepicker'}),
-            'exchange_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
-            'is_average_rate': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'source': forms.TextInput(attrs={'class': 'form-control'}),
-        }
-        
+        fields = ['from_currency', 'to_currency', 'rate_date', 'exchange_rate', 'is_average_rate', 'source']
+
     def __init__(self, *args, **kwargs):
         self.organization = kwargs.pop('organization', None)
         super().__init__(*args, **kwargs)
-        
-        # Populate currency choices
-        
-        currency_choices = get_active_currency_choices()
-        self.fields['from_currency'].choices = currency_choices
-        self.fields['to_currency'].choices = currency_choices
-            
-    def save(self, commit=True):
-        instance = super().save(commit=False)
         if self.organization:
-            instance.organization = self.organization
-        if commit:
-            instance.save()
-        return instance
+            self.fields['from_currency'].queryset = Currency.objects.filter(is_active=True)
+            self.fields['to_currency'].queryset = Currency.objects.filter(is_active=True)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        from_currency = cleaned_data.get('from_currency')
+        to_currency = cleaned_data.get('to_currency')
+        rate_date = cleaned_data.get('rate_date')
+
+        if from_currency and to_currency and rate_date:
+            if from_currency == to_currency:
+                raise forms.ValidationError("From and To currencies cannot be the same.")
+
+            # Check for duplicate exchange rate
+            if CurrencyExchangeRate.objects.filter(
+                organization=self.organization,
+                from_currency=from_currency,
+                to_currency=to_currency,
+                rate_date=rate_date
+            ).exclude(pk=self.instance.pk if self.instance else None).exists():
+                raise forms.ValidationError("An exchange rate for this currency pair and date already exists.")
+
+        return cleaned_data
 
 class JournalTypeForm(forms.ModelForm):
     class Meta:
@@ -398,10 +473,9 @@ class VoucherModeConfigForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         # Populate currency choices
-        self.fields['default_currency'].choices = [
-            (currency.currency_code, f"{currency.currency_code} - {currency.currency_name}") 
-            for currency in Currency.objects.filter(is_active=True)
-        ]
+        currency_choices = [(currency.currency_code, f"{currency.currency_code} - {currency.currency_name}") 
+                           for currency in Currency.objects.filter(is_active=True)]
+        self.fields['default_currency'].choices = currency_choices
             
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -410,7 +484,18 @@ class VoucherModeConfigForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
 class JournalForm(forms.ModelForm):
+    # Override currency_code to be a ChoiceField populated from Currency model for a dropdown
+    currency_code = forms.ChoiceField(
+        choices=[], # Will be populated dynamically in __init__
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'required': 'required',
+            'data-pristine-required-message': "Please select a currency."
+        })
+    )
+
     class Meta:
         model = Journal
         fields = [
@@ -419,7 +504,24 @@ class JournalForm(forms.ModelForm):
             'exchange_rate'
         ]
         widgets = {
-            'journal_date': forms.DateInput(attrs={'type': 'date'}),
+            'journal_type': forms.Select(attrs={'class': 'form-select'}),
+            'period': forms.Select(attrs={'class': 'form-select'}),
+            'journal_date': forms.DateInput(attrs={
+                'class': 'form-control datepicker', # Ensure datepicker class is applied
+                'required': 'required',
+                'data-pristine-required-message': "Please select a journal date."
+            }),
+            'reference': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            # currency_code widget is overridden above
+            'exchange_rate': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.000001',
+                'required': 'required',
+                'data-pristine-required-message': "Please enter an exchange rate.",
+                'data-pristine-min-message': "Exchange rate must be positive.",
+                'min': '0.000001' # Client-side validation for non-zero rate
+            }),
         }
     
     def __init__(self, *args, organization=None, **kwargs):
@@ -434,6 +536,21 @@ class JournalForm(forms.ModelForm):
                 fiscal_year__organization=organization,
                 status='open'
             )
+            
+            # Populate currency_code choices from active Currency objects
+            currency_choices = [(c.currency_code, f"{c.currency_code} - {c.currency_name}")
+                                for c in Currency.objects.filter(is_active=True)]
+            
+            # Add an empty default choice if not already populated (for create view)
+            if not self.instance.pk and not self.initial.get('currency_code'):
+                 self.fields['currency_code'].choices = [('', '---------')] + currency_choices
+            else:
+                self.fields['currency_code'].choices = currency_choices
+            
+            # Ensure the initial value for currency_code is correctly set for existing instances
+            if self.instance.pk and self.instance.currency_code:
+                self.initial['currency_code'] = self.instance.currency_code
+
 
 class JournalLineForm(forms.ModelForm):
     class Meta:
@@ -443,6 +560,51 @@ class JournalLineForm(forms.ModelForm):
             'currency_code', 'exchange_rate', 'department', 'project', 'cost_center',
             'tax_code', 'tax_rate', 'tax_amount', 'memo'
         ]
+        widgets = {
+            'account': forms.Select(attrs={
+                'class': 'form-select',
+                'required': 'required',
+                'data-pristine-required-message': 'Please select an account.'
+            }),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
+            'debit_amount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01', # Allow decimal values
+                'data-pristine-required-message': 'Debit amount is required.',
+                'data-pristine-min-message': 'Debit amount must be non-negative.',
+                'min': '0', 
+                'data-pristine-number-message': 'Please enter a valid number.'
+            }),
+            'credit_amount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01', # Allow decimal values
+                'data-pristine-required-message': 'Credit amount is required.',
+                'data-pristine-min-message': 'Credit amount must be non-negative.',
+                'min': '0', 
+                'data-pristine-number-message': 'Please enter a valid number.'
+            }),
+            # Set widget for currency_code for JournalLineForm too
+            'currency_code': forms.Select(attrs={
+                'class': 'form-select',
+                'required': 'required', # Make it required at line level too
+                'data-pristine-required-message': 'Please select a currency for the line.'
+            }),
+            'exchange_rate': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.000001',
+                'required': 'required', # Make it required at line level too
+                'data-pristine-required-message': 'Please enter exchange rate for the line.',
+                'data-pristine-min-message': 'Exchange rate must be positive.',
+                'min': '0.000001'
+            }),
+            'department': forms.Select(attrs={'class': 'form-select'}),
+            'project': forms.Select(attrs={'class': 'form-select'}),
+            'cost_center': forms.Select(attrs={'class': 'form-select'}),
+            'tax_code': forms.Select(attrs={'class': 'form-select'}),
+            'tax_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.0001'}),
+            'tax_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.0001'}),
+            'memo': forms.TextInput(attrs={'class': 'form-control'}),
+        }
 
     def __init__(self, *args, **kwargs):
         organization = kwargs.pop('organization', None)
@@ -453,17 +615,42 @@ class JournalLineForm(forms.ModelForm):
             self.fields['project'].queryset = Project.objects.filter(organization=organization)
             self.fields['cost_center'].queryset = CostCenter.objects.filter(organization=organization)
             self.fields['tax_code'].queryset = TaxCode.objects.filter(organization=organization)
+            
+            # Populate currency_code choices for JournalLineForm
+            currency_choices = [(c.currency_code, f"{c.currency_code} - {c.currency_name}")
+                                for c in Currency.objects.filter(is_active=True)]
+            self.fields['currency_code'].choices = [('', '---------')] + currency_choices
+            
+        # Custom validation: ensure either debit or credit is present, but not both or neither.
+        # This will be validated server-side.
+        self.fields['debit_amount'].required = False # Allow one to be zero if other is non-zero
+        self.fields['credit_amount'].required = False # Allow one to be zero if other is non-zero
 
-# forms.py (continued)
+    def clean(self):
+        cleaned_data = super().clean()
+        debit = cleaned_data.get('debit_amount')
+        credit = cleaned_data.get('credit_amount')
+
+        # Convert None to 0 for consistent comparison
+        debit = debit if debit is not None else 0
+        credit = credit if credit is not None else 0
+        
+        if (debit == 0 and credit == 0) or (debit > 0 and credit > 0):
+            # Add error to the form directly
+            raise forms.ValidationError("A journal line must have either a Debit amount or a Credit amount, but not both, and not neither.")
+        
+        return cleaned_data
+
+# Ensure JournalLineFormSet passes organization to each form
 JournalLineFormSet = inlineformset_factory(
     Journal, JournalLine,
     form=JournalLineForm,
-    extra=1,
+    extra=1, # Start with one empty form
     can_delete=True,
     fields=[
         'account', 'description', 'debit_amount', 
         'credit_amount', 'department', 'project',
-        'cost_center', 'tax_code', 'memo'
+        'cost_center', 'tax_code', 'memo', 'currency_code', 'exchange_rate' # Include these fields
     ]
 )
 

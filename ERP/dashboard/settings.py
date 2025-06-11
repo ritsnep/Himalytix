@@ -143,11 +143,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = "/static/"
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+# This is where Django will look for static files during development
+# (e.g., your custom CSS/JS that isn't part of an app)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static') # Your existing /Himalytix/ERP/static/ folder
+]
+
+# This is where 'python manage.py collectstatic' will gather ALL static files for deployment.
+# It should be a DIFFERENT directory, typically outside your project source code.
+STATIC_ROOT = os.path.join(BASE_DIR.parent, 'collected_static_files') # <-- Changed this line
+
 
 MESSAGE_TAGS = {
     messages.DEBUG: "alert-info",

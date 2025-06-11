@@ -23,6 +23,7 @@
     <link href="{% static 'css/icons.min.css'%}" rel="stylesheet" type="text/css" />
     <!-- App Css-->
     <link href="{% static 'css/app.min.css'%}" id="app-style" rel="stylesheet" type="text/css" />
+    <link href="{% static 'libs/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css' %}" rel="stylesheet">
     {% endblock css %}
 
 </head>
@@ -62,6 +63,9 @@
     <script src="{% static 'libs/feather-icons/dist/feather.min.js'%}"></script>
     <!-- pace js -->
     <script src="{% static 'libs/pace-js/pace.min.js'%}"></script>
+    <script src="{% static 'libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'libs/pristinejs/dist/pristine.min.js' %}"></script>
+    <script src="{% static 'js/pages/form-validation.init.js' %}"></script>
     {% block extra_js %}
     {% endblock extra_js %}
     <script src="{% static 'js/app.js'%}"></script>

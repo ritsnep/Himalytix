@@ -29,20 +29,20 @@
 
 {% block table_body %}
 <tbody>
-    {% for c in currencies %}
+    {% for currency in currencies %}
     <tr>
-        <td>{{ c.code }}</td>
-        <td>{{ c.name }}</td>
-        <td>{{ c.symbol }}</td>
+        <td>{{ currency.currency_code }}</td>
+        <td>{{ currency.currency_name }}</td>
+        <td>{{ currency.symbol }}</td>
         <td>
-            {% if c.is_active %}
+            {% if currency.is_active %}
                 <span class="badge bg-success">Active</span>
             {% else %}
                 <span class="badge bg-danger">Inactive</span>
             {% endif %}
         </td>
         <td>
-            <a href="{% url 'accounting:currency_update' c.pk %}" class="btn btn-sm btn-primary">
+            <a href="{% url 'accounting:currency_update' currency.currency_code %}" class="btn btn-sm btn-primary">
                 <i class="fas fa-edit"></i> Edit
             </a>
         </td>

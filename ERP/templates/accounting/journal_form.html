@@ -1,0 +1,371 @@
+{% extends 'accounting/_form_base.html' %}
+{% load static %}
+
+{% block title %}Journal Entry{% endblock %}
+
+{% block form_content %}
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">{{ form_title|default:"Journal Entry" }}</h4>
+            <p class="card-title-desc">Create or update journal entries.</p>
+        </div>
+        <div class="card-body">
+            <form id="journal-form" method="post" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="{{ journal_form.journal_type.id_for_label }}" class="form-label">Journal Type</label>
+                            {{ journal_form.journal_type }}
+                            {% if journal_form.journal_type.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ journal_form.journal_type.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="{{ journal_form.period.id_for_label }}" class="form-label">Period</label>
+                            {{ journal_form.period }}
+                            {% if journal_form.period.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ journal_form.period.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="{{ journal_form.journal_date.id_for_label }}" class="form-label">Journal Date</label>
+                            {{ journal_form.journal_date }}
+                            {% if journal_form.journal_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ journal_form.journal_date.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="{{ journal_form.reference.id_for_label }}" class="form-label">Reference</label>
+                            {{ journal_form.reference }}
+                            {% if journal_form.reference.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ journal_form.reference.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="{{ journal_form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ journal_form.description }}
+                            {% if journal_form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ journal_form.description.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="{{ journal_form.currency_code.id_for_label }}" class="form-label">Currency</label>
+                            {{ journal_form.currency_code }}
+                            {% if journal_form.currency_code.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ journal_form.currency_code.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="{{ journal_form.exchange_rate.id_for_label }}" class="form-label">Exchange Rate</label>
+                            {{ journal_form.exchange_rate }}
+                            {% if journal_form.exchange_rate.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ journal_form.exchange_rate.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Journal Lines Section -->
+                <h5 class="mt-4">Journal Lines</h5>
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered" id="journal-lines-table">
+                        <thead>
+                            <tr>
+                                <th>Account</th>
+                                <th>Description</th>
+                                <th>Debit</th>
+                                <th>Credit</th>
+                                <th>Department</th>
+                                <th>Project</th>
+                                <th>Cost Center</th>
+                                <th>Tax Code</th>
+                                <th>Memo</th>
+                                <th></th> {# For delete button #}
+                            </tr>
+                        </thead>
+                        <tbody id="journal-lines-body">
+                            {{ lines.management_form }}
+                            {% for formset_form in lines %}
+                                <tr class="journal-line-form">
+                                    {% for hidden_field in formset_form.hidden_fields %}
+                                        {{ hidden_field }}
+                                    {% endfor %}
+                                    <td>
+                                        <div class="form-group {% if formset_form.account.errors %}has-danger{% endif %}">
+                                            {{ formset_form.account }}
+                                            {% if formset_form.account.errors %}
+                                            <div class="text-danger">
+                                                {{ formset_form.account.errors }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-group {% if formset_form.description.errors %}has-danger{% endif %}">
+                                            {{ formset_form.description }}
+                                            {% if formset_form.description.errors %}
+                                            <div class="text-danger">
+                                                {{ formset_form.description.errors }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-group {% if formset_form.debit_amount.errors %}has-danger{% endif %}">
+                                            {{ formset_form.debit_amount }}
+                                            {% if formset_form.debit_amount.errors %}
+                                            <div class="text-danger">
+                                                {{ formset_form.debit_amount.errors }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-group {% if formset_form.credit_amount.errors %}has-danger{% endif %}">
+                                            {{ formset_form.credit_amount }}
+                                            {% if formset_form.credit_amount.errors %}
+                                            <div class="text-danger">
+                                                {{ formset_form.credit_amount.errors }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-group {% if formset_form.department.errors %}has-danger{% endif %}">
+                                            {{ formset_form.department }}
+                                            {% if formset_form.department.errors %}
+                                            <div class="text-danger">
+                                                {{ formset_form.department.errors }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-group {% if formset_form.project.errors %}has-danger{% endif %}">
+                                            {{ formset_form.project }}
+                                            {% if formset_form.project.errors %}
+                                            <div class="text-danger">
+                                                {{ formset_form.project.errors }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-group {% if formset_form.cost_center.errors %}has-danger{% endif %}">
+                                            {{ formset_form.cost_center }}
+                                            {% if formset_form.cost_center.errors %}
+                                            <div class="text-danger">
+                                                {{ formset_form.cost_center.errors }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-group {% if formset_form.tax_code.errors %}has-danger{% endif %}">
+                                            {{ formset_form.tax_code }}
+                                            {% if formset_form.tax_code.errors %}
+                                            <div class="text-danger">
+                                                {{ formset_form.tax_code.errors }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-group {% if formset_form.memo.errors %}has-danger{% endif %}">
+                                            {{ formset_form.memo }}
+                                            {% if formset_form.memo.errors %}
+                                            <div class="text-danger">
+                                                {{ formset_form.memo.errors }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if formset_form.instance.pk %}
+                                            <button type="button" class="btn btn-danger btn-sm remove-line-button" data-form-id="{{ forloop.counter0 }}">Remove</button>
+                                            <input type="hidden" name="{{ formset_form.DELETE.html_name }}" id="{{ formset_form.DELETE.id_for_label }}">
+                                        {% else %}
+                                            <button type="button" class="btn btn-danger btn-sm remove-line-button">Remove</button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="2" class="text-end">Total:</th>
+                                <th id="total-debit">0.00</th>
+                                <th id="total-credit">0.00</th>
+                                <th colspan="6"></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <button type="button" id="add-more-lines" class="btn btn-info btn-sm">Add More Lines</button>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'accounting:journal_list' %}" class="btn btn-secondary">Back to List</a>
+                    <button type="submit" class="btn btn-primary">Save Journal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock form_content %}
+
+{% block extra_js %}
+    {{ block.super }}
+    <script src="{% static 'libs/choices.js/public/assets/scripts/choices.min.js'%}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Choices.js for all select elements
+            function initializeChoices() {
+                document.querySelectorAll('select').forEach(select => {
+                    if (!select.classList.contains('choices-initialized')) {
+                        new Choices(select, {
+                            searchEnabled: true,
+                            removeItemButton: true,
+                            placeholder: true,
+                        });
+                        select.classList.add('choices-initialized');
+                    }
+                });
+            }
+
+            initializeChoices(); // Initial call for existing elements
+
+            // Function to update totals
+            function updateTotals() {
+                let totalDebit = 0;
+                let totalCredit = 0;
+
+                document.querySelectorAll('.debit-amount').forEach(input => {
+                    if (!$(input).closest('tr').find('input[id$="-DELETE"]').is(':checked')) {
+                        totalDebit += parseFloat(input.value || 0);
+                    }
+                });
+
+                document.querySelectorAll('.credit-amount').forEach(input => {
+                    if (!$(input).closest('tr').find('input[id$="-DELETE"]').is(':checked')) {
+                        totalCredit += parseFloat(input.value || 0);
+                    }
+                });
+
+                document.getElementById('total-debit').textContent = totalDebit.toFixed(2);
+                document.getElementById('total-credit').textContent = totalCredit.toFixed(2);
+            }
+
+            // Event listener for amount changes
+            $(document).on('change', '.debit-amount, .credit-amount', updateTotals);
+
+            // Add new formset line
+            $('#add-more-lines').on('click', function() {
+                var formCount = $('#id_lines-TOTAL_FORMS');
+                var currentForms = parseInt(formCount.val());
+                
+                // Get empty form template
+                var emptyForm = $('#journal-lines-body tr').last().clone(true);
+                
+                // Clear values and reset names/ids
+                emptyForm.find(':input').each(function() {
+                    var name = $(this).attr('name').replace('-' + (currentForms - 1) + '-', '-' + currentForms + '-');
+                    var id = 'id_' + name;
+                    $(this).attr({'name': name, 'id': id}).val('');
+                    if ($(this).is(':checkbox')) {
+                        $(this).prop('checked', false);
+                    }
+                });
+
+                // Reset Choices.js dropdowns
+                emptyForm.find('select.choices-initialized').each(function() {
+                    var choicesInstance = Choices.getInstance(this);
+                    if (choicesInstance) {
+                        choicesInstance.destroy();
+                    }
+                    $(this).removeClass('choices-initialized');
+                });
+
+                // Append new form and update form count
+                $('#journal-lines-body').append(emptyForm);
+                formCount.val(currentForms + 1);
+                
+                initializeChoices(); // Re-initialize Choices.js for new elements
+                updateTotals(); // Update totals for new lines
+            });
+
+            // Remove formset line
+            $(document).on('click', '.remove-line-button', function() {
+                var row = $(this).closest('tr');
+                var deleteInput = row.find('input[id$="-DELETE"]');
+
+                if (deleteInput.length > 0) {
+                    // Mark for deletion if it's an existing instance
+                    deleteInput.prop('checked', true);
+                    row.hide();
+                } else {
+                    // Remove directly if it's a new unsaved form
+                    row.remove();
+                    var formCount = $('#id_lines-TOTAL_FORMS');
+                    formCount.val(parseInt(formCount.val()) - 1);
+                }
+                updateTotals(); // Update totals after removal
+            });
+
+            // Initial calculation
+            updateTotals();
+
+            // Journal form validation (debit == credit)
+            $('#journal-form').on('submit', function(e) {
+                updateTotals(); // Ensure totals are up-to-date before validation
+                const totalDebit = parseFloat(document.getElementById('total-debit').textContent);
+                const totalCredit = parseFloat(document.getElementById('total-credit').textContent);
+
+                if (totalDebit !== totalCredit) {
+                    e.preventDefault();
+                    alert('Debit and Credit totals must be equal to save the journal.');
+                }
+            });
+        });
+    </script>
+{% endblock %} 

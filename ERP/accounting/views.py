@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from .models import AccountType, Currency, CurrencyExchangeRate, FiscalYear, TaxAuthority, TaxType
 from .forms import AccountTypeForm, ChartOfAccountForm, CostCenterForm, CurrencyExchangeRateForm, CurrencyForm, DepartmentForm, FiscalYearForm, ProjectForm, TaxAuthorityForm, TaxTypeForm
 from django.contrib import messages
+from django.db.models import F
 
 
 from .models import (
@@ -29,6 +30,7 @@ from .forms import (
 from django.urls import reverse_lazy
 from usermanagement.utils import require_permission
 from usermanagement.utils import PermissionUtils
+from django.forms import inlineformset_factory
 
 class UserOrganizationMixin:
     """
@@ -117,12 +119,26 @@ class FiscalYearUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrga
         return get_object_or_404(
             FiscalYear,
             fiscal_year_id=self.kwargs['fiscal_year_id'],
-            organization_id=self.request.user.organization
+            organization=self.request.user.get_active_organization()
         )
 
     def form_valid(self, form):
         form.instance.organization = self.get_organization()
+        messages.success(self.request, "Fiscal year updated successfully.")
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'form_title': 'Update Fiscal Year',
+            'page_title': 'Update Fiscal Year',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Fiscal Years', reverse('accounting:fiscal_year_list')),
+                ('Update', None)
+            ]
+        })
+        return context
 
 class FiscalYearListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
     model = FiscalYear
@@ -225,18 +241,29 @@ class JournalCreateView(LoginRequiredMixin, CreateView):
     model = Journal
     form_class = JournalForm
     template_name = 'accounting/journal_form.html'
-    
+    success_url = reverse_lazy('accounting:journal_list')
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
+        kwargs['organization'] = self.request.user.get_active_organization()
         return kwargs
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.POST:
-            context['lines'] = JournalLineFormSet(self.request.POST)
+            context['lines'] = JournalLineFormSet(self.request.POST, instance=self.object)
         else:
-            context['lines'] = JournalLineFormSet()
+            context['lines'] = JournalLineFormSet(instance=self.object)
+        
+        context.update({
+            'form_title': 'Create New Journal',
+            'page_title': 'Create New Journal',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Journals', reverse('accounting:journal_list')),
+                ('Create', None)
+            ]
+        })
         return context
     
     def form_valid(self, form):
@@ -245,22 +272,25 @@ class JournalCreateView(LoginRequiredMixin, CreateView):
             lines = context['lines']
             
             with transaction.atomic():
-                form.instance.organization = self.request.user.organization
+                form.instance.organization = self.request.user.get_active_organization()
                 form.instance.created_by = self.request.user
                 self.object = form.save()
                 
                 if lines.is_valid():
                     lines.instance = self.object
                     lines.save()
-            
+                else:
+                    # If line forms are invalid, return form_invalid
+                    messages.error(self.request, "Please correct the errors in the journal lines.")
+                    return self.form_invalid(form) # Re-render with errors
+
+            messages.success(self.request, "Journal created successfully.")
             return super().form_valid(form)
         except Exception as e:
             logger.error(f"Error creating journal: {e}")
-            messages.error(self.request, "An error occurred while creating the journal.")
-            return HttpResponseServerError("Internal Server Error")
-    
-    def get_success_url(self):
-        return reverse_lazy('journal_detail', kwargs={'pk': self.object.pk})
+            messages.error(self.request, f"An error occurred while creating the journal: {e}")
+            return HttpResponseServerError("Internal Server Error") # More informative error
+
 class JournalDetailView(LoginRequiredMixin, DetailView):
     model = Journal
     template_name = 'accounting/journal_detail.html'
@@ -313,10 +343,11 @@ class JournalUpdateView(LoginRequiredMixin, UpdateView):
     model = Journal
     form_class = JournalForm
     template_name = 'accounting/journal_form.html'
+    success_url = reverse_lazy('accounting:journal_list')
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
+        kwargs['organization'] = self.request.user.get_active_organization()
         return kwargs
     
     def get_context_data(self, **kwargs):
@@ -325,6 +356,16 @@ class JournalUpdateView(LoginRequiredMixin, UpdateView):
             context['lines'] = JournalLineFormSet(self.request.POST, instance=self.object)
         else:
             context['lines'] = JournalLineFormSet(instance=self.object)
+
+        context.update({
+            'form_title': f'Update Journal: {self.object.journal_number}',
+            'page_title': f'Update Journal: {self.object.journal_number}',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Journals', reverse('accounting:journal_list')),
+                (f'Update {self.object.journal_number}', None)
+            ]
+        })
         return context
     
     def form_valid(self, form):
@@ -338,6 +379,13 @@ class JournalUpdateView(LoginRequiredMixin, UpdateView):
             if lines.is_valid():
                 lines.instance = self.object
                 lines.save()
+            else:
+                # If line forms are invalid, return form_invalid
+                messages.error(self.request, "Please correct the errors in the journal lines.")
+                return self.form_invalid(form) # Re-render with errors
+        messages.success(self.request, "Journal updated successfully.") # Add success message
+        return super().form_valid(form)
+
 class HTMXAccountAutocompleteView(LoginRequiredMixin, View):
     def get(self, request):
         query = request.GET.get('query', '')
@@ -347,9 +395,23 @@ class HTMXAccountAutocompleteView(LoginRequiredMixin, View):
         )[:10]
         results = [{'id': a.account_id, 'text': f"{a.account_code} - {a.account_name}"} for a in accounts]
         return JsonResponse({'results': results})
+
 class HTMXJournalLineFormView(LoginRequiredMixin, View):
     def get(self, request):
-        form = JournalLineForm(organization=request.user.organization)
+        organization = request.user.get_active_organization()
+        form_index = request.GET.get('index', '0') # Get the index for the new form
+
+        # Create a single empty form from the formset
+        # We need a dummy instance to create the formset for a single extra form
+        # Or, we can just instantiate JournalLineForm directly with a prefix
+        form = JournalLineForm(prefix=f'lines-{form_index}', organization=organization)
+        
+        # Manually set required attributes for new form for client-side validation
+        # These are set in the forms.py now, but can be reinforced here if needed
+        # form.fields['account'].widget.attrs['required'] = 'required'
+        # form.fields['debit_amount'].widget.attrs['required'] = 'required'
+        # form.fields['credit_amount'].widget.attrs['required'] = 'required'
+
         return render(request, 'accounting/partials/journal_line_form.html', {'form': form})
 
 # Voucher Mode Views
@@ -375,16 +437,30 @@ class VoucherModeConfigCreateView(LoginRequiredMixin, CreateView):
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
+        kwargs['organization'] = self.request.user.get_active_organization()
         return kwargs
     
     def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
+        form.instance.organization = self.request.user.get_active_organization()
         form.instance.created_by = self.request.user
+        messages.success(self.request, "Voucher configuration created successfully.")
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse_lazy('voucher_config_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'form_title': 'Create New Voucher Configuration',
+            'page_title': 'Create New Voucher Configuration',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Voucher Configs', reverse('accounting:voucher_config_list')),
+                ('Create', None)
+            ]
+        })
+        return context
 
 
 class VoucherModeConfigUpdateView(LoginRequiredMixin, UpdateView):
@@ -394,20 +470,49 @@ class VoucherModeConfigUpdateView(LoginRequiredMixin, UpdateView):
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
+        kwargs['organization'] = self.request.user.get_active_organization()
         return kwargs
     
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
+        messages.success(self.request, "Voucher configuration updated successfully.")
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse_lazy('voucher_config_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'form_title': f'Update Voucher Configuration: {self.object.name}',
+            'page_title': f'Update Voucher Configuration: {self.object.name}',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Voucher Configs', reverse('accounting:voucher_config_list')),
+                (f'Update {self.object.name}', None)
+            ]
+        })
+        return context
 
 class VoucherModeConfigDetailView(LoginRequiredMixin, DetailView):
     model = VoucherModeConfig
     template_name = 'accounting/voucher_config_detail.html'
     context_object_name = 'config'
+
+    def get_queryset(self):
+        return VoucherModeConfig.objects.filter(organization=self.request.user.get_active_organization())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'page_title': f'Voucher Configuration Details: {self.object.name}',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Voucher Configs', reverse('accounting:voucher_config_list')),
+                (f'Details: {self.object.name}', None)
+            ]
+        })
+        return context
 
 
 class VoucherModeDefaultCreateView(LoginRequiredMixin, CreateView):
@@ -417,17 +522,33 @@ class VoucherModeDefaultCreateView(LoginRequiredMixin, CreateView):
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
+        kwargs['organization'] = self.request.user.get_active_organization()
         kwargs['config_id'] = self.kwargs['config_id']
         return kwargs
     
     def form_valid(self, form):
-        config = get_object_or_404(VoucherModeConfig, pk=self.kwargs['config_id'])
+        config = get_object_or_404(VoucherModeConfig, pk=self.kwargs['config_id'], organization=self.request.user.get_active_organization())
         form.instance.config = config
+        messages.success(self.request, "Voucher default line created successfully.")
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse_lazy('voucher_config_detail', kwargs={'pk': self.kwargs['config_id']})
+        return reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': self.kwargs['config_id']})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config = get_object_or_404(VoucherModeConfig, pk=self.kwargs['config_id'], organization=self.request.user.get_active_organization())
+        context.update({
+            'form_title': f'Add Default Line to {config.name}',
+            'page_title': f'Add Default Line: {config.name}',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Voucher Configs', reverse('accounting:voucher_config_list')),
+                (f'{config.name} Details', reverse('accounting:voucher_config_detail', kwargs={'pk': config.pk})),
+                ('Add Default Line', None)
+            ]
+        })
+        return context
 
 
 class VoucherModeDefaultUpdateView(LoginRequiredMixin, UpdateView):
@@ -437,52 +558,173 @@ class VoucherModeDefaultUpdateView(LoginRequiredMixin, UpdateView):
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
+        kwargs['organization'] = self.request.user.get_active_organization()
         kwargs['config_id'] = self.object.config_id
         return kwargs
     
     def get_success_url(self):
-        return reverse_lazy('voucher_config_detail', kwargs={'pk': self.object.config_id})
+        return reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': self.object.config_id})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config = get_object_or_404(VoucherModeConfig, pk=self.object.config_id, organization=self.request.user.get_active_organization())
+        context.update({
+            'form_title': f'Update Default Line for {config.name}',
+            'page_title': f'Update Default Line: {config.name}',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Voucher Configs', reverse('accounting:voucher_config_list')),
+                (f'{config.name} Details', reverse('accounting:voucher_config_detail', kwargs={'pk': config.pk})),
+                ('Update Default Line', None)
+            ]
+        })
+        return context
 
 class VoucherModeDefaultDeleteView(LoginRequiredMixin, View):
-    @require_permission('accounting','vouchermodedefault','delete')
+    @method_decorator(require_permission('accounting','vouchermodedefault','delete'))
     def post(self, request, pk):
-        default = get_object_or_404(VoucherModeDefault, pk=pk)
+        default = get_object_or_404(VoucherModeDefault, pk=pk, config__organization=request.user.get_active_organization())
         config_id = default.config_id
         default.delete()
-        return redirect('voucher_config_detail', pk=config_id)
+        messages.success(request, "Voucher default line deleted successfully.")
+        return redirect(reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': config_id}))
 
 class VoucherEntryView(LoginRequiredMixin, View):
 
     template_name = 'accounting/voucher_entry.html'
     
     def get(self, request, config_id=None):
+        organization = request.user.get_active_organization()
         if config_id:
-            config = get_object_or_404(VoucherModeConfig, pk=config_id, organization=request.user.organization)
+            config = get_object_or_404(VoucherModeConfig, pk=config_id, organization=organization)
         else:
             config = VoucherModeConfig.objects.filter(
-                organization=request.user.organization,
+                organization=organization,
                 is_default=True
             ).first()
         
         if not config:
-            return redirect('voucher_config_list')
+            messages.warning(request, "No default voucher configuration found. Please create one.")
+            return redirect('accounting:voucher_config_list')
         
-        journal_form = JournalForm(organization=request.user.organization, initial={
+        journal_form = JournalForm(organization=organization, initial={
             'journal_type': config.journal_type,
             'currency_code': config.default_currency,
         })
         
-        defaults = config.defaults.all().order_by('display_order')
+        # Populate initial lines from defaults
+        initial_lines = []
+        for default in config.defaults.all().order_by('display_order'):
+            initial_lines.append({
+                'account': default.account,
+                'description': default.default_description,
+                'debit_amount': default.default_amount if default.default_debit else 0,
+                'credit_amount': default.default_amount if default.default_credit else 0,
+                'department': default.default_department,
+                'project': default.default_project,
+                'cost_center': default.default_cost_center,
+                'tax_code': default.default_tax_code,
+                'memo': default.default_description,
+            })
+        
+        JournalLineFormSet = inlineformset_factory(
+            Journal, JournalLine,
+            form=JournalLineForm,
+            extra=max(len(initial_lines), 1),
+            can_delete=True,
+            fields=[
+                'account', 'description', 'debit_amount', 
+                'credit_amount', 'department', 'project',
+                'cost_center', 'tax_code', 'memo'
+            ]
+        )
+        lines_formset = JournalLineFormSet(initial=initial_lines, form_kwargs={'organization': organization})
+
+
         context = {
             'config': config,
             'journal_form': journal_form,
-            'defaults': defaults,
+            'lines': lines_formset,
+            'form_title': f'Voucher Entry: {config.name}',
+            'page_title': f'Voucher Entry: {config.name}',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Voucher Entry', reverse('accounting:voucher_entry')),
+                (config.name, None)
+            ]
         }
         
         return render(request, self.template_name, context)
-    
-    # Example for Department
+
+    def post(self, request, config_id=None):
+        organization = request.user.get_active_organization()
+        if config_id:
+            config = get_object_or_404(VoucherModeConfig, pk=config_id, organization=organization)
+        else:
+            config = VoucherModeConfig.objects.filter(
+                organization=organization,
+                is_default=True
+            ).first()
+
+        if not config:
+            messages.error(request, "No default voucher configuration found. Cannot create voucher.")
+            return redirect('accounting:voucher_config_list')
+
+        journal_form = JournalForm(request.POST, organization=organization)
+
+        JournalLineFormSet = inlineformset_factory(
+            Journal, JournalLine,
+            form=JournalLineForm,
+            extra=0,
+            can_delete=True,
+            fields=[
+                'account', 'description', 'debit_amount', 
+                'credit_amount', 'department', 'project',
+                'cost_center', 'tax_code', 'memo'
+            ]
+        )
+        lines_formset = JournalLineFormSet(request.POST, form_kwargs={'organization': organization})
+
+        if journal_form.is_valid() and lines_formset.is_valid():
+            try:
+                with transaction.atomic():
+                    journal = journal_form.save(commit=False)
+                    journal.organization = organization
+                    journal.created_by = request.user
+                    journal.save()
+
+                    lines = lines_formset.save(commit=False)
+                    for line in lines:
+                        line.journal = journal
+                        line.save()
+                    
+                    # Handle deletions in formset
+                    for deleted_form in lines_formset.deleted_forms:
+                        deleted_form.instance.delete()
+
+                messages.success(request, "Voucher entry created successfully.")
+                return redirect('accounting:journal_detail', pk=journal.pk)
+
+            except Exception as e:
+                messages.error(request, f"Error saving voucher entry: {e}")
+                logger.error(f"Error saving voucher entry: {e}")
+        else:
+            messages.error(request, "Please correct the errors in the form.")
+
+        context = {
+            'config': config,
+            'journal_form': journal_form,
+            'lines': lines_formset,
+            'form_title': f'Voucher Entry: {config.name}',
+            'page_title': f'Voucher Entry: {config.name}',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Voucher Entry', reverse('accounting:voucher_entry')),
+                (config.name, None)
+            ]
+        }
+        return render(request, self.template_name, context)
+
 
 class DepartmentListView(LoginRequiredMixin, ListView):
     model = Department
@@ -652,11 +894,22 @@ class CurrencyListView(LoginRequiredMixin, ListView):
     context_object_name = 'currencies'
     paginate_by = 20
 
+    def get_queryset(self):
+        return Currency.objects.all().order_by('currency_code')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['create_url'] = reverse('accounting:currency_create')
         context['create_button_text'] = 'New Currency'
         context['page_title'] = 'Currencies'
+        # Add table headers
+        context['table_headers'] = [
+            'Currency Code',
+            'Currency Name',
+            'Symbol',
+            'Status',
+            'Actions'
+        ]
         return context
 
 class CurrencyCreateView(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
@@ -682,6 +935,10 @@ class CurrencyUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView
     template_name = 'accounting/currency_form.html'
     success_url = reverse_lazy('accounting:currency_list')
     permission_required = ('accounting', 'currency', 'change')
+    pk_url_kwarg = 'currency_code'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Currency, currency_code=self.kwargs['currency_code'])
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
@@ -696,27 +953,37 @@ class CurrencyUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView
 # Currency Exchange Rate Views
 class CurrencyExchangeRateListView(LoginRequiredMixin, ListView):
     model = CurrencyExchangeRate
-    template_name = 'accounting/exchange_rate_list.html'
+    template_name = 'accounting/currency_exchange_rate_list.html'
     context_object_name = 'exchange_rates'
     paginate_by = 20
 
     def get_queryset(self):
+        # Prefetch related Currency objects for efficient display in template
         return CurrencyExchangeRate.objects.filter(
             organization=self.request.user.organization
-        ).order_by('-rate_date')
+        ).select_related('from_currency', 'to_currency').order_by('-rate_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user = self.request.user
+        org = user.get_active_organization()
+
+        context['page_title'] = 'Currency Exchange Rates'
         context['create_url'] = reverse('accounting:exchange_rate_create')
         context['create_button_text'] = 'New Exchange Rate'
-        context['page_title'] = 'Exchange Rates'
+        
+        # FIX: Changed 'accounting:dashboard' to 'accounting:chart_of_accounts_list'
+        context['breadcrumbs'] = [
+            ('Accounting', reverse('accounting:chart_of_accounts_list')), # Use a valid, central accounting list view
+            ('Exchange Rates', reverse('accounting:exchange_rate_list')),
+        ]
         return context
 
 
 class CurrencyExchangeRateCreateView(LoginRequiredMixin, CreateView):
     model = CurrencyExchangeRate
     form_class = CurrencyExchangeRateForm
-    template_name = 'accounting/exchange_rate_form.html'
+    template_name = 'accounting/currency_exchange_rate_form.html'
     success_url = reverse_lazy('accounting:exchange_rate_list')
 
     def get_form_kwargs(self):
@@ -727,11 +994,16 @@ class CurrencyExchangeRateCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.organization = self.request.user.organization
         form.instance.created_by = self.request.user
+        messages.success(self.request, "Currency exchange rate created successfully.")
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, "Please correct the errors below.")
+        return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Exchange Rate'
+        context['form_title'] = 'Create Currency Exchange Rate'
         context['back_url'] = reverse('accounting:exchange_rate_list')
         return context
 
@@ -739,7 +1011,7 @@ class CurrencyExchangeRateCreateView(LoginRequiredMixin, CreateView):
 class CurrencyExchangeRateUpdateView(LoginRequiredMixin, UpdateView):
     model = CurrencyExchangeRate
     form_class = CurrencyExchangeRateForm
-    template_name = 'accounting/exchange_rate_form.html'
+    template_name = 'accounting/currency_exchange_rate_form.html'
     success_url = reverse_lazy('accounting:exchange_rate_list')
 
     def get_form_kwargs(self):
@@ -747,17 +1019,17 @@ class CurrencyExchangeRateUpdateView(LoginRequiredMixin, UpdateView):
         kwargs['organization'] = self.request.user.organization
         return kwargs
 
-    def get_queryset(self):
-        return CurrencyExchangeRate.objects.filter(organization=self.request.user.organization)
-
-    def form_valid(self, form):
-        form.instance.updated_by = self.request.user
-        return super().form_valid(form)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Update Exchange Rate'
-        context['back_url'] = reverse('accounting:exchange_rate_list')
+        context.update({
+            'form_title': 'Edit Currency Exchange Rate',
+            'page_title': 'Edit Currency Exchange Rate',
+            'breadcrumbs': [
+                ('Accounting', reverse('accounting:chart_of_accounts_list')),
+                ('Exchange Rates', reverse('accounting:exchange_rate_list')),
+                ('Edit', None)
+            ]
+        })
         return context
 
 # Tax Authority Views

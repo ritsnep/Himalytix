@@ -3,23 +3,37 @@
 
 {% block title %}Currency Exchange Rates{% endblock %}
 
-{% block table_headers %}
-    <th>From Currency</th>
-    <th>To Currency</th>
-    <th>Rate</th>
-    <th>Effective Date</th>
-    <th>Actions</th>
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block create_button %}
+    {# You might want to add a permission check here like: {% if can_add %} #}
+    <a href="{{ create_url }}" class="btn btn-success mb-2">
+        <i class="mdi mdi-plus me-1"></i> {{ create_button_text }}
+    </a>
+{% endblock %}
+
+{% block table_head %}
+<thead>
+    <tr>
+        <th>From Currency</th>
+        <th>To Currency</th>
+        <th>Rate</th>
+        <th>Effective Date</th>
+        <th>Actions</th>
+    </tr>
+</thead>
 {% endblock %}
 
 {% block table_body %}
+<tbody>
     {% for rate in exchange_rates %}
     <tr>
-        <td>{{ rate.from_currency.code }} - {{ rate.from_currency.name }}</td>
-        <td>{{ rate.to_currency.code }} - {{ rate.to_currency.name }}</td>
-        <td>{{ rate.rate }}</td>
-        <td>{{ rate.effective_date|date:"Y-m-d" }}</td>
+        <td>{{ rate.from_currency.currency_code }} - {{ rate.from_currency.currency_name }}</td>
+        <td>{{ rate.to_currency.currency_code }} - {{ rate.to_currency.currency_name }}</td>
+        <td>{{ rate.exchange_rate }}</td>
+        <td>{{ rate.rate_date|date:"Y-m-d" }}</td>
         <td>
-            <a href="{% url 'accounting:currency_exchange_rate_update' rate.pk %}" class="btn btn-sm btn-primary">
+            <a href="{% url 'accounting:exchange_rate_update' rate.pk %}" class="btn btn-sm btn-primary">
                 <i class="fas fa-edit"></i> Edit
             </a>
         </td>
@@ -29,4 +43,5 @@
         <td colspan="5" class="text-center">No exchange rates found.</td>
     </tr>
     {% endfor %}
+</tbody>
 {% endblock %} 

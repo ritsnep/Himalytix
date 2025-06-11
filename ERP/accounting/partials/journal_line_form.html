@@ -1,0 +1,58 @@
+{# This partial template is rendered by HTMXJournalLineFormView to add a new journal line #}
+{# Note: The prefix will be replaced by JavaScript when added to the DOM #}
+<tr class="journal-line-item" id="journal-line-__prefix__">
+    <td>
+        {{ form.account }}
+        {% if form.account.errors %}<div class="invalid-feedback d-block">{{ form.account.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {{ form.description }}
+        {% if form.description.errors %}<div class="invalid-feedback d-block">{{ form.description.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {{ form.debit_amount }}
+        {% if form.debit_amount.errors %}<div class="invalid-feedback d-block">{{ form.debit_amount.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {{ form.credit_amount }}
+        {% if form.credit_amount.errors %}<div class="invalid-feedback d-block">{{ form.credit_amount.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {{ form.currency_code }}
+        {% if form.currency_code.errors %}<div class="invalid-feedback d-block">{{ form.currency_code.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {{ form.exchange_rate }}
+        {% if form.exchange_rate.errors %}<div class="invalid-feedback d-block">{{ form.exchange_rate.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {{ form.department }}
+        {% if form.department.errors %}<div class="invalid-feedback d-block">{{ form.department.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {{ form.project }}
+        {% if form.project.errors %}<div class="invalid-feedback d-block">{{ form.project.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {{ form.cost_center }}
+        {% if form.cost_center.errors %}<div class="invalid-feedback d-block">{{ form.cost_center.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {{ form.tax_code }}
+        {% if form.tax_code.errors %}<div class="invalid-feedback d-block">{{ form.tax_code.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {{ form.memo }}
+        {% if form.memo.errors %}<div class="invalid-feedback d-block">{{ form.memo.errors }}</div>{% endif %}
+    </td>
+    <td>
+        {# Hidden input for the 'DELETE' checkbox for formsets (only for existing forms, will be handled by JS for new ones) #}
+        {% if form.instance.pk %}
+            <div class="form-check text-center mb-1" style="display: none;">
+                {{ form.DELETE }}
+                <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">Delete</label>
+            </div>
+        {% endif %}
+        <button type="button" class="btn btn-soft-danger btn-sm remove-line-btn" data-form-id="journal-line-__prefix__">Remove</button>
+    </td>
+</tr> 
