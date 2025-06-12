@@ -505,6 +505,7 @@ class VoucherModeConfigDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
+            'form_title': f'Voucher Configuration Details: {self.object.name}',
             'page_title': f'Voucher Configuration Details: {self.object.name}',
             'breadcrumbs': [
                 ('Accounting', reverse('accounting:chart_of_accounts_list')),

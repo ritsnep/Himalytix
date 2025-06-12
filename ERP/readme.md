@@ -72,3 +72,40 @@ Contains REST API endpoints (currently minimal) built with Django REST Framework
 - **User** – granted only the `view` actions for each entity.
 
 The built‑in `Super Admin` role on `CustomUser` bypasses normal permission checks. Users are linked to organizations through the `UserRole` model and inherit permissions from their assigned roles.
+
+
+## Overview
+
+This repository contains a Django-based Enterprise Resource Planning (ERP) system. It provides modules for accounting, user management and exposes a REST API for integration with other services.
+
+## Setup Instructions
+
+1. Ensure Python 3.11 or newer is installed.
+2. Create and activate a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r ERP/requirements.txt
+   ```
+4. Apply migrations and create a superuser:
+   ```bash
+   python ERP/manage.py migrate
+   python ERP/manage.py createsuperuser
+   ```
+5. Run the development server:
+   ```bash
+   python ERP/manage.py runserver
+   ```
+6. Open your browser to `http://localhost:8000/` to access the application.
+
+## Contribution Guidelines
+
+Contributions are welcome! To contribute:
+
+- Fork this repository and create a branch for your changes.
+- Follow PEP 8 styling for Python code.
+- Include tests where applicable.
+- Submit a pull request describing your changes.
