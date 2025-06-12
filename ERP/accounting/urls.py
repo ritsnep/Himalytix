@@ -21,6 +21,8 @@ urlpatterns = [
     path('voucher-configs/<int:pk>/', views.VoucherModeConfigDetailView.as_view(), name='voucher_config_detail'),
     path('voucher-configs/<int:pk>/edit/', views.VoucherModeConfigUpdateView.as_view(), name='voucher_config_update'),
     
+    path('voucher-config/<int:type_id>.hx/', views.VoucherConfigHXView.as_view(), name='voucher_config_hx'),
+    
     path('voucher-configs/<int:config_id>/defaults/create/', views.VoucherModeDefaultCreateView.as_view(), name='voucher_default_create'),
     path('voucher-defaults/<int:pk>/edit/', views.VoucherModeDefaultUpdateView.as_view(), name='voucher_default_update'),
     path('voucher-defaults/<int:pk>/delete/', views.VoucherModeDefaultDeleteView.as_view(), name='voucher_default_delete'),

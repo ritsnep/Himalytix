@@ -30,8 +30,6 @@
 </head>
 
 <body id="page-body" data-layout-mode="{{ theme }}" {% block extra_body %} data-topbar="dark"{% endblock extra_body %}>
-{% comment %} <body id="page-body" {% block extra_body %} data-topbar="dark"{% endblock extra_body %}> {% endcomment %}
-{% comment %} <body {% block extra_body %} data-topbar="dark"{% endblock extra_body %}> {% endcomment %}
     <!-- Begin page -->
     <div id="layout-wrapper">
         {% block header %}
@@ -41,18 +39,17 @@
         {% block left_sidebar %}
         {% include 'partials/left-sidebar.html' %}
         {% endblock left_sidebar %}
-{% comment %} 
-        {% include 'partials/tab_bar.html' %} {% endcomment %}
 
+        <!-- Tab-bar should be outside main-content -->
+        {% include 'partials/tab_bar.html' %}
 
-
-        <div id="main-container" class="container-fluid py-4" hx-ext="loading-states">
+        <div id="main-container" class="main-content" hx-ext="loading-states">
             {% block content %}
             {% block footer %}
             {% endblock footer %}
             {% endblock content %}
         </div>
-        </div>
+    </div>
     <!-- END layout-wrapper -->
 
 

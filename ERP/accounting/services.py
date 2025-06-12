@@ -4,8 +4,10 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
-from .models import Journal, JournalType, JournalLine, AccountingPeriod, GeneralLedger
-
+from .models import (
+    Journal, JournalType, JournalLine, AccountingPeriod,
+    GeneralLedger, VoucherModeConfig, ChartOfAccount
+)
 logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
@@ -82,4 +84,69 @@ def close_period(period: AccountingPeriod, user) -> AccountingPeriod:
         period.closed_by = user
         period.save(update_fields=["status", "closed_at", "closed_by"])
     logger.info("close_period end period_id=%s", period.pk)
+    
     return period
+
+
+def create_voucher(user, config_id: int, header_data: dict, lines_data: list[dict]) -> Journal:
+    """Create a journal voucher with integrity checks."""
+    org = user.get_active_organization()
+    config = VoucherModeConfig.objects.select_related('journal_type').get(pk=config_id, organization=org)
+    period = AccountingPeriod.objects.get(pk=header_data['period'], status='open')
+
+    journal = Journal(
+        organization=org,
+        journal_type=config.journal_type,
+        period=period,
+        journal_date=header_data['journal_date'],
+        reference=header_data.get('reference', ''),
+        description=header_data.get('description', ''),
+        currency_code=header_data.get('currency_code', config.default_currency),
+        exchange_rate=Decimal(str(header_data.get('exchange_rate', '1'))),
+        created_by=user,
+    )
+
+    lines = []
+    total_debit = Decimal('0')
+    total_credit = Decimal('0')
+    for idx, line in enumerate(lines_data, start=1):
+        account = line.get('account')
+        if not account and line.get('account_type'):
+            account = ChartOfAccount.objects.filter(
+                organization=org,
+                account_type_id=line['account_type']
+            ).first()
+        if not account:
+            raise ValidationError('Account could not be resolved')
+
+        debit = Decimal(str(line.get('debit_amount', '0')))
+        credit = Decimal(str(line.get('credit_amount', '0')))
+        total_debit += debit
+        total_credit += credit
+        lines.append(JournalLine(
+            journal=journal,
+            line_number=idx,
+            account=account,
+            description=line.get('description', ''),
+            debit_amount=debit,
+            credit_amount=credit,
+            department_id=line.get('department'),
+            project_id=line.get('project'),
+            cost_center_id=line.get('cost_center'),
+            tax_code_id=line.get('tax_code'),
+            memo=line.get('memo', ''),
+            currency_code=journal.currency_code,
+            exchange_rate=journal.exchange_rate,
+        ))
+
+    if total_debit != total_credit:
+        raise ValidationError('Debit and Credit totals must match')
+
+    journal.total_debit = total_debit
+    journal.total_credit = total_credit
+
+    with transaction.atomic():
+        journal.save()
+        JournalLine.objects.bulk_create(lines)
+
+    return journal

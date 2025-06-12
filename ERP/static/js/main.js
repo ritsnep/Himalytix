@@ -1,26 +1,23 @@
-const overlay = document.getElementById('loading-overlay');
-
-document.body.addEventListener('htmx:requestStart', () => overlay.classList.add('show'));
-document.body.addEventListener('htmx:afterSwap',   () => overlay.classList.remove('show'));
-document.body.addEventListener('htmx:responseError',() => overlay.classList.remove('show'));
+const root = document.body;
+function setTheme(t){
+  root.setAttribute('data-layout-mode', t);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-    const stored = localStorage.getItem('theme');
-    if (stored) {
-        document.documentElement.setAttribute('data-layout-mode', stored);
-    }
-    const toggle = document.querySelector('.theme-toggle');
-    if (toggle) {
-        toggle.addEventListener('click', () => {
-            const attr = document.documentElement.getAttribute('data-layout-mode');
-            const next = attr === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-layout-mode', next);
-            localStorage.setItem('theme', next);
-            document.cookie = `theme=${next};path=/`;
-        });
-    }
+  setTheme(localStorage.getItem('theme') || 'light');
+  const toggle = document.querySelector('.theme-toggle');
+  if (toggle){
+    toggle.addEventListener('click', () => {
+      const next = root.getAttribute('data-layout-mode') === 'dark' ? 'light' : 'dark';
+      setTheme(next);
+      localStorage.setItem('theme', next);
+    });
+  }
 });
 
-htmx.on('htmx:beforeSwap', () => {
-    document.documentElement.setAttribute('data-layout-mode', localStorage.getItem('theme') || 'light');
-});
+htmx.on('htmx:beforeSwap', () => setTheme(localStorage.getItem('theme') || 'light'));
+
+const overlay = document.getElementById('loading-overlay');
+htmx.on('htmx:requestStart', () => overlay.classList.add('show'));
+htmx.on('htmx:responseError', () => overlay.classList.remove('show'));
+htmx.on('htmx:afterSwap', () => overlay.classList.remove('show'));

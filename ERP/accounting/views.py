@@ -4,7 +4,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DetailView
 from django.urls import reverse, reverse_lazy
-from django.http import HttpResponseForbidden, HttpResponseServerError, JsonResponse
+from django.http import HttpResponseForbidden, HttpResponseServerError, JsonResponse, HttpResponse
+import json
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.utils import timezone
@@ -15,6 +16,7 @@ from .forms import AccountTypeForm, ChartOfAccountForm, CostCenterForm, Currency
 from django.contrib import messages
 from django.db.models import F
 
+from .serializers import VoucherModeConfigSerializer
 
 from .models import (
     FiscalYear, GeneralLedger, Journal, JournalLine, JournalType, ChartOfAccount, 
@@ -533,6 +535,20 @@ class VoucherModeConfigDetailView(LoginRequiredMixin, DetailView):
             ]
         })
         return context
+
+
+class VoucherConfigHXView(LoginRequiredMixin, View):
+    """Return voucher configuration fragment and layout JSON."""
+
+    def get(self, request, type_id: int):
+        org = request.user.get_active_organization()
+        config = get_object_or_404(VoucherModeConfig, organization=org, journal_type_id=type_id)
+        layout_cfg = VoucherModeConfigSerializer(config).data
+        html = render(request, 'accounting/voucher_fragment.html', {
+            'layout_cfg': json.dumps(layout_cfg)
+        }).content.decode('utf-8')
+        return HttpResponse(html)
+
 
 
 class VoucherModeDefaultCreateView(LoginRequiredMixin, CreateView):

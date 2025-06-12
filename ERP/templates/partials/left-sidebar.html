@@ -12,7 +12,8 @@
                 <li class="menu-title" data-key="t-menu">Menu</li>
 
                 <li>
-                    <a href="{% url 'dashboard' %}">
+ 
+                    <a href="{% url 'dashboard' %}" hx-get="{% url 'dashboard' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                         <i data-feather="home"></i>
                         <span class="badge rounded-pill bg-soft-success text-success float-end">9+</span>
                         <span data-key="t-dashboard">Dashboard</span>
@@ -28,73 +29,73 @@
                     <ul class="sub-menu" aria-expanded="false">
                         <!-- Chart of Accounts -->
                         <li>
-                            <a href="{% url 'accounting:chart_of_accounts_list' %}">
+                            <a href="{% url 'accounting:chart_of_accounts_list' %}" hx-get="{% url 'accounting:chart_of_accounts_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Chart of Accounts</span>
                             </a>
                         </li>
                         <!-- Account Types -->
                         <li>
-                            <a href="{% url 'accounting:account_type_list' %}">
+                            <a href="{% url 'accounting:account_type_list' %}" hx-get="{% url 'accounting:account_type_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Account Types</span>
                             </a>
                         </li>
                         <!-- Currencies -->
                         <li>
-                            <a href="{% url 'accounting:currency_list' %}">
+                            <a href="{% url 'accounting:currency_list' %}" hx-get="{% url 'accounting:currency_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Currencies</span>
                             </a>
                         </li>
                         <!-- Exchange Rates -->
                         <li>
-                            <a href="{% url 'accounting:exchange_rate_list' %}">
+                            <a href="{% url 'accounting:exchange_rate_list' %}" hx-get="{% url 'accounting:exchange_rate_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Exchange Rates</span>
                             </a>
                         </li>
                         <!-- Fiscal Years -->
                         <li>
-                            <a href="{% url 'accounting:fiscal_year_list' %}">
+                            <a href="{% url 'accounting:fiscal_year_list' %}" hx-get="{% url 'accounting:fiscal_year_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Fiscal Years</span>
                             </a>
                         </li>
                         <!-- Cost Centers -->
                         <li>
-                            <a href="{% url 'accounting:costcenter_list' %}">
+                            <a href="{% url 'accounting:costcenter_list' %}" hx-get="{% url 'accounting:costcenter_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Cost Centers</span>
                             </a>
                         </li>
                         <!-- Departments -->
                         <li>
-                            <a href="{% url 'accounting:department_list' %}">
+                            <a href="{% url 'accounting:department_list' %}" hx-get="{% url 'accounting:department_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Departments</span>
                             </a>
                         </li>
                         <!-- Journals -->
                         <li>
-                            <a href="{% url 'accounting:journal_list' %}">
+                            <a href="{% url 'accounting:journal_list' %}" hx-get="{% url 'accounting:journal_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Journals</span>
                             </a>
                         </li>
                         <!-- Voucher Configurations -->
                         <li>
-                            <a href="{% url 'accounting:voucher_config_list' %}">
+                            <a href="{% url 'accounting:voucher_config_list' %}" hx-get="{% url 'accounting:voucher_config_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Voucher Configurations</span>
                             </a>
                         </li>
                         <!-- Tax Authorities -->
                         <li>
-                            <a href="{% url 'accounting:tax_authority_list' %}">
+                            <a href="{% url 'accounting:tax_authority_list' %}" hx-get="{% url 'accounting:tax_authority_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Tax Authorities</span>
                             </a>
                         </li>
                         <!-- Tax Types -->
                         <li>
-                            <a href="{% url 'accounting:tax_type_list' %}">
+                            <a href="{% url 'accounting:tax_type_list' %}" hx-get="{% url 'accounting:tax_type_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Tax Types</span>
                             </a>
                         </li>
                         <!-- Projects -->
                         <li>
-                            <a href="{% url 'accounting:project_list' %}">
+                            <a href="{% url 'accounting:project_list' %}" hx-get="{% url 'accounting:project_list' %}.hx/" hx-target="#main-container" hx-push-url="true" class="nav-link">
                                 <span>Projects</span>
                             </a>
                         </li>
