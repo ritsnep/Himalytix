@@ -28,6 +28,7 @@ from .forms import (
 
 
 from django.urls import reverse_lazy
+from utils.htmx import require_htmx
 from usermanagement.utils import require_permission
 from usermanagement.utils import PermissionUtils
 from django.forms import inlineformset_factory
@@ -821,6 +822,15 @@ class ChartOfAccountListView(LoginRequiredMixin, ListView):
             ('Chart of Accounts', None),
         ]
         return context
+    
+class ChartOfAccountListPartial(ChartOfAccountListView):
+    """HTMX partial for chart of accounts list."""
+    template_name = "accounting/chart_of_accounts_list_partial.html"
+
+    @method_decorator(require_htmx)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
 
 class ChartOfAccountCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
     model = ChartOfAccount
