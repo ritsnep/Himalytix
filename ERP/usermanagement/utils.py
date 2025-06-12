@@ -7,6 +7,17 @@ from django.urls import reverse
 from django.urls import reverse_lazy
 from django.http import HttpResponseRedirect
 
+
+def permission_required(permission_codename):
+    """Decorator that checks a user's Django permission by codename."""
+    def decorator(view_func):
+        def wrapper(request, *args, **kwargs):
+            if not request.user.has_perm(permission_codename):
+                return HttpResponseForbidden()
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
 class PermissionUtils:
     @staticmethod
     def get_user_permissions(user, organization):
@@ -36,14 +47,6 @@ class PermissionUtils:
                 cache.set(cache_key, permissions, 300)  # Cache for 5 minutes
                 
         return permissions
-    def has_permission(permission_codename):
-        def decorator(view_func):
-            def wrapper(request, *args, **kwargs):
-                if not request.user.has_perm(permission_codename):
-                    return HttpResponseForbidden()
-                return view_func(request, *args, **kwargs)
-            return wrapper
-        return decorator
     @staticmethod
     def has_permission(user, organization, module, entity, action):
         # Super admin has all permissions
