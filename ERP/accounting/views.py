@@ -815,7 +815,7 @@ class ChartOfAccountCreateView(PermissionRequiredMixin, LoginRequiredMixin, User
 class ChartOfAccountUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = ChartOfAccount
     form_class = ChartOfAccountForm
-    template_name = 'accounting/chart_of_accounts_form.html'
+    template_name = 'accounting/update_chart_of_account.html'
     success_url = reverse_lazy('accounting:chart_of_accounts_list')
     permission_required = ('accounting', 'chartofaccount', 'change')
 
