@@ -52,5 +52,5 @@ urlpatterns = [
     # # Include the allauth and 2FA urls from their respective packages.
     # path("/", include("allauth_2fa.urls")),
     # path("account/", include("allauth.urls")),
-    # path("api/v1/", include("api.urls")),
+    path("api/v1/", include("api.urls")),
 ]

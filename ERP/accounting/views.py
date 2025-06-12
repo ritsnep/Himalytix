@@ -133,7 +133,6 @@ class FiscalYearUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrga
             'form_title': 'Update Fiscal Year',
             'page_title': 'Update Fiscal Year',
             'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
                 ('Fiscal Years', reverse('accounting:fiscal_year_list')),
                 ('Update', None)
             ]
@@ -184,6 +183,9 @@ class CostCenterListView(LoginRequiredMixin, ListView):
         context['create_url'] = reverse('accounting:costcenter_create')
         context['create_button_text'] = 'New Cost Center'
         context['page_title'] = 'Cost Centers'
+        context['breadcrumbs'] = [
+            ('Cost Centers', None),
+        ]
         return context
 
 
@@ -192,6 +194,7 @@ class CostCenterCreateView(LoginRequiredMixin, UserOrganizationMixin, CreateView
     form_class = CostCenterForm
     template_name = 'accounting/costcenter_form.html'
     success_url = reverse_lazy('accounting:costcenter_list')
+    
     def form_valid(self, form):
         form.instance.organization = self.request.user.organization 
         return super().form_valid(form)
@@ -200,6 +203,10 @@ class CostCenterCreateView(LoginRequiredMixin, UserOrganizationMixin, CreateView
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Create Cost Center'
         context['back_url'] = reverse('accounting:costcenter_list')
+        context['breadcrumbs'] = [
+            ('Cost Centers', reverse('accounting:costcenter_list')),
+            ('Create Cost Center', None)
+        ]
         return context
 
 class CostCenterUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
@@ -207,19 +214,27 @@ class CostCenterUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrga
     form_class = CostCenterForm
     template_name = 'accounting/costcenter_form.html'
     success_url = reverse_lazy('accounting:costcenter_list')
+    
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organization'] = self.request.user.organization
         return kwargs
+    
     def get_queryset(self):
         return CostCenter.objects.filter(organization=self.request.user.organization)
+    
     def form_valid(self, form):
         form.instance.organization = self.request.user.organization
         return super().form_valid(form)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Update Cost Center'
         context['back_url'] = reverse('accounting:costcenter_list')
+        context['breadcrumbs'] = [
+            ('Cost Centers', reverse('accounting:costcenter_list')),
+            ('Update Cost Center', None)
+        ]
         return context
     
 class JournalListView(LoginRequiredMixin, ListView):
@@ -230,11 +245,15 @@ class JournalListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Journal.objects.filter(organization=self.request.user.organization).order_by('-journal_date')
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['create_url'] = reverse('accounting:journal_create')
         context['create_button_text'] = 'New Journal'
         context['page_title'] = 'Journals'
+        context['breadcrumbs'] = [
+            ('Journals', None),
+        ]
         return context
 
 class JournalCreateView(LoginRequiredMixin, CreateView):
@@ -256,12 +275,11 @@ class JournalCreateView(LoginRequiredMixin, CreateView):
             context['lines'] = JournalLineFormSet(instance=self.object)
         
         context.update({
-            'form_title': 'Create New Journal',
-            'page_title': 'Create New Journal',
+            'form_title': 'Create Journal',
+            'page_title': 'Create Journal',
             'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
                 ('Journals', reverse('accounting:journal_list')),
-                ('Create', None)
+                ('Create Journal', None)
             ]
         })
         return context
@@ -361,9 +379,8 @@ class JournalUpdateView(LoginRequiredMixin, UpdateView):
             'form_title': f'Update Journal: {self.object.journal_number}',
             'page_title': f'Update Journal: {self.object.journal_number}',
             'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
                 ('Journals', reverse('accounting:journal_list')),
-                (f'Update {self.object.journal_number}', None)
+                (f'Update Journal: {self.object.journal_number}', None)
             ]
         })
         return context
@@ -422,11 +439,15 @@ class VoucherModeConfigListView(LoginRequiredMixin, ListView):
     
     def get_queryset(self):
         return VoucherModeConfig.objects.filter(organization=self.request.user.organization)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['create_url'] = reverse('accounting:voucher_config_create')
         context['create_button_text'] = 'New Voucher Mode Config'
-        context['page_title'] = 'Voucher Mode Configs'
+        context['page_title'] = 'Voucher Configurations'
+        context['breadcrumbs'] = [
+            ('Voucher Configurations', None),
+        ]
         return context
 
 
@@ -452,12 +473,11 @@ class VoucherModeConfigCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'form_title': 'Create New Voucher Configuration',
-            'page_title': 'Create New Voucher Configuration',
+            'form_title': 'Create Voucher Configuration',
+            'page_title': 'Create Voucher Configuration',
             'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
-                ('Voucher Configs', reverse('accounting:voucher_config_list')),
-                ('Create', None)
+                ('Voucher Configurations', reverse('accounting:voucher_config_list')),
+                ('Create Voucher Configuration', None)
             ]
         })
         return context
@@ -487,8 +507,7 @@ class VoucherModeConfigUpdateView(LoginRequiredMixin, UpdateView):
             'form_title': f'Update Voucher Configuration: {self.object.name}',
             'page_title': f'Update Voucher Configuration: {self.object.name}',
             'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
-                ('Voucher Configs', reverse('accounting:voucher_config_list')),
+                ('Voucher Configurations', reverse('accounting:voucher_config_list')),
                 (f'Update {self.object.name}', None)
             ]
         })
@@ -508,8 +527,7 @@ class VoucherModeConfigDetailView(LoginRequiredMixin, DetailView):
             'form_title': f'Voucher Configuration Details: {self.object.name}',
             'page_title': f'Voucher Configuration Details: {self.object.name}',
             'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
-                ('Voucher Configs', reverse('accounting:voucher_config_list')),
+                ('Voucher Configurations', reverse('accounting:voucher_config_list')),
                 (f'Details: {self.object.name}', None)
             ]
         })
@@ -543,8 +561,7 @@ class VoucherModeDefaultCreateView(LoginRequiredMixin, CreateView):
             'form_title': f'Add Default Line to {config.name}',
             'page_title': f'Add Default Line: {config.name}',
             'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
-                ('Voucher Configs', reverse('accounting:voucher_config_list')),
+                ('Voucher Configurations', reverse('accounting:voucher_config_list')),
                 (f'{config.name} Details', reverse('accounting:voucher_config_detail', kwargs={'pk': config.pk})),
                 ('Add Default Line', None)
             ]
@@ -573,8 +590,7 @@ class VoucherModeDefaultUpdateView(LoginRequiredMixin, UpdateView):
             'form_title': f'Update Default Line for {config.name}',
             'page_title': f'Update Default Line: {config.name}',
             'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
-                ('Voucher Configs', reverse('accounting:voucher_config_list')),
+                ('Voucher Configurations', reverse('accounting:voucher_config_list')),
                 (f'{config.name} Details', reverse('accounting:voucher_config_detail', kwargs={'pk': config.pk})),
                 ('Update Default Line', None)
             ]
@@ -649,7 +665,6 @@ class VoucherEntryView(LoginRequiredMixin, View):
             'form_title': f'Voucher Entry: {config.name}',
             'page_title': f'Voucher Entry: {config.name}',
             'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
                 ('Voucher Entry', reverse('accounting:voucher_entry')),
                 (config.name, None)
             ]
@@ -719,7 +734,6 @@ class VoucherEntryView(LoginRequiredMixin, View):
             'form_title': f'Voucher Entry: {config.name}',
             'page_title': f'Voucher Entry: {config.name}',
             'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
                 ('Voucher Entry', reverse('accounting:voucher_entry')),
                 (config.name, None)
             ]
@@ -737,6 +751,9 @@ class DepartmentListView(LoginRequiredMixin, ListView):
         context['create_url'] = reverse('accounting:department_create')
         context['create_button_text'] = 'New Department'
         context['page_title'] = 'Departments'
+        context['breadcrumbs'] = [
+            ('Departments', None),
+        ]
         return context
 
 
@@ -745,30 +762,43 @@ class DepartmentCreateView(LoginRequiredMixin, CreateView):
     form_class = DepartmentForm
     template_name = 'accounting/department_form.html'
     success_url = reverse_lazy('accounting:department_list')
+    
     def form_valid(self, form):
         form.instance.organization = self.request.user.organization
         return super().form_valid(form)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Create Department'
         context['back_url'] = reverse('accounting:department_list')
-        return context    
+        context['breadcrumbs'] = [
+            ('Departments', reverse('accounting:department_list')),
+            ('Create Department', None)
+        ]
+        return context
 
 class DepartmentUpdateView(LoginRequiredMixin, UpdateView):
     model = Department
     form_class = DepartmentForm
     template_name = 'accounting/department_form.html'
     success_url = reverse_lazy('accounting:department_list')
+    
     def get_queryset(self):
         return Department.objects.all()
+    
     def form_valid(self, form):
         form.instance.organization = self.request.user.organization
         return super().form_valid(form)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Department'
+        context['form_title'] = 'Update Department'
         context['back_url'] = reverse('accounting:department_list')
-        return context   
+        context['breadcrumbs'] = [
+            ('Departments', reverse('accounting:department_list')),
+            ('Update Department', None)
+        ]
+        return context
 
 # Chart of Accounts Views
 class ChartOfAccountListView(LoginRequiredMixin, ListView):
@@ -787,6 +817,9 @@ class ChartOfAccountListView(LoginRequiredMixin, ListView):
         context['create_url'] = reverse('accounting:chart_of_accounts_create')
         context['create_button_text'] = 'New Chart of Account'
         context['page_title'] = 'Chart of Accounts'
+        context['breadcrumbs'] = [
+            ('Chart of Accounts', None),
+        ]
         return context
 
 class ChartOfAccountCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
@@ -810,12 +843,16 @@ class ChartOfAccountCreateView(PermissionRequiredMixin, LoginRequiredMixin, User
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Create Chart of Account'
         context['back_url'] = reverse('accounting:chart_of_accounts_list')
+        context['breadcrumbs'] = [
+            ('Chart of Accounts', reverse('accounting:chart_of_accounts_list')),
+            ('Create Chart of Account', None)
+        ]
         return context
 
 class ChartOfAccountUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = ChartOfAccount
     form_class = ChartOfAccountForm
-    template_name = 'accounting/update_chart_of_account.html'
+    template_name = 'accounting/chart_of_accounts_form.html'
     success_url = reverse_lazy('accounting:chart_of_accounts_list')
     permission_required = ('accounting', 'chartofaccount', 'change')
 
@@ -835,6 +872,10 @@ class ChartOfAccountUpdateView(PermissionRequiredMixin, LoginRequiredMixin, Upda
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Update Chart of Account'
         context['back_url'] = reverse('accounting:chart_of_accounts_list')
+        context['breadcrumbs'] = [
+            ('Chart of Accounts', reverse('accounting:chart_of_accounts_list')),
+            ('Update Chart of Account', None)
+        ]
         return context
 
 # Account Type Views
@@ -852,6 +893,9 @@ class AccountTypeListView(LoginRequiredMixin, ListView):
         context['create_url'] = reverse('accounting:account_type_create')
         context['create_button_text'] = 'New Account Type'
         context['page_title'] = 'Account Types'
+        context['breadcrumbs'] = [
+            ('Account Types', None),
+        ]
         return context
 
 
@@ -869,6 +913,10 @@ class AccountTypeCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Create Account Type'
         context['back_url'] = reverse('accounting:account_type_list')
+        context['breadcrumbs'] = [
+            ('Account Types', reverse('accounting:account_type_list')),
+            ('Create Account Type', None)
+        ]
         return context
 
 
@@ -886,6 +934,10 @@ class AccountTypeUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Update Account Type'
         context['back_url'] = reverse('accounting:account_type_list')
+        context['breadcrumbs'] = [
+            ('Account Types', reverse('accounting:account_type_list')),
+            ('Update Account Type', None)
+        ]
         return context
 
 # Currency Views
@@ -903,13 +955,8 @@ class CurrencyListView(LoginRequiredMixin, ListView):
         context['create_url'] = reverse('accounting:currency_create')
         context['create_button_text'] = 'New Currency'
         context['page_title'] = 'Currencies'
-        # Add table headers
-        context['table_headers'] = [
-            'Currency Code',
-            'Currency Name',
-            'Symbol',
-            'Status',
-            'Actions'
+        context['breadcrumbs'] = [
+            ('Currencies', None),
         ]
         return context
 
@@ -928,6 +975,10 @@ class CurrencyCreateView(PermissionRequiredMixin, LoginRequiredMixin, CreateView
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Create Currency'
         context['back_url'] = reverse('accounting:currency_list')
+        context['breadcrumbs'] = [
+            ('Currencies', reverse('accounting:currency_list')),
+            ('Create Currency', None)
+        ]
         return context
 
 class CurrencyUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
@@ -949,6 +1000,10 @@ class CurrencyUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Update Currency'
         context['back_url'] = reverse('accounting:currency_list')
+        context['breadcrumbs'] = [
+            ('Currencies', reverse('accounting:currency_list')),
+            ('Update Currency', None)
+        ]
         return context
 
 # Currency Exchange Rate Views
@@ -959,24 +1014,17 @@ class CurrencyExchangeRateListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        # Prefetch related Currency objects for efficient display in template
         return CurrencyExchangeRate.objects.filter(
             organization=self.request.user.organization
         ).select_related('from_currency', 'to_currency').order_by('-rate_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = self.request.user
-        org = user.get_active_organization()
-
-        context['page_title'] = 'Currency Exchange Rates'
+        context['page_title'] = 'Exchange Rates'
         context['create_url'] = reverse('accounting:exchange_rate_create')
         context['create_button_text'] = 'New Exchange Rate'
-        
-        # FIX: Changed 'accounting:dashboard' to 'accounting:chart_of_accounts_list'
         context['breadcrumbs'] = [
-            ('Accounting', reverse('accounting:chart_of_accounts_list')), # Use a valid, central accounting list view
-            ('Exchange Rates', reverse('accounting:exchange_rate_list')),
+            ('Exchange Rates', None),
         ]
         return context
 
@@ -998,14 +1046,14 @@ class CurrencyExchangeRateCreateView(LoginRequiredMixin, CreateView):
         messages.success(self.request, "Currency exchange rate created successfully.")
         return super().form_valid(form)
 
-    def form_invalid(self, form):
-        messages.error(self.request, "Please correct the errors below.")
-        return super().form_invalid(form)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Currency Exchange Rate'
+        context['form_title'] = 'Create Exchange Rate'
         context['back_url'] = reverse('accounting:exchange_rate_list')
+        context['breadcrumbs'] = [
+            ('Exchange Rates', reverse('accounting:exchange_rate_list')),
+            ('Create Exchange Rate', None)
+        ]
         return context
 
 
@@ -1022,15 +1070,12 @@ class CurrencyExchangeRateUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({
-            'form_title': 'Edit Currency Exchange Rate',
-            'page_title': 'Edit Currency Exchange Rate',
-            'breadcrumbs': [
-                ('Accounting', reverse('accounting:chart_of_accounts_list')),
-                ('Exchange Rates', reverse('accounting:exchange_rate_list')),
-                ('Edit', None)
-            ]
-        })
+        context['form_title'] = 'Update Exchange Rate'
+        context['back_url'] = reverse('accounting:exchange_rate_list')
+        context['breadcrumbs'] = [
+            ('Exchange Rates', reverse('accounting:exchange_rate_list')),
+            ('Update Exchange Rate', None)
+        ]
         return context
 
 # Tax Authority Views
@@ -1050,6 +1095,9 @@ class TaxAuthorityListView(LoginRequiredMixin, ListView):
         context['create_url'] = reverse('accounting:tax_authority_create')
         context['create_button_text'] = 'New Tax Authority'
         context['page_title'] = 'Tax Authorities'
+        context['breadcrumbs'] = [
+            ('Tax Authorities', None),
+        ]
         return context
 
 
@@ -1073,6 +1121,10 @@ class TaxAuthorityCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Create Tax Authority'
         context['back_url'] = reverse('accounting:tax_authority_list')
+        context['breadcrumbs'] = [
+            ('Tax Authorities', reverse('accounting:tax_authority_list')),
+            ('Create Tax Authority', None)
+        ]
         return context
 
 
@@ -1098,6 +1150,10 @@ class TaxAuthorityUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Update Tax Authority'
         context['back_url'] = reverse('accounting:tax_authority_list')
+        context['breadcrumbs'] = [
+            ('Tax Authorities', reverse('accounting:tax_authority_list')),
+            ('Update Tax Authority', None)
+        ]
         return context
 
 # Tax Type Views
@@ -1117,6 +1173,9 @@ class TaxTypeListView(LoginRequiredMixin, ListView):
         context['create_url'] = reverse('accounting:tax_type_create')
         context['create_button_text'] = 'New Tax Type'
         context['page_title'] = 'Tax Types'
+        context['breadcrumbs'] = [
+            ('Tax Types', None),
+        ]
         return context
 
 
@@ -1140,6 +1199,10 @@ class TaxTypeCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Create Tax Type'
         context['back_url'] = reverse('accounting:tax_type_list')
+        context['breadcrumbs'] = [
+            ('Tax Types', reverse('accounting:tax_type_list')),
+            ('Create Tax Type', None)
+        ]
         return context
 
 
@@ -1165,6 +1228,10 @@ class TaxTypeUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Update Tax Type'
         context['back_url'] = reverse('accounting:tax_type_list')
+        context['breadcrumbs'] = [
+            ('Tax Types', reverse('accounting:tax_type_list')),
+            ('Update Tax Type', None)
+        ]
         return context
 
 # Project Views
@@ -1184,6 +1251,9 @@ class ProjectListView(LoginRequiredMixin, ListView):
         context['create_url'] = reverse('accounting:project_create')
         context['create_button_text'] = 'New Project'
         context['page_title'] = 'Projects'
+        context['breadcrumbs'] = [
+            ('Projects', None),
+        ]
         return context
 
 
@@ -1207,6 +1277,10 @@ class ProjectCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Create Project'
         context['back_url'] = reverse('accounting:project_list')
+        context['breadcrumbs'] = [
+            ('Projects', reverse('accounting:project_list')),
+            ('Create Project', None)
+        ]
         return context
 
 
@@ -1232,4 +1306,8 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Update Project'
         context['back_url'] = reverse('accounting:project_list')
+        context['breadcrumbs'] = [
+            ('Projects', reverse('accounting:project_list')),
+            ('Update Project', None)
+        ]
         return context

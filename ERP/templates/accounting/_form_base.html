@@ -23,10 +23,13 @@
                             <ol class="breadcrumb m-0">
                                 {% if breadcrumbs %}
                                     {% for name, url in breadcrumbs %}
-                                        <li class="breadcrumb-item"><a href="{{ url }}">{{ name }}</a></li>
+                                        {% if not forloop.last %}
+                                            <li class="breadcrumb-item"><a href="{{ url }}">{{ name }}</a></li>
+                                        {% else %}
+                                            <li class="breadcrumb-item active">{{ name }}</li>
+                                        {% endif %}
                                     {% endfor %}
                                 {% else %}
-                                    <li class="breadcrumb-item"><a href="{% url 'accounting:chart_of_accounts_list' %}">Accounting</a></li>
                                     <li class="breadcrumb-item active">{{ page_title|default:form_title|default:"Form" }}</li>
                                 {% endif %}
                             </ol>

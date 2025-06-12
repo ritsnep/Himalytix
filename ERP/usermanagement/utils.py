@@ -84,10 +84,12 @@ def require_permission(module, entity, action):
 
 def get_menu(user):
     menu = []
-    for permission in user.get_all_permissions():
-        if permission.codename.startswith('menu_'):
-            menu.append({'label': permission.name, 'url': permission.codename.split('_')[1]})
-    return menu 
+    for permission in user.user_permissions.all():
+        codename = permission.codename
+        if codename.startswith("menu_"):
+            url = codename.split("menu_", 1)[1]
+            menu.append({"label": permission.name, "url": url})
+    return menu
 
 
 def get_form_fields(user, form):

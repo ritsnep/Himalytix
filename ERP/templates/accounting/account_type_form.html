@@ -5,10 +5,7 @@
 
 {% block form_content %}
     <div class="card">
-        <div class="card-header">
-            <h4 class="card-title">{{ form_title|default:"Account Type" }}</h4>
-            <p class="card-title-desc">Manage your account types.</p>
-        </div>
+
         <div class="card-body">
             <form id="account-type-form" method="post" novalidate>
                 {% csrf_token %}
