@@ -53,7 +53,11 @@ window.addEventListener('DOMContentLoaded', () => {
         sessionStorage.removeItem('formData:' + url);
         if (url === window.location.pathname) {
             const next = tabs[tabs.length - 1];
-            if (next) navigate(next.url); else renderTabs();
+            if (next) {
+                htmx.ajax('GET', next.url, '#main-container');
+            } else {
+                renderTabs();
+            }
         } else {
             renderTabs();
         }
@@ -125,17 +129,33 @@ window.addEventListener('DOMContentLoaded', () => {
     addTab(document.title, window.location.pathname);
     renderTabs();
 
-    document.body.addEventListener('click', (e) => {
-        const link = e.target.closest('a');
-        if (!link || link.target || link.hasAttribute('download') || link.getAttribute('href').startsWith('#')) return;
-        if (link.origin !== location.origin) return;
-        e.preventDefault();
-        navigate(link.href);
-    });
+    if (!window.htmx) {
+        document.body.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (!link || link.target || link.hasAttribute('download') || link.getAttribute('href').startsWith('#')) return;
+            if (link.origin !== location.origin) return;
+            e.preventDefault();
+            navigate(link.href);
+        });
 
-    window.addEventListener('popstate', () => {
-        navigate(location.href, false);
-    });
+        window.addEventListener('popstate', () => {
+            navigate(location.href, false);
+        });
+    } else {
+        htmx.on('htmx:beforeRequest', () => {
+            cacheFormData(window.location.pathname);
+        });
+
+        htmx.on('htmx:afterSwap', (e) => {
+            if (e.detail.target.id === 'main-container') {
+                contentArea = document.getElementById('main-container');
+                addTab(document.title, window.location.pathname);
+                renderTabs(window.location.pathname);
+                restoreFormData(window.location.pathname);
+                if (window.feather) feather.replace();
+            }
+        });
+    }
 
     // Global controls
     window.closeCurrentTab = () => closeTab(window.location.pathname);

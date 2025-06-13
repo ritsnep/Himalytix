@@ -5,7 +5,7 @@ function setTheme(t){
 
 document.addEventListener('DOMContentLoaded', () => {
   setTheme(localStorage.getItem('theme') || 'light');
-  const toggle = document.querySelector('.theme-toggle');
+  const toggle = document.querySelector('#mode-setting-btn');
   if (toggle){
     toggle.addEventListener('click', () => {
       const next = root.getAttribute('data-layout-mode') === 'dark' ? 'light' : 'dark';

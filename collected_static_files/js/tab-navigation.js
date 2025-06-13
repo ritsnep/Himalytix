@@ -25,17 +25,23 @@ window.addEventListener('DOMContentLoaded', () => {
             li.className = 'nav-item';
             const a = document.createElement('a');
             a.className = 'nav-link' + (tab.url === activeUrl ? ' active' : '');
-            a.textContent = tab.title;
             a.href = tab.url;
-            li.appendChild(a);
+            // Use span for tab title for styling
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'tab-title';
+            titleSpan.textContent = tab.title;
+            a.appendChild(titleSpan);
+            // Close button
             const closeBtn = document.createElement('button');
-            closeBtn.textContent = '×';
-            closeBtn.className = 'ms-1 btn-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.className = 'btn-close';
+            closeBtn.title = 'Close tab';
             closeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 closeTab(tab.url);
             });
             a.appendChild(closeBtn);
+            li.appendChild(a);
             tabBar.appendChild(li);
         });
     }
@@ -43,15 +49,59 @@ window.addEventListener('DOMContentLoaded', () => {
     function closeTab(url) {
         const tabs = getTabs().filter(t => t.url !== url);
         saveTabs(tabs);
+        // Remove cached form data for closed tab
+        sessionStorage.removeItem('formData:' + url);
         if (url === window.location.pathname) {
             const next = tabs[tabs.length - 1];
-            if (next) navigate(next.url); else renderTabs();
+            if (next) {
+                htmx.ajax('GET', next.url, '#main-container');
+            } else {
+                renderTabs();
+            }
         } else {
             renderTabs();
         }
     }
 
+    // Save form data for the current tab
+    function cacheFormData(url) {
+        if (!contentArea) return;
+        const forms = contentArea.querySelectorAll('form');
+        if (!forms.length) return;
+        const data = [];
+        forms.forEach(form => {
+            const fd = new FormData(form);
+            const obj = {};
+            for (const [k, v] of fd.entries()) obj[k] = v;
+            data.push({ action: form.action, data: obj });
+        });
+        sessionStorage.setItem('formData:' + url, JSON.stringify(data));
+    }
+
+    // Restore form data for the current tab
+    function restoreFormData(url) {
+        if (!contentArea) return;
+        const forms = contentArea.querySelectorAll('form');
+        const saved = sessionStorage.getItem('formData:' + url);
+        if (!saved) return;
+        const dataArr = JSON.parse(saved);
+        forms.forEach((form, idx) => {
+            const data = dataArr[idx]?.data || {};
+            for (const [k, v] of Object.entries(data)) {
+                const el = form.elements[k];
+                if (!el) continue;
+                if (el.type === 'checkbox' || el.type === 'radio') {
+                    el.checked = !!v;
+                } else {
+                    el.value = v;
+                }
+            }
+        });
+    }
+
     function navigate(url, push = true) {
+        // Cache form data before navigating away
+        cacheFormData(window.location.pathname);
         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(resp => resp.text())
             .then(html => {
@@ -65,11 +115,13 @@ window.addEventListener('DOMContentLoaded', () => {
                 contentArea.replaceWith(newContent);
                 contentArea = newContent;
                 document.title = doc.title;
-                const path = new URL(url).pathname;
+                const path = new URL(url, window.location.origin).pathname;
                 addTab(doc.title, path);
                 renderTabs(path);
                 if (push) history.pushState({}, '', path);
                 if (window.feather) feather.replace();
+                // Restore form data for this tab if available
+                restoreFormData(path);
             });
     }
 
@@ -77,17 +129,33 @@ window.addEventListener('DOMContentLoaded', () => {
     addTab(document.title, window.location.pathname);
     renderTabs();
 
-    document.body.addEventListener('click', (e) => {
-        const link = e.target.closest('a');
-        if (!link || link.target || link.hasAttribute('download') || link.getAttribute('href').startsWith('#')) return;
-        if (link.origin !== location.origin) return;
-        e.preventDefault();
-        navigate(link.href);
-    });
+    if (!window.htmx) {
+        document.body.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (!link || link.target || link.hasAttribute('download') || link.getAttribute('href').startsWith('#')) return;
+            if (link.origin !== location.origin) return;
+            e.preventDefault();
+            navigate(link.href);
+        });
 
-    window.addEventListener('popstate', () => {
-        navigate(location.href, false);
-    });
+        window.addEventListener('popstate', () => {
+            navigate(location.href, false);
+        });
+    } else {
+        htmx.on('htmx:beforeRequest', () => {
+            cacheFormData(window.location.pathname);
+        });
+
+        htmx.on('htmx:afterSwap', (e) => {
+            if (e.detail.target.id === 'main-container') {
+                contentArea = document.getElementById('main-container');
+                addTab(document.title, window.location.pathname);
+                renderTabs(window.location.pathname);
+                restoreFormData(window.location.pathname);
+                if (window.feather) feather.replace();
+            }
+        });
+    }
 
     // Global controls
     window.closeCurrentTab = () => closeTab(window.location.pathname);

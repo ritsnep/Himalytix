@@ -40,19 +40,38 @@ body, html {
   .main-content { margin-left: 0; }
 }
 
-/* Tab-bar is sticky, not fixed, so it pushes content down */
+/* Tab-bar is sticky so it doesn't cover page content */
 #tab-bar {
   position: sticky;
   top: 70px; /* height of topnav */
-  z-index: 1041;
-  height: 48px;
+  z-index: 1031;
+  height: 42px; /* reserve space below */
   background: #23272b;
-  display: flex;
-  align-items: center;
   border-bottom: 1px solid #30373f;
-  overflow-x: auto;
-  white-space: nowrap;
   padding: 0 12px;
+}
+
+#open-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  align-items: center;
+}
+#open-tabs::-webkit-scrollbar { height: 4px; }
+#open-tabs::-webkit-scrollbar-thumb { background: var(--bs-gray-600); }
+
+/* Right-hand drawer placeholder */
+.context-drawer {
+  position: fixed;
+  right: 0;
+  top: 70px;
+  bottom: 0;
+  width: 260px;
+  overflow-y: auto;
+  background: var(--bs-dark);
+  transition: transform .3s;
 }
 
 /* Loading overlay unchanged */
