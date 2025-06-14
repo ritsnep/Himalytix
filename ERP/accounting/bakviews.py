@@ -970,4 +970,4 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Update Project'
         context['back_url'] = reverse('accounting:project_list')
-        return context   
+        return context

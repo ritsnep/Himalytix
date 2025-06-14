@@ -1,6 +1,7 @@
 # urls.py
 from django.urls import path
 from . import views
+from .views import ChartOfAccountDeleteView
 
 app_name = "accounting"
 urlpatterns = [
@@ -51,7 +52,7 @@ urlpatterns = [
     path('chart-of-accounts.hx/', views.ChartOfAccountListPartial.as_view(), name='chart_of_accounts_list_hx'),
     path('chart-of-accounts/create/', views.ChartOfAccountCreateView.as_view(), name='chart_of_accounts_create'),
     path('chart-of-accounts/<int:pk>/update/', views.ChartOfAccountUpdateView.as_view(), name='chart_of_accounts_update'),
-    # path('chart-of-accounts/<int:pk>/delete/', views.ChartOfAccountDeleteView.as_view(), name='chart_of_accounts_delete'),
+    path('chart-of-accounts/<int:pk>/delete/', ChartOfAccountDeleteView.as_view(), name='chart_of_accounts_delete'),
 
     # Account Type URLs
     path('account-types/', views.AccountTypeListView.as_view(), name='account_type_list'),
@@ -82,4 +83,16 @@ urlpatterns = [
     path('projects/', views.ProjectListView.as_view(), name='project_list'),
     path('projects/create/', views.ProjectCreateView.as_view(), name='project_create'),
     path('projects/<int:pk>/edit/', views.ProjectUpdateView.as_view(), name='project_update'),
+
+    # Accounting Period URLs
+    path('accounting-periods/', views.AccountingPeriodListView.as_view(), name='accounting_period_list'),
+    path('accounting-periods/create/', views.AccountingPeriodCreateView.as_view(), name='accounting_period_create'),
+    path('accounting-periods/<int:period_id>/', views.AccountingPeriodDetailView.as_view(), name='accounting_period_detail'),
+    path('accounting-periods/<int:period_id>/edit/', views.AccountingPeriodUpdateView.as_view(), name='accounting_period_update'),
+
+    # Journal Type URLs
+    path('journal-types/', views.JournalTypeListView.as_view(), name='journal_type_list'),
+    path('journal-types/create/', views.JournalTypeCreateView.as_view(), name='journal_type_create'),
+    path('journal-types/<int:journal_type_id>/', views.JournalTypeDetailView.as_view(), name='journal_type_detail'),
+    path('journal-types/<int:journal_type_id>/edit/', views.JournalTypeUpdateView.as_view(), name='journal_type_update'),
 ]

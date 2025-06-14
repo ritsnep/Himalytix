@@ -41,19 +41,21 @@ class AutoIncrementCodeGenerator:
 class FiscalYear(models.Model):
     """
     Represents a fiscal year for an organization.
+    Defines the financial reporting period, status, and audit trail.
+    Only one fiscal year per organization can be current at a time.
     """
     STATUS_CHOICES = [
         ('open', 'Open'),
         ('closed', 'Closed'),
         ('archived', 'Archived'),
     ]
-    fiscal_year_id = models.CharField(max_length=10, primary_key=True, default=generate_fiscal_year_id)
+    id = models.CharField(default=get_random_string(10, '0123456789'), max_length=10, unique=True, editable=False)
+    fiscal_year_id = models.CharField(max_length=10,primary_key=True, unique=True, default=generate_fiscal_year_id)
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
         related_name='fiscal_years',
     )
-    # organization_id = models.IntegerField(default=1, blank=True,null=True)  # Placeholder for organization ID, change to ForeignKey later
     code = models.CharField(max_length=10)
     name = models.CharField(max_length=100)
     start_date = models.DateField()
@@ -61,33 +63,53 @@ class FiscalYear(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
     is_current = models.BooleanField(default=False)
     closed_at = models.DateTimeField(null=True, blank=True)
-    closed_by = models.IntegerField(null=True, blank=True)  # You may change to ForeignKey(User) later
-    created_at = models.DateTimeField(auto_now_add=True)  # DEFAULT NOW()
+    closed_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='closed_fiscal_years')
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True, blank=True)
-    created_by = models.IntegerField(null=True, blank=True)  # Or ForeignKey(User)
-    updated_by = models.IntegerField(null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_fiscal_years')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_fiscal_years')
     is_archived = models.BooleanField(default=False)
     archived_at = models.DateTimeField(null=True, blank=True)
-    archived_by = models.IntegerField(null=True, blank=True)  # You may change to ForeignKey(User) later
+    archived_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_fiscal_years')
     is_default = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'fiscal_years'
         ordering = ['-start_date']
+        unique_together = ('organization', 'code')
 
     def __str__(self):
         return f"{self.code} - {self.name}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.start_date >= self.end_date:
+            raise ValidationError("Start date must be before end date.")
+        if self.is_current:
+            qs = FiscalYear.objects.filter(organization_id=self.organization_id, is_current=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            if qs.exists():
+                raise ValidationError("Only one fiscal year can be current per organization.")
 
     def save(self, *args, **kwargs):
         logger.info(f"Saving FiscalYear: {self.code}")
         if not self.code:
             code_generator = AutoIncrementCodeGenerator(FiscalYear, 'code', prefix='FY', suffix='')
             self.code = code_generator.generate_code()
+        # Enforce only one is_current per org
+        if self.is_current:
+            FiscalYear.objects.filter(organization_id=self.organization_id, is_current=True).exclude(pk=self.pk).update(is_current=False)
+        self.full_clean()
         super(FiscalYear, self).save(*args, **kwargs)
 
         
 
 class AccountingPeriod(models.Model):
+    """
+    Represents a period (month, quarter, etc.) within a fiscal year.
+    Used for period-based reporting and posting control.
+    """
     STATUS_CHOICES = [
         ('open', 'Open'),
         ('closed', 'Closed'),
@@ -103,11 +125,11 @@ class AccountingPeriod(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
     is_adjustment_period = models.BooleanField(default=False)
     closed_at = models.DateTimeField(null=True, blank=True)
-    closed_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='closed_periods')
+    closed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='closed_periods')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(null=True, blank=True)
-    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_periods')
-    updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_periods')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_periods')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_periods')
     is_archived = models.BooleanField(default=False)
     archived_at = models.DateTimeField(null=True, blank=True)
     is_current = models.BooleanField(default=False)
@@ -118,6 +140,11 @@ class AccountingPeriod(models.Model):
 
     def __str__(self):
         return f"{self.fiscal_year.name} - {self.name}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.start_date >= self.end_date:
+            raise ValidationError("Start date must be before end date.")
 
 class Department(models.Model):
     organization = models.ForeignKey(
@@ -419,7 +446,7 @@ class JournalType(models.Model):
     
     class Meta:
         unique_together = ('organization', 'code')
-
+        ordering = ('name',)
     def __str__(self):
         return f"{self.code} - {self.name}"
 

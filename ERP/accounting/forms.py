@@ -3,18 +3,20 @@ from django import forms
 from django.forms import inlineformset_factory
 from .models import (
     AccountType, CostCenter, Currency, Department, Journal, JournalLine, JournalType, ChartOfAccount,
-    AccountingPeriod, Project, TaxAuthority, TaxCode, TaxType, VoucherModeConfig, VoucherModeDefault, CurrencyExchangeRate
+    AccountingPeriod, Project, TaxAuthority, TaxCode, TaxType, VoucherModeConfig, VoucherModeDefault, CurrencyExchangeRate,
+    GeneralLedger
 )
 from django import forms
 from .models import FiscalYear
 from .utils import get_active_currency_choices
+from .forms_mixin import BootstrapFormMixin
 
 
 # class FiscalYearForm(forms.ModelForm):
 #     class Meta:
 #         model = FiscalYear
 #         fields = ('code',  'name', 'start_date', 'end_date', 'status', 'is_current')
-class FiscalYearForm(forms.ModelForm):
+class FiscalYearForm(BootstrapFormMixin, forms.ModelForm):
     code = forms.CharField(
         widget=forms.TextInput(attrs={
             'class': 'form-control',
@@ -47,10 +49,16 @@ class FiscalYearForm(forms.ModelForm):
 
 
 # New forms below
-class AccountingPeriodForm(forms.ModelForm):
+class AccountingPeriodForm(BootstrapFormMixin, forms.ModelForm):
+    fiscal_year = forms.ModelChoiceField(
+        queryset=FiscalYear.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        required=True,
+        label="Fiscal Year"
+    )
     class Meta:
         model = AccountingPeriod
-        fields = ('name', 'period_number', 'start_date', 'end_date', 'status', 'is_current')
+        fields = ('fiscal_year', 'name', 'period_number', 'start_date', 'end_date', 'status', 'is_current')
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'period_number': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -60,7 +68,15 @@ class AccountingPeriodForm(forms.ModelForm):
             'is_current': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
-class DepartmentForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        super().__init__(*args, **kwargs)
+        if self.organization:
+            self.fields['fiscal_year'].queryset = FiscalYear.objects.filter(organization=self.organization)
+        else:
+            self.fields['fiscal_year'].queryset = FiscalYear.objects.none()
+        
+class DepartmentForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Department
         fields = ('name',)
@@ -68,7 +84,7 @@ class DepartmentForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
-class ProjectForm(forms.ModelForm):
+class ProjectForm(BootstrapFormMixin, forms.ModelForm):
     code = forms.CharField(
         widget=forms.TextInput(attrs={
             'class': 'form-control',
@@ -107,7 +123,7 @@ class ProjectForm(forms.ModelForm):
             instance.save()
         return instance
 
-class CostCenterForm(forms.ModelForm):
+class CostCenterForm(BootstrapFormMixin, forms.ModelForm):
     code = forms.CharField(
         widget=forms.TextInput(attrs={
             'class': 'form-control',
@@ -146,7 +162,7 @@ class CostCenterForm(forms.ModelForm):
             instance.save()
         return instance
 
-class AccountTypeForm(forms.ModelForm):
+class AccountTypeForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = AccountType
         fields = ('name', 'nature', 'classification', 'balance_sheet_category', 
@@ -161,7 +177,7 @@ class AccountTypeForm(forms.ModelForm):
             'system_type': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
-class ChartOfAccountForm(forms.ModelForm):
+class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = ChartOfAccount
         fields = [
@@ -228,7 +244,29 @@ class ChartOfAccountForm(forms.ModelForm):
             self.fields['currency'].widget = forms.Select(attrs={'class': 'form-select'})
             self.fields['currency'].choices = currency_choices
 
-class CurrencyForm(forms.ModelForm):
+        # Filter AccountType if parent is selected
+        parent = self.initial.get('parent_account') or self.data.get('parent_account')
+        if parent:
+            try:
+                parent_obj = ChartOfAccount.objects.get(pk=parent)
+                self.fields['account_type'].queryset = AccountType.objects.filter(
+                    pk=parent_obj.account_type.pk
+                )
+                self.parent_account_type = parent_obj.account_type
+            except ChartOfAccount.DoesNotExist:
+                self.parent_account_type = None
+        else:
+            self.parent_account_type = None
+
+    def clean(self):
+        cleaned_data = super().clean()
+        parent = cleaned_data.get('parent_account')
+        account_type = cleaned_data.get('account_type')
+        if parent and account_type and parent.account_type != account_type:
+            self.add_error('account_type', "Account type must match the parent account's type.")
+        return cleaned_data
+
+class CurrencyForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Currency
         fields = ('currency_code', 'currency_name', 'symbol', 'is_active')
@@ -252,7 +290,7 @@ class CurrencyForm(forms.ModelForm):
         if self.instance.pk:  # If editing existing currency
             self.fields['currency_code'].widget.attrs['readonly'] = True
 
-class CurrencyExchangeRateForm(forms.ModelForm):
+class CurrencyExchangeRateForm(BootstrapFormMixin, forms.ModelForm):
     from_currency = forms.ModelChoiceField(
         queryset=Currency.objects.filter(is_active=True),
         empty_label="Select From Currency",
@@ -327,7 +365,7 @@ class CurrencyExchangeRateForm(forms.ModelForm):
 
         return cleaned_data
 
-class JournalTypeForm(forms.ModelForm):
+class JournalTypeForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = JournalType
         fields = ('code', 'name', 'description', 'auto_numbering_prefix', 
@@ -357,7 +395,7 @@ class JournalTypeForm(forms.ModelForm):
             instance.save()
         return instance
 
-class TaxAuthorityForm(forms.ModelForm):
+class TaxAuthorityForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = TaxAuthority
         fields = ('name', 'country_code', 'description', 'is_active', 'is_default')
@@ -381,7 +419,7 @@ class TaxAuthorityForm(forms.ModelForm):
             instance.save()
         return instance
 
-class TaxTypeForm(forms.ModelForm):
+class TaxTypeForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = TaxType
         fields = ('name', 'authority', 'description', 'filing_frequency', 'is_active')
@@ -411,7 +449,7 @@ class TaxTypeForm(forms.ModelForm):
             instance.save()
         return instance
 
-class TaxCodeForm(forms.ModelForm):
+class TaxCodeForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = TaxCode
         fields = ('name', 'tax_type', 'tax_authority', 'tax_rate', 'rate',
@@ -449,7 +487,7 @@ class TaxCodeForm(forms.ModelForm):
             instance.save()
         return instance
 
-class VoucherModeConfigForm(forms.ModelForm):
+class VoucherModeConfigForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = VoucherModeConfig
         fields = ('name', 'description', 'is_default', 'layout_style', 
@@ -476,6 +514,13 @@ class VoucherModeConfigForm(forms.ModelForm):
         currency_choices = [(currency.currency_code, f"{currency.currency_code} - {currency.currency_name}") 
                            for currency in Currency.objects.filter(is_active=True)]
         self.fields['default_currency'].choices = currency_choices
+
+        # Fix: use self.organization instead of undefined variable
+        if self.organization:
+            self.fields['journal_type'].queryset = JournalType.objects.filter(
+                organization=self.organization,
+                is_active=True
+            )
             
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -485,7 +530,7 @@ class VoucherModeConfigForm(forms.ModelForm):
             instance.save()
         return instance
 
-class JournalForm(forms.ModelForm):
+class JournalForm(BootstrapFormMixin, forms.ModelForm):
     # Override currency_code to be a ChoiceField populated from Currency model for a dropdown
     currency_code = forms.ChoiceField(
         choices=[], # Will be populated dynamically in __init__
@@ -524,7 +569,8 @@ class JournalForm(forms.ModelForm):
             }),
         }
     
-    def __init__(self, *args, organization=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        organization = kwargs.pop('organization', None)
         super().__init__(*args, **kwargs)
         
         if organization:
@@ -552,7 +598,7 @@ class JournalForm(forms.ModelForm):
                 self.initial['currency_code'] = self.instance.currency_code
 
 
-class JournalLineForm(forms.ModelForm):
+class JournalLineForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = JournalLine
         fields = [
@@ -654,7 +700,7 @@ JournalLineFormSet = inlineformset_factory(
     ]
 )
 
-class VoucherModeConfigForm(forms.ModelForm):
+class VoucherModeConfigForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = VoucherModeConfig
         fields = [
@@ -664,16 +710,17 @@ class VoucherModeConfigForm(forms.ModelForm):
             'require_line_description', 'default_currency'
         ]
     
-    def __init__(self, *args, organization=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
         super().__init__(*args, **kwargs)
         
-        if organization:
+        if self.organization:
             self.fields['journal_type'].queryset = JournalType.objects.filter(
-                organization=organization,
+                organization=self.organization,
                 is_active=True
             )
 
-class VoucherModeDefaultForm(forms.ModelForm):
+class VoucherModeDefaultForm(BootstrapFormMixin, forms.ModelForm):
     account_code = forms.CharField(required=False)
     account_type = forms.ModelChoiceField(
         queryset=AccountType.objects.all(),
@@ -693,7 +740,9 @@ class VoucherModeDefaultForm(forms.ModelForm):
             'default_description': forms.TextInput(),
         }
     
-    def __init__(self, *args, organization=None, config_id=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        organization = kwargs.pop('organization', None)
+        config_id = kwargs.pop('config_id', None)
         super().__init__(*args, **kwargs)
         
         if organization:
@@ -716,3 +765,34 @@ class VoucherModeDefaultForm(forms.ModelForm):
                 self.fields['account_type'].queryset = AccountType.objects.filter(
                     chartofaccount__organization=organization
                 ).distinct()
+
+        # Prepopulate account_code for existing instances
+        if self.instance.pk and self.instance.account:
+            self.fields['account_code'].initial = self.instance.account.account_code
+
+    def clean(self):
+        cleaned_data = super().clean()
+        account_code = cleaned_data.get('account_code')
+        if account_code and self.organization:
+            try:
+                account = ChartOfAccount.objects.get(
+                    organization=self.organization,
+                    account_code=account_code
+                )
+                cleaned_data['account'] = account
+            except ChartOfAccount.DoesNotExist:
+                self.add_error('account_code', 'Invalid account code.')
+        return cleaned_data
+
+class GeneralLedgerForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = GeneralLedger
+        fields = '__all__'
+        widgets = {
+            'transaction_date': forms.DateInput(attrs={'class': 'form-control datepicker'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+    def clean(self):
+        cleaned_data = super().clean()
+        # Add any custom validation here
+        return cleaned_data

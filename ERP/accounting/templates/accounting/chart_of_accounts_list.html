@@ -1,0 +1,34 @@
+{% extends 'accounting/_list_base.html' %}
+{% load static %}
+
+{% block title %}Chart of Accounts{% endblock %}
+{% block breadcrumb %}Chart of Accounts{% endblock %}
+{% block add_url %}{{ create_url }}{% endblock %}
+
+{% block list_header %}
+<h4 class="card-title">Chart of Accounts</h4>
+{% endblock %}
+
+{% block create_button %}
+<a href="{{ create_url }}" class="btn btn-success mb-2">
+    <i class="mdi mdi-plus me-1"></i> New Chart of Account
+</a>
+{% endblock %}
+
+{% block table_head %}
+<thead>
+  <tr>
+    <th>Account Code</th>
+    <th>Account Name</th>
+    <th>Type</th>
+    <th>Status</th>
+    <th>Action</th>
+  </tr>
+</thead>
+{% endblock %}
+
+{% block table_body %}
+<tbody>
+  {% include "accounting/partials/chart_of_accounts_tree.html" with accounts=account_tree level=0 %}
+</tbody>
+{% endblock %}

@@ -25,7 +25,7 @@ from .models import (
 )
 from .forms import (
     JournalForm, JournalLineForm, JournalLineFormSet,
-    VoucherModeConfigForm, VoucherModeDefaultForm
+    VoucherModeConfigForm, VoucherModeDefaultForm, AccountingPeriodForm, JournalTypeForm
 )
 
 
@@ -34,377 +34,11 @@ from utils.htmx import require_htmx
 from usermanagement.utils import require_permission
 from usermanagement.utils import PermissionUtils
 from django.forms import inlineformset_factory
-
-class UserOrganizationMixin:
-    """
-    Mixin to provide self.organization = request.user.organization
-    and inject it into form kwargs and queryset.
-    """
-    def get_organization(self):
-        # Use the user's active organization if available
-        user = getattr(self.request, "user", None)
-        if user and hasattr(user, "get_active_organization"):
-            org = user.get_active_organization()
-            if org:
-                return org
-        # Fallback to user.organization if present
-        return getattr(user, "organization", None)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        org = self.get_organization()
-        if org:
-            kwargs['organization'] = org
-        return kwargs
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        org = self.get_organization()
-        # Only filter if the model has an organization field
-        if org and hasattr(qs.model, "organization_id"):
-            return qs.filter(organization=org)
-        return qs
-
-class PermissionRequiredMixin:
-    def dispatch(self, request, *args, **kwargs):
-        if not hasattr(self, 'permission_required'):
-            return super().dispatch(request, *args, **kwargs)
-        
-        module, entity, action = self.permission_required
-        if not PermissionUtils.has_permission(request.user, request.user.organization, module, entity, action):
-            return HttpResponseForbidden()
-        
-        return super().dispatch(request, *args, **kwargs)
-
-class FiscalYearCreateView(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
-    model = FiscalYear
-    form_class = FiscalYearForm
-    template_name = 'accounting/fiscal_year_form.html'
-    success_url = reverse_lazy('accounting:fiscal_year_list')
-    permission_required = ('accounting', 'fiscalyear', 'add')
-
-    def clean(self):
-        if self.start_date >= self.end_date:
-            raise ValidationError("Start date must be before end date.")
-
-    def get_initial(self):
-        initial = super().get_initial()
-        from .models import AutoIncrementCodeGenerator
-        code_generator = AutoIncrementCodeGenerator(FiscalYear, 'code', prefix='FY', suffix='')
-        initial['code'] = code_generator.generate_code()
-        return initial
-
-    def form_valid(self, form):
-        messages.success(self.request, "Fiscal year created successfully.")
-        form.instance.organization = self.get_organization()
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Fiscal Year'
-        context['back_url'] = reverse('accounting:fiscal_year_list')
-        return context
-
-class FiscalYearUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
-    model = FiscalYear
-    form_class = FiscalYearForm
-    template_name = 'accounting/fiscal_year_form.html'
-    success_url = reverse_lazy('accounting:fiscal_year_list')
-    permission_required = ('accounting', 'fiscalyear', 'change')
-    
-    slug_field = 'fiscal_year_id'
-    slug_url_kwarg = 'fiscal_year_id'
-
-    def get_queryset(self):
-        return super().get_queryset()
-
-    def get_object(self, queryset=None):
-        return get_object_or_404(
-            FiscalYear,
-            fiscal_year_id=self.kwargs['fiscal_year_id'],
-            organization=self.request.user.get_active_organization()
-        )
-
-    def form_valid(self, form):
-        form.instance.organization = self.get_organization()
-        messages.success(self.request, "Fiscal year updated successfully.")
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({
-            'form_title': 'Update Fiscal Year',
-            'page_title': 'Update Fiscal Year',
-            'breadcrumbs': [
-                ('Fiscal Years', reverse('accounting:fiscal_year_list')),
-                ('Update', None)
-            ]
-        })
-        return context
-
-class FiscalYearListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
-    model = FiscalYear
-    template_name = 'accounting/fiscal_year_list.html'
-    context_object_name = 'fiscal_years'
-    paginate_by = 20
-
-    def get_queryset(self):
-        org = self.get_organization()
-        if not org:
-            return self.model.objects.none()
-        return super().get_queryset()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        org = user.get_active_organization()
-        if not org:
-            context['can_add'] = False
-            context['can_change'] = False
-            context['can_delete'] = False
-        else:
-            context['can_add'] = PermissionUtils.has_permission(user, org, 'accounting', 'fiscalyear', 'add')
-            context['can_change'] = PermissionUtils.has_permission(user, org, 'accounting', 'fiscalyear', 'change')
-            context['can_delete'] = PermissionUtils.has_permission(user, org, 'accounting', 'fiscalyear', 'delete')
-        
-        context['create_url'] = reverse('accounting:fiscal_year_create')
-        context['create_button_text'] = 'New Fiscal Year'
-        context['page_title'] = 'Fiscal Years'
-        return context
-
-class CostCenterListView(LoginRequiredMixin, ListView):
-    model = CostCenter
-    template_name = 'accounting/costcenter_list.html'
-    context_object_name = 'cost_centers'
-    paginate_by = 20
-
-    def get_queryset(self):
-        return CostCenter.objects.filter(organization_id=self.request.user.organization)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['create_url'] = reverse('accounting:costcenter_create')
-        context['create_button_text'] = 'New Cost Center'
-        context['page_title'] = 'Cost Centers'
-        context['breadcrumbs'] = [
-            ('Cost Centers', None),
-        ]
-        return context
-
-
-class CostCenterCreateView(LoginRequiredMixin, UserOrganizationMixin, CreateView):
-    model = CostCenter
-    form_class = CostCenterForm
-    template_name = 'accounting/costcenter_form.html'
-    success_url = reverse_lazy('accounting:costcenter_list')
-    
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization 
-        return super().form_valid(form)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Cost Center'
-        context['back_url'] = reverse('accounting:costcenter_list')
-        context['breadcrumbs'] = [
-            ('Cost Centers', reverse('accounting:costcenter_list')),
-            ('Create Cost Center', None)
-        ]
-        return context
-
-class CostCenterUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
-    model = CostCenter
-    form_class = CostCenterForm
-    template_name = 'accounting/costcenter_form.html'
-    success_url = reverse_lazy('accounting:costcenter_list')
-    
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
-        return kwargs
-    
-    def get_queryset(self):
-        return CostCenter.objects.filter(organization=self.request.user.organization)
-    
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
-        return super().form_valid(form)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Update Cost Center'
-        context['back_url'] = reverse('accounting:costcenter_list')
-        context['breadcrumbs'] = [
-            ('Cost Centers', reverse('accounting:costcenter_list')),
-            ('Update Cost Center', None)
-        ]
-        return context
-    
-class JournalListView(LoginRequiredMixin, ListView):
-    model = Journal
-    template_name = 'accounting/journal_list.html'
-    context_object_name = 'journals'
-    paginate_by = 20
-
-    def get_queryset(self):
-        return Journal.objects.filter(organization=self.request.user.organization).order_by('-journal_date')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['create_url'] = reverse('accounting:journal_create')
-        context['create_button_text'] = 'New Journal'
-        context['page_title'] = 'Journals'
-        context['breadcrumbs'] = [
-            ('Journals', None),
-        ]
-        return context
-
-class JournalCreateView(LoginRequiredMixin, CreateView):
-    model = Journal
-    form_class = JournalForm
-    template_name = 'accounting/journal_form.html'
-    success_url = reverse_lazy('accounting:journal_list')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.get_active_organization()
-        return kwargs
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context['lines'] = JournalLineFormSet(self.request.POST, instance=self.object)
-        else:
-            context['lines'] = JournalLineFormSet(instance=self.object)
-        
-        context.update({
-            'form_title': 'Create Journal',
-            'page_title': 'Create Journal',
-            'breadcrumbs': [
-                ('Journals', reverse('accounting:journal_list')),
-                ('Create Journal', None)
-            ]
-        })
-        return context
-    
-    def form_valid(self, form):
-        try:
-            context = self.get_context_data()
-            lines = context['lines']
-            
-            with transaction.atomic():
-                form.instance.organization = self.request.user.get_active_organization()
-                form.instance.created_by = self.request.user
-                self.object = form.save()
-                
-                if lines.is_valid():
-                    lines.instance = self.object
-                    lines.save()
-                else:
-                    # If line forms are invalid, return form_invalid
-                    messages.error(self.request, "Please correct the errors in the journal lines.")
-                    return self.form_invalid(form) # Re-render with errors
-
-            messages.success(self.request, "Journal created successfully.")
-            return super().form_valid(form)
-        except Exception as e:
-            logger.error(f"Error creating journal: {e}")
-            messages.error(self.request, f"An error occurred while creating the journal: {e}")
-            return HttpResponseServerError("Internal Server Error") # More informative error
-
-class JournalDetailView(LoginRequiredMixin, DetailView):
-    model = Journal
-    template_name = 'accounting/journal_detail.html'
-    context_object_name = 'journal'
-class JournalPostView(LoginRequiredMixin, View):
-    def post(self, request, pk):
-        journal = get_object_or_404(Journal, pk=pk, organization=request.user.organization)
-        
-        if journal.status != 'draft':
-            return JsonResponse({'success': False, 'error': 'Journal is not in draft status'})
-        
-        with transaction.atomic():
-            # Create GL entries
-            for line in journal.lines.all():
-                GeneralLedger.objects.create(
-                    organization=journal.organization,
-                    account=line.account,
-                    journal=journal,
-                    journal_line=line,
-                    period=journal.period,
-                    transaction_date=journal.journal_date,
-                    debit_amount=line.debit_amount,
-                    credit_amount=line.credit_amount,
-                    balance_after=line.account.current_balance + (line.debit_amount - line.credit_amount),
-                    currency_code=line.currency_code,
-                    exchange_rate=line.exchange_rate,
-                    functional_debit_amount=line.functional_debit_amount,
-                    functional_credit_amount=line.functional_credit_amount,
-                    department=line.department,
-                    project=line.project,
-                    cost_center=line.cost_center,
-                    description=line.description,
-                    source_module=journal.source_module,
-                    source_reference=journal.source_reference,
-                )
-                
-                # Update account balances
-                line.account.current_balance += (line.debit_amount - line.credit_amount)
-                line.account.save()
-            
-            journal.status = 'posted'
-            journal.posted_at = timezone.now()
-            journal.posted_by = request.user
-            journal.save()
-        
-        return JsonResponse({'success': True})
-
-
-class JournalUpdateView(LoginRequiredMixin, UpdateView):
-    model = Journal
-    form_class = JournalForm
-    template_name = 'accounting/journal_form.html'
-    success_url = reverse_lazy('accounting:journal_list')
-    
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.get_active_organization()
-        return kwargs
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context['lines'] = JournalLineFormSet(self.request.POST, instance=self.object)
-        else:
-            context['lines'] = JournalLineFormSet(instance=self.object)
-
-        context.update({
-            'form_title': f'Update Journal: {self.object.journal_number}',
-            'page_title': f'Update Journal: {self.object.journal_number}',
-            'breadcrumbs': [
-                ('Journals', reverse('accounting:journal_list')),
-                (f'Update Journal: {self.object.journal_number}', None)
-            ]
-        })
-        return context
-    
-    def form_valid(self, form):
-        context = self.get_context_data()
-        lines = context['lines']
-        
-        with transaction.atomic():
-            form.instance.updated_by = self.request.user
-            self.object = form.save()
-            
-            if lines.is_valid():
-                lines.instance = self.object
-                lines.save()
-            else:
-                # If line forms are invalid, return form_invalid
-                messages.error(self.request, "Please correct the errors in the journal lines.")
-                return self.form_invalid(form) # Re-render with errors
-        messages.success(self.request, "Journal updated successfully.") # Add success message
-        return super().form_valid(form)
+from .views_mixins import UserOrganizationMixin, PermissionRequiredMixin
+from .views_list import *
+from .views_create import *
+from .views_update import *
+from .views_delete import *
 
 class HTMXAccountAutocompleteView(LoginRequiredMixin, View):
     def get(self, request):
@@ -822,21 +456,49 @@ class ChartOfAccountListView(LoginRequiredMixin, ListView):
     model = ChartOfAccount
     template_name = 'accounting/chart_of_accounts_list.html'
     context_object_name = 'accounts'
-    paginate_by = 20
+    paginate_by = None  # Show all for tree
 
     def get_queryset(self):
+        # Return all accounts for the org, ordered for tree
         return ChartOfAccount.objects.filter(
             organization=self.request.user.organization
         ).order_by('account_code')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        accounts = list(self.get_queryset())
+        # Build a tree structure
+        tree = []
+        id_map = {}
+        for acc in accounts:
+            acc.children = []
+            acc.level = 0
+            acc.indent_px = 0
+            id_map[acc.account_id] = acc
+        for acc in accounts:
+            if acc.parent_account_id:
+                parent = id_map.get(acc.parent_account_id)
+                if parent:
+                    acc.level = parent.level + 1
+                    acc.indent_px = int(acc.level) * 20  # Ensure integer
+                    parent.children.append(acc)
+            else:
+                acc.level = 0
+                acc.indent_px = 0
+                tree.append(acc)
+        # Ensure children are lists, not querysets
+        for acc in accounts:
+            if not isinstance(acc.children, list):
+                acc.children = list(acc.children)
+        context['account_tree'] = tree
         context['create_url'] = reverse('accounting:chart_of_accounts_create')
         context['create_button_text'] = 'New Chart of Account'
         context['page_title'] = 'Chart of Accounts'
         context['breadcrumbs'] = [
             ('Chart of Accounts', None),
         ]
+        # Pass level=0 for the root include
+        context['level'] = 0
         return context
     
 class ChartOfAccountListPartial(ChartOfAccountListView):
@@ -903,6 +565,22 @@ class ChartOfAccountUpdateView(PermissionRequiredMixin, LoginRequiredMixin, Upda
             ('Update Chart of Account', None)
         ]
         return context
+
+class ChartOfAccountDeleteView(PermissionRequiredMixin, LoginRequiredMixin, DeleteView):
+    model = ChartOfAccount
+    template_name = 'accounting/chart_of_accounts_confirm_delete.html'
+    success_url = reverse_lazy('accounting:chart_of_accounts_list')
+    permission_required = ('accounting', 'chartofaccount', 'delete')
+
+    def get_queryset(self):
+        return ChartOfAccount.objects.filter(organization=self.request.user.organization)
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if ChartOfAccount.objects.filter(parent_account=self.object).exists():
+            messages.error(request, "Cannot delete an account that has sub-accounts. Please remove or reassign its children first.")
+            return redirect(self.success_url)
+        return super().delete(request, *args, **kwargs)
 
 # Account Type Views
 class AccountTypeListView(LoginRequiredMixin, ListView):
@@ -1337,3 +1015,530 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
             ('Update Project', None)
         ]
         return context
+
+# Accounting Period Views
+class AccountingPeriodListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
+    model = AccountingPeriod
+    template_name = 'accounting/accounting_period_list.html'
+    context_object_name = 'accounting_periods'
+    paginate_by = 20
+
+    def get_queryset(self):
+        org = self.get_organization()
+        if not org:
+            return self.model.objects.none()
+        return super().get_queryset()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        org = user.get_active_organization()
+        context['create_url'] = reverse('accounting:accounting_period_create')
+        context['create_button_text'] = 'New Accounting Period'
+        context['page_title'] = 'Accounting Periods'
+        return context
+
+class AccountingPeriodCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
+    model = AccountingPeriod
+    form_class = AccountingPeriodForm
+    template_name = 'accounting/accounting_period_form.html'
+    success_url = reverse_lazy('accounting:accounting_period_list')
+    permission_required = ('accounting', 'accountingperiod', 'add')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Accounting Period'
+        context['back_url'] = reverse('accounting:accounting_period_list')
+        return context
+
+class AccountingPeriodUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
+    model = AccountingPeriod
+    form_class = AccountingPeriodForm
+    template_name = 'accounting/accounting_period_form.html'
+    success_url = reverse_lazy('accounting:accounting_period_list')
+    permission_required = ('accounting', 'accountingperiod', 'change')
+    slug_field = 'period_id'
+    slug_url_kwarg = 'period_id'
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            AccountingPeriod,
+            period_id=self.kwargs['period_id'],
+            fiscal_year__organization=self.request.user.get_active_organization()
+        )
+
+    def form_valid(self, form):
+        form.instance.organization = self.get_organization()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Update Accounting Period'
+        context['back_url'] = reverse('accounting:accounting_period_list')
+        return context
+
+class AccountingPeriodDetailView(LoginRequiredMixin, UserOrganizationMixin, DetailView):
+    model = AccountingPeriod
+    template_name = 'accounting/accounting_period_detail.html'
+    context_object_name = 'accounting_period'
+    slug_field = 'period_id'
+    slug_url_kwarg = 'period_id'
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+# Journal Type Views
+class JournalTypeListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
+    model = JournalType
+    template_name = 'accounting/journal_type_list.html'
+    context_object_name = 'journal_types'
+    paginate_by = 20
+    queryset = JournalType.objects.order_by('name')
+   
+    def get_queryset(self):
+        org = self.get_organization()
+        if not org:
+            return self.model.objects.none()
+        return super().get_queryset()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        org = user.get_active_organization()
+        context['create_url'] = reverse('accounting:journal_type_create')
+        context['create_button_text'] = 'New Journal Type'
+        context['page_title'] = 'Journal Types'
+        return context
+
+class JournalTypeCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
+    model = JournalType
+    form_class = JournalTypeForm
+    template_name = 'accounting/journal_type_form.html'
+    success_url = reverse_lazy('accounting:journal_type_list')
+    permission_required = ('accounting', 'journaltype', 'add')
+
+    def form_valid(self, form):
+        form.instance.organization = self.get_organization()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Journal Type'
+        context['back_url'] = reverse('accounting:journal_type_list')
+        return context
+
+class JournalTypeUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
+    model = JournalType
+    form_class = JournalTypeForm
+    template_name = 'accounting/journal_type_form.html'
+    success_url = reverse_lazy('accounting:journal_type_list')
+    permission_required = ('accounting', 'journaltype', 'change')
+    slug_field = 'journal_type_id'
+    slug_url_kwarg = 'journal_type_id'
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            JournalType,
+            journal_type_id=self.kwargs['journal_type_id'],
+            organization=self.request.user.get_active_organization()
+        )
+
+    def form_valid(self, form):
+        form.instance.organization = self.get_organization()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Update Journal Type'
+        context['back_url'] = reverse('accounting:journal_type_list')
+        return context
+
+class JournalTypeDetailView(LoginRequiredMixin, UserOrganizationMixin, DetailView):
+    model = JournalType
+    template_name = 'accounting/journal_type_detail.html'
+    context_object_name = 'journal_type'
+    slug_field = 'journal_type_id'
+    slug_url_kwarg = 'journal_type_id'
+
+    def get_queryset(self):
+        return super().get_queryset()
+    context_object_name = 'journal_type'
+    slug_field = 'journal_type_id'
+    slug_url_kwarg = 'journal_type_id'
+
+    def get_queryset(self):
+        return super().get_queryset()
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Tax Authority'
+        context['back_url'] = reverse('accounting:tax_authority_list')
+        context['breadcrumbs'] = [
+            ('Tax Authorities', reverse('accounting:tax_authority_list')),
+            ('Create Tax Authority', None)
+        ]
+        return context
+
+
+class TaxAuthorityUpdateView(LoginRequiredMixin, UpdateView):
+    model = TaxAuthority
+    form_class = TaxAuthorityForm
+    template_name = 'accounting/tax_authority_form.html'
+    success_url = reverse_lazy('accounting:tax_authority_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+
+    def get_queryset(self):
+        return TaxAuthority.objects.filter(organization=self.request.user.organization)
+
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Update Tax Authority'
+        context['back_url'] = reverse('accounting:tax_authority_list')
+        context['breadcrumbs'] = [
+            ('Tax Authorities', reverse('accounting:tax_authority_list')),
+            ('Update Tax Authority', None)
+        ]
+        return context
+
+# Tax Type Views
+class TaxTypeListView(LoginRequiredMixin, ListView):
+    model = TaxType
+    template_name = 'accounting/tax_type_list.html'
+    context_object_name = 'tax_types'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return TaxType.objects.filter(
+            organization=self.request.user.organization
+        ).order_by('code')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['create_url'] = reverse('accounting:tax_type_create')
+        context['create_button_text'] = 'New Tax Type'
+        context['page_title'] = 'Tax Types'
+        context['breadcrumbs'] = [
+            ('Tax Types', None),
+        ]
+        return context
+
+
+class TaxTypeCreateView(LoginRequiredMixin, CreateView):
+    model = TaxType
+    form_class = TaxTypeForm
+    template_name = 'accounting/tax_type_form.html'
+    success_url = reverse_lazy('accounting:tax_type_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Tax Type'
+        context['back_url'] = reverse('accounting:tax_type_list')
+        context['breadcrumbs'] = [
+            ('Tax Types', reverse('accounting:tax_type_list')),
+            ('Create Tax Type', None)
+        ]
+        return context
+
+
+class TaxTypeUpdateView(LoginRequiredMixin, UpdateView):
+    model = TaxType
+    form_class = TaxTypeForm
+    template_name = 'accounting/tax_type_form.html'
+    success_url = reverse_lazy('accounting:tax_type_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+
+    def get_queryset(self):
+        return TaxType.objects.filter(organization=self.request.user.organization)
+
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Update Tax Type'
+        context['back_url'] = reverse('accounting:tax_type_list')
+        context['breadcrumbs'] = [
+            ('Tax Types', reverse('accounting:tax_type_list')),
+            ('Update Tax Type', None)
+        ]
+        return context
+
+# Project Views
+class ProjectListView(LoginRequiredMixin, ListView):
+    model = Project
+    template_name = 'accounting/project_list.html'
+    context_object_name = 'projects'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return Project.objects.filter(
+            organization=self.request.user.organization
+        ).order_by('code')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['create_url'] = reverse('accounting:project_create')
+        context['create_button_text'] = 'New Project'
+        context['page_title'] = 'Projects'
+        context['breadcrumbs'] = [
+            ('Projects', None),
+        ]
+        return context
+
+
+class ProjectCreateView(LoginRequiredMixin, CreateView):
+    model = Project
+    form_class = ProjectForm
+    template_name = 'accounting/project_form.html'
+    success_url = reverse_lazy('accounting:project_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Project'
+        context['back_url'] = reverse('accounting:project_list')
+        context['breadcrumbs'] = [
+            ('Projects', reverse('accounting:project_list')),
+            ('Create Project', None)
+        ]
+        return context
+
+
+class ProjectUpdateView(LoginRequiredMixin, UpdateView):
+    model = Project
+    form_class = ProjectForm
+    template_name = 'accounting/project_form.html'
+    success_url = reverse_lazy('accounting:project_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+
+    def get_queryset(self):
+        return Project.objects.filter(organization=self.request.user.organization)
+
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Update Project'
+        context['back_url'] = reverse('accounting:project_list')
+        context['breadcrumbs'] = [
+            ('Projects', reverse('accounting:project_list')),
+            ('Update Project', None)
+        ]
+        return context
+
+# Accounting Period Views
+class AccountingPeriodListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
+    model = AccountingPeriod
+    template_name = 'accounting/accounting_period_list.html'
+    context_object_name = 'accounting_periods'
+    paginate_by = 20
+
+    def get_queryset(self):
+        org = self.get_organization()
+        if not org:
+            return self.model.objects.none()
+        return super().get_queryset()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        org = user.get_active_organization()
+        context['create_url'] = reverse('accounting:accounting_period_create')
+        context['create_button_text'] = 'New Accounting Period'
+        context['page_title'] = 'Accounting Periods'
+        return context
+
+class AccountingPeriodCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
+    model = AccountingPeriod
+    form_class = AccountingPeriodForm
+    template_name = 'accounting/accounting_period_form.html'
+    success_url = reverse_lazy('accounting:accounting_period_list')
+    permission_required = ('accounting', 'accountingperiod', 'add')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Accounting Period'
+        context['back_url'] = reverse('accounting:accounting_period_list')
+        return context
+
+class AccountingPeriodUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
+    model = AccountingPeriod
+    form_class = AccountingPeriodForm
+    template_name = 'accounting/accounting_period_form.html'
+    success_url = reverse_lazy('accounting:accounting_period_list')
+    permission_required = ('accounting', 'accountingperiod', 'change')
+    slug_field = 'period_id'
+    slug_url_kwarg = 'period_id'
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            AccountingPeriod,
+            period_id=self.kwargs['period_id'],
+            fiscal_year__organization=self.request.user.get_active_organization()
+        )
+
+    def form_valid(self, form):
+        form.instance.organization = self.get_organization()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Update Accounting Period'
+        context['back_url'] = reverse('accounting:accounting_period_list')
+        return context
+
+class AccountingPeriodDetailView(LoginRequiredMixin, UserOrganizationMixin, DetailView):
+    model = AccountingPeriod
+    template_name = 'accounting/accounting_period_detail.html'
+    context_object_name = 'accounting_period'
+    slug_field = 'period_id'
+    slug_url_kwarg = 'period_id'
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+# Journal Type Views
+class JournalTypeListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
+    model = JournalType
+    template_name = 'accounting/journal_type_list.html'
+    context_object_name = 'journal_types'
+    paginate_by = 20
+    queryset = JournalType.objects.order_by('name')
+   
+    def get_queryset(self):
+        org = self.get_organization()
+        if not org:
+            return self.model.objects.none()
+        return super().get_queryset()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        org = user.get_active_organization()
+        context['create_url'] = reverse('accounting:journal_type_create')
+        context['create_button_text'] = 'New Journal Type'
+        context['page_title'] = 'Journal Types'
+        return context
+
+class JournalTypeCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
+    model = JournalType
+    form_class = JournalTypeForm
+    template_name = 'accounting/journal_type_form.html'
+    success_url = reverse_lazy('accounting:journal_type_list')
+    permission_required = ('accounting', 'journaltype', 'add')
+
+    def form_valid(self, form):
+        form.instance.organization = self.get_organization()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Journal Type'
+        context['back_url'] = reverse('accounting:journal_type_list')
+        return context
+
+class JournalTypeUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
+    model = JournalType
+    form_class = JournalTypeForm
+    template_name = 'accounting/journal_type_form.html'
+    success_url = reverse_lazy('accounting:journal_type_list')
+    permission_required = ('accounting', 'journaltype', 'change')
+    slug_field = 'journal_type_id'
+    slug_url_kwarg = 'journal_type_id'
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            JournalType,
+            journal_type_id=self.kwargs['journal_type_id'],
+            organization=self.request.user.get_active_organization()
+        )
+
+    def form_valid(self, form):
+        form.instance.organization = self.get_organization()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Update Journal Type'
+        context['back_url'] = reverse('accounting:journal_type_list')
+        return context
+
+class JournalTypeDetailView(LoginRequiredMixin, UserOrganizationMixin, DetailView):
+    model = JournalType
+    template_name = 'accounting/journal_type_detail.html'
+    context_object_name = 'journal_type'
+    slug_field = 'journal_type_id'
+    slug_url_kwarg = 'journal_type_id'
+
+    def get_queryset(self):
+        return super().get_queryset()
+    context_object_name = 'journal_type'
+    slug_field = 'journal_type_id'
+    slug_url_kwarg = 'journal_type_id'
+
+    def get_queryset(self):
+        return super().get_queryset()

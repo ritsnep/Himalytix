@@ -1,0 +1,30 @@
+{% extends 'accounting/_list_base.html' %}
+{% block table_head %}
+<thead>
+    <tr>
+        <th>Code</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Active</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+{% endblock %}
+{% block table_body %}
+<tbody>
+    {% for journal_type in journal_types %}
+    <tr>
+        <td>{{ journal_type.code }}</td>
+        <td>{{ journal_type.name }}</td>
+        <td>{{ journal_type.description }}</td>
+        <td>{{ journal_type.is_active|yesno:"Yes,No" }}</td>
+        <td>
+            <a href="{% url 'accounting:journal_type_detail' journal_type.journal_type_id %}">View</a> |
+            <a href="{% url 'accounting:journal_type_update' journal_type.journal_type_id %}">Edit</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">No journal types found.</td></tr>
+    {% endfor %}
+</tbody>
+{% endblock %}
