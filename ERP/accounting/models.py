@@ -77,20 +77,51 @@ class FiscalYear(models.Model):
         db_table = 'fiscal_years'
         ordering = ['-start_date']
         unique_together = ('organization', 'code')
+        indexes = [
+            models.Index(fields=['organization', 'is_current']),
+            models.Index(fields=['organization', 'status']),
+        ]
 
     def __str__(self):
         return f"{self.code} - {self.name}"
 
     def clean(self):
         from django.core.exceptions import ValidationError
+        # Validate date order
         if self.start_date >= self.end_date:
             raise ValidationError("Start date must be before end date.")
+
+        # Only one is_current per org
         if self.is_current:
             qs = FiscalYear.objects.filter(organization_id=self.organization_id, is_current=True)
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             if qs.exists():
                 raise ValidationError("Only one fiscal year can be current per organization.")
+
+        # Only one is_default per org
+        if self.is_default:
+            qs = FiscalYear.objects.filter(organization_id=self.organization_id, is_default=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            if qs.exists():
+                raise ValidationError("Only one fiscal year can be default per organization.")
+
+        # Prevent overlapping fiscal years for the same organization
+        overlapping = FiscalYear.objects.filter(
+            organization_id=self.organization_id,
+            start_date__lte=self.end_date,
+            end_date__gte=self.start_date,
+        )
+        if self.pk:
+            overlapping = overlapping.exclude(pk=self.pk)
+        if overlapping.exists():
+            raise ValidationError("Fiscal year dates overlap with another fiscal year for this organization.")
+
+        # Optionally: Check for gaps (not enforced here, but can be added)
+        # previous = FiscalYear.objects.filter(organization_id=self.organization_id, end_date__lt=self.start_date).order_by('-end_date').first()
+        # if previous and (self.start_date - previous.end_date).days > 1:
+        #     raise ValidationError("There is a gap between this fiscal year and the previous one.")
 
     def save(self, *args, **kwargs):
         logger.info(f"Saving FiscalYear: {self.code}")
@@ -100,6 +131,9 @@ class FiscalYear(models.Model):
         # Enforce only one is_current per org
         if self.is_current:
             FiscalYear.objects.filter(organization_id=self.organization_id, is_current=True).exclude(pk=self.pk).update(is_current=False)
+        # Enforce only one is_default per org
+        if self.is_default:
+            FiscalYear.objects.filter(organization_id=self.organization_id, is_default=True).exclude(pk=self.pk).update(is_default=False)
         self.full_clean()
         super(FiscalYear, self).save(*args, **kwargs)
 
@@ -480,6 +514,18 @@ class JournalType(models.Model):
     def __str__(self):
         return f"{self.code} - {self.name}"
 
+    def get_next_journal_number(self, period: AccountingPeriod = None) -> str:
+        """Generate the next journal number for this type and increment the sequence."""
+        from django.db import transaction
+
+        with transaction.atomic():
+            jt = JournalType.objects.select_for_update().get(pk=self.pk)
+            prefix = jt.auto_numbering_prefix or ''
+            suffix = jt.auto_numbering_suffix or ''
+            next_num = jt.auto_numbering_next
+            jt.auto_numbering_next = next_num + 1
+            jt.save(update_fields=["auto_numbering_next"])
+        return f"{prefix}{next_num}{suffix}"
 
 class Journal(models.Model):
     STATUS_CHOICES = [

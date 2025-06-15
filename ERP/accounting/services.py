@@ -31,18 +31,100 @@ def post_journal(journal: Journal) -> Journal:
     with transaction.atomic():
         if journal.period.status != "open":
             raise ValidationError("Accounting period is closed")
+
         jt = JournalType.objects.select_for_update().get(pk=journal.journal_type.pk)
         if not journal.journal_number:
-            #create journal number
-            journal.journal_number = jt.get_next_journal_number(journal.period)  # get_next_journal_number
+            journal.journal_number = jt.get_next_journal_number(journal.period)
+
         journal.save()
-        for line in journal.lines.all():
+
+        for line in journal.lines.select_related("account").all():
+            line.functional_debit_amount = line.debit_amount * journal.exchange_rate
+            line.functional_credit_amount = line.credit_amount * journal.exchange_rate
             line.save()
+
+            account = line.account
+            account.current_balance = account.current_balance + line.debit_amount - line.credit_amount
+            account.save(update_fields=["current_balance"])
+
+            GeneralLedger.objects.create(
+                organization_id=journal.organization,
+                account=account,
+                journal=journal,
+                journal_line=line,
+                period=journal.period,
+                transaction_date=journal.journal_date,
+                debit_amount=line.debit_amount,
+                credit_amount=line.credit_amount,
+                balance_after=account.current_balance,
+                currency_code=line.currency_code,
+                exchange_rate=line.exchange_rate,
+                functional_debit_amount=line.functional_debit_amount,
+                functional_credit_amount=line.functional_credit_amount,
+                department=line.department,
+                project=line.project_id,
+                cost_center=line.cost_center,
+                description=line.description,
+                source_module=journal.source_module,
+                source_reference=journal.source_reference,
+            )
+
         journal.status = "posted"
+        journal.posted_at = timezone.now()
         journal.save()
-        # ...existing code for assigning journal number...
-        pass
     return journal
+def post_journal_with_params(params: JournalPostParams) -> Journal:
+    """Post a journal using parameters."""
+    journal = params.journal
+    if journal.status != "draft":
+        raise ValidationError("Only draft journals can be posted")
+    if journal.total_debit != journal.total_credit:
+        raise ValidationError("Journal not balanced")
+    with transaction.atomic():
+        if journal.period.status != "open":
+            raise ValidationError("Accounting period is closed")
+        jt = JournalType.objects.select_for_update().get(pk=journal.journal_type.pk)
+        if not journal.journal_number:
+            journal.journal_number = jt.get_next_journal_number(journal.period)
+
+        journal.save()
+
+        for line in journal.lines.select_related("account").all():
+            line.functional_debit_amount = line.debit_amount * journal.exchange_rate
+            line.functional_credit_amount = line.credit_amount * journal.exchange_rate
+            line.save()
+
+            acc = line.account
+            acc.current_balance = acc.current_balance + line.debit_amount - line.credit_amount
+            acc.save(update_fields=["current_balance"])
+
+            GeneralLedger.objects.create(
+                organization_id=journal.organization,
+                account=acc,
+                journal=journal,
+                journal_line=line,
+                period=journal.period,
+                transaction_date=journal.journal_date,
+                debit_amount=line.debit_amount,
+                credit_amount=line.credit_amount,
+                balance_after=acc.current_balance,
+                currency_code=line.currency_code,
+                exchange_rate=line.exchange_rate,
+                functional_debit_amount=line.functional_debit_amount,
+                functional_credit_amount=line.functional_credit_amount,
+                department=line.department,
+                project=line.project_id,
+                cost_center=line.cost_center,
+                description=line.description,
+                source_module=journal.source_module,
+                source_reference=journal.source_reference,
+            )
+
+        journal.status = "posted"
+        journal.posted_at = timezone.now()
+        journal.save()
+    return journal
+
 def post_journal_with_params(params: JournalPostParams) -> Journal:
     """Post a journal using parameters."""
     journal = params.journal
