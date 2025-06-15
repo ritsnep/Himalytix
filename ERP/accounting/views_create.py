@@ -59,6 +59,59 @@ class CostCenterCreateView(LoginRequiredMixin, UserOrganizationMixin, CreateView
         ]
         return context
 
+class TaxTypeCreateView(LoginRequiredMixin, CreateView):
+    model = TaxType
+    form_class = TaxTypeForm
+    template_name = 'accounting/tax_type_form.html'
+    success_url = reverse_lazy('accounting:tax_type_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Tax Type'
+        context['back_url'] = reverse('accounting:tax_type_list')
+        context['breadcrumbs'] = [
+            ('Tax Types', reverse('accounting:tax_type_list')),
+            ('Create Tax Type', None)
+        ]
+        return context
+ 
+class TaxAuthorityCreateView(LoginRequiredMixin, CreateView):
+    model = TaxAuthority
+    form_class = TaxAuthorityForm
+    template_name = 'accounting/tax_authority_form.html'
+    success_url = reverse_lazy('accounting:tax_authority_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Tax Authority'
+        context['back_url'] = reverse('accounting:tax_authority_list')
+        context['breadcrumbs'] = [
+            ('Tax Authorities', reverse('accounting:tax_authority_list')),
+            ('Create Tax Authority', None)
+        ]
+        return context
+
+
 class AccountTypeCreateView(LoginRequiredMixin, CreateView):
     model = AccountType
     form_class = AccountTypeForm
@@ -185,6 +238,110 @@ class VoucherModeConfigCreateView(LoginRequiredMixin, CreateView):
         })
         return context
 
+
+class VoucherModeDefaultCreateView(LoginRequiredMixin, CreateView):
+    model = VoucherModeDefault
+    form_class = VoucherModeDefaultForm
+    template_name = 'accounting/voucher_default_form.html'
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.get_active_organization()
+        kwargs['config_id'] = self.kwargs['config_id']
+        return kwargs
+    
+    def form_valid(self, form):
+        config = get_object_or_404(VoucherModeConfig, pk=self.kwargs['config_id'], organization=self.request.user.get_active_organization())
+        form.instance.config = config
+        messages.success(self.request, "Voucher default line created successfully.")
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': self.kwargs['config_id']})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config = get_object_or_404(VoucherModeConfig, pk=self.kwargs['config_id'], organization=self.request.user.get_active_organization())
+        context.update({
+            'form_title': f'Add Default Line to {config.name}',
+            'page_title': f'Add Default Line: {config.name}',
+            'breadcrumbs': [
+                ('Voucher Configurations', reverse('accounting:voucher_config_list')),
+                (f'{config.name} Details', reverse('accounting:voucher_config_detail', kwargs={'pk': config.pk})),
+                ('Add Default Line', None)
+            ]
+        })
+        return context
+
+
+class ProjectCreateView(LoginRequiredMixin, CreateView):
+    model = Project
+    form_class = ProjectForm
+    template_name = 'accounting/project_form.html'
+    success_url = reverse_lazy('accounting:project_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Project'
+        context['back_url'] = reverse('accounting:project_list')
+        context['breadcrumbs'] = [
+            ('Projects', reverse('accounting:project_list')),
+            ('Create Project', None)
+        ]
+        return context
+
+class AccountingPeriodCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
+    model = AccountingPeriod
+    form_class = AccountingPeriodForm
+    template_name = 'accounting/accounting_period_form.html'
+    success_url = reverse_lazy('accounting:accounting_period_list')
+    permission_required = ('accounting', 'accountingperiod', 'add')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.organization
+        return kwargs
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Accounting Period'
+        context['back_url'] = reverse('accounting:accounting_period_list')
+        return context
+
+class DepartmentCreateView(LoginRequiredMixin, CreateView):
+    model = Department
+    form_class = DepartmentForm
+    template_name = 'accounting/department_form.html'
+    success_url = reverse_lazy('accounting:department_list')
+    
+    def form_valid(self, form):
+        form.instance.organization = self.request.user.organization
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Department'
+        context['back_url'] = reverse('accounting:department_list')
+        context['breadcrumbs'] = [
+            ('Departments', reverse('accounting:department_list')),
+            ('Create Department', None)
+        ]
+        return context
+
+
 class JournalCreateView(LoginRequiredMixin, CreateView):
     model = Journal
     form_class = JournalForm
@@ -237,3 +394,20 @@ class JournalCreateView(LoginRequiredMixin, CreateView):
             logger.error(f"Error creating journal: {e}")
             messages.error(self.request, f"An error occurred while creating the journal: {e}")
             return HttpResponseServerError("Internal Server Error") # More informative error
+        
+class JournalTypeCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
+    model = JournalType
+    form_class = JournalTypeForm
+    template_name = 'accounting/journal_type_form.html'
+    success_url = reverse_lazy('accounting:journal_type_list')
+    permission_required = ('accounting', 'journaltype', 'add')
+
+    def form_valid(self, form):
+        form.instance.organization = self.get_organization()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Create Journal Type'
+        context['back_url'] = reverse('accounting:journal_type_list')
+        return context

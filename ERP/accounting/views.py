@@ -2,7 +2,7 @@ from asyncio.log import logger
 from django.forms import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.views.generic import ListView, CreateView, UpdateView, DetailView
+from django.views.generic import ListView,  UpdateView, DetailView
 from django.urls import reverse, reverse_lazy
 from django.http import HttpResponseForbidden, HttpResponseServerError, JsonResponse, HttpResponse
 import json
@@ -88,37 +88,6 @@ class VoucherModeConfigListView(LoginRequiredMixin, ListView):
         return context
 
 
-class VoucherModeConfigCreateView(LoginRequiredMixin, CreateView):
-    model = VoucherModeConfig
-    form_class = VoucherModeConfigForm
-    template_name = 'accounting/voucher_config_form.html'
-    
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.get_active_organization()
-        return kwargs
-    
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.get_active_organization()
-        form.instance.created_by = self.request.user
-        messages.success(self.request, "Voucher configuration created successfully.")
-        return super().form_valid(form)
-    
-    def get_success_url(self):
-        return reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': self.object.pk})
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({
-            'form_title': 'Create Voucher Configuration',
-            'page_title': 'Create Voucher Configuration',
-            'breadcrumbs': [
-                ('Voucher Configurations', reverse('accounting:voucher_config_list')),
-                ('Create Voucher Configuration', None)
-            ]
-        })
-        return context
-
 
 class VoucherModeConfigUpdateView(LoginRequiredMixin, UpdateView):
     model = VoucherModeConfig
@@ -182,42 +151,6 @@ class VoucherConfigHXView(LoginRequiredMixin, View):
             'layout_cfg': json.dumps(layout_cfg)
         }).content.decode('utf-8')
         return HttpResponse(html)
-
-
-
-class VoucherModeDefaultCreateView(LoginRequiredMixin, CreateView):
-    model = VoucherModeDefault
-    form_class = VoucherModeDefaultForm
-    template_name = 'accounting/voucher_default_form.html'
-    
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.get_active_organization()
-        kwargs['config_id'] = self.kwargs['config_id']
-        return kwargs
-    
-    def form_valid(self, form):
-        config = get_object_or_404(VoucherModeConfig, pk=self.kwargs['config_id'], organization=self.request.user.get_active_organization())
-        form.instance.config = config
-        messages.success(self.request, "Voucher default line created successfully.")
-        return super().form_valid(form)
-    
-    def get_success_url(self):
-        return reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': self.kwargs['config_id']})
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        config = get_object_or_404(VoucherModeConfig, pk=self.kwargs['config_id'], organization=self.request.user.get_active_organization())
-        context.update({
-            'form_title': f'Add Default Line to {config.name}',
-            'page_title': f'Add Default Line: {config.name}',
-            'breadcrumbs': [
-                ('Voucher Configurations', reverse('accounting:voucher_config_list')),
-                (f'{config.name} Details', reverse('accounting:voucher_config_detail', kwargs={'pk': config.pk})),
-                ('Add Default Line', None)
-            ]
-        })
-        return context
 
 
 class VoucherModeDefaultUpdateView(LoginRequiredMixin, UpdateView):
@@ -408,26 +341,6 @@ class DepartmentListView(LoginRequiredMixin, ListView):
         return context
 
 
-class DepartmentCreateView(LoginRequiredMixin, CreateView):
-    model = Department
-    form_class = DepartmentForm
-    template_name = 'accounting/department_form.html'
-    success_url = reverse_lazy('accounting:department_list')
-    
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
-        return super().form_valid(form)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Department'
-        context['back_url'] = reverse('accounting:department_list')
-        context['breadcrumbs'] = [
-            ('Departments', reverse('accounting:department_list')),
-            ('Create Department', None)
-        ]
-        return context
-
 class DepartmentUpdateView(LoginRequiredMixin, UpdateView):
     model = Department
     form_class = DepartmentForm
@@ -497,6 +410,10 @@ class ChartOfAccountListView(LoginRequiredMixin, ListView):
         context['breadcrumbs'] = [
             ('Chart of Accounts', None),
         ]
+        # Remove columns/data/actions for table_tree.html
+        # context['columns'] = ...
+        # context['data'] = ...
+        # context['actions'] = ...
         # Pass level=0 for the root include
         context['level'] = 0
         return context
@@ -509,33 +426,6 @@ class ChartOfAccountListPartial(ChartOfAccountListView):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
-
-class ChartOfAccountCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
-    model = ChartOfAccount
-    form_class = ChartOfAccountForm
-    template_name = 'accounting/chart_of_accounts_form.html'
-    success_url = reverse_lazy('accounting:chart_of_accounts_list')
-    permission_required = ('accounting', 'chartofaccount', 'add')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.get_organization()
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.organization = self.get_organization()
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Chart of Account'
-        context['back_url'] = reverse('accounting:chart_of_accounts_list')
-        context['breadcrumbs'] = [
-            ('Chart of Accounts', reverse('accounting:chart_of_accounts_list')),
-            ('Create Chart of Account', None)
-        ]
-        return context
 
 class ChartOfAccountUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = ChartOfAccount
@@ -602,27 +492,7 @@ class AccountTypeListView(LoginRequiredMixin, ListView):
         ]
         return context
 
-
-class AccountTypeCreateView(LoginRequiredMixin, CreateView):
-    model = AccountType
-    form_class = AccountTypeForm
-    template_name = 'accounting/account_type_form.html'
-    success_url = reverse_lazy('accounting:account_type_list')
-
-    def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Account Type'
-        context['back_url'] = reverse('accounting:account_type_list')
-        context['breadcrumbs'] = [
-            ('Account Types', reverse('accounting:account_type_list')),
-            ('Create Account Type', None)
-        ]
-        return context
-
+ 
 
 class AccountTypeUpdateView(LoginRequiredMixin, UpdateView):
     model = AccountType
@@ -663,28 +533,7 @@ class CurrencyListView(LoginRequiredMixin, ListView):
             ('Currencies', None),
         ]
         return context
-
-class CurrencyCreateView(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
-    model = Currency
-    form_class = CurrencyForm
-    template_name = 'accounting/currency_form.html'
-    success_url = reverse_lazy('accounting:currency_list')
-    permission_required = ('accounting', 'currency', 'add')
-
-    def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Currency'
-        context['back_url'] = reverse('accounting:currency_list')
-        context['breadcrumbs'] = [
-            ('Currencies', reverse('accounting:currency_list')),
-            ('Create Currency', None)
-        ]
-        return context
-
+ 
 class CurrencyUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Currency
     form_class = CurrencyForm
@@ -731,35 +580,7 @@ class CurrencyExchangeRateListView(LoginRequiredMixin, ListView):
             ('Exchange Rates', None),
         ]
         return context
-
-
-class CurrencyExchangeRateCreateView(LoginRequiredMixin, CreateView):
-    model = CurrencyExchangeRate
-    form_class = CurrencyExchangeRateForm
-    template_name = 'accounting/currency_exchange_rate_form.html'
-    success_url = reverse_lazy('accounting:exchange_rate_list')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
-        form.instance.created_by = self.request.user
-        messages.success(self.request, "Currency exchange rate created successfully.")
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Exchange Rate'
-        context['back_url'] = reverse('accounting:exchange_rate_list')
-        context['breadcrumbs'] = [
-            ('Exchange Rates', reverse('accounting:exchange_rate_list')),
-            ('Create Exchange Rate', None)
-        ]
-        return context
-
+ 
 
 class CurrencyExchangeRateUpdateView(LoginRequiredMixin, UpdateView):
     model = CurrencyExchangeRate
@@ -801,33 +622,6 @@ class TaxAuthorityListView(LoginRequiredMixin, ListView):
         context['page_title'] = 'Tax Authorities'
         context['breadcrumbs'] = [
             ('Tax Authorities', None),
-        ]
-        return context
-
-
-class TaxAuthorityCreateView(LoginRequiredMixin, CreateView):
-    model = TaxAuthority
-    form_class = TaxAuthorityForm
-    template_name = 'accounting/tax_authority_form.html'
-    success_url = reverse_lazy('accounting:tax_authority_list')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Tax Authority'
-        context['back_url'] = reverse('accounting:tax_authority_list')
-        context['breadcrumbs'] = [
-            ('Tax Authorities', reverse('accounting:tax_authority_list')),
-            ('Create Tax Authority', None)
         ]
         return context
 
@@ -883,33 +677,6 @@ class TaxTypeListView(LoginRequiredMixin, ListView):
         return context
 
 
-class TaxTypeCreateView(LoginRequiredMixin, CreateView):
-    model = TaxType
-    form_class = TaxTypeForm
-    template_name = 'accounting/tax_type_form.html'
-    success_url = reverse_lazy('accounting:tax_type_list')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Tax Type'
-        context['back_url'] = reverse('accounting:tax_type_list')
-        context['breadcrumbs'] = [
-            ('Tax Types', reverse('accounting:tax_type_list')),
-            ('Create Tax Type', None)
-        ]
-        return context
-
-
 class TaxTypeUpdateView(LoginRequiredMixin, UpdateView):
     model = TaxType
     form_class = TaxTypeForm
@@ -960,32 +727,6 @@ class ProjectListView(LoginRequiredMixin, ListView):
         ]
         return context
 
-
-class ProjectCreateView(LoginRequiredMixin, CreateView):
-    model = Project
-    form_class = ProjectForm
-    template_name = 'accounting/project_form.html'
-    success_url = reverse_lazy('accounting:project_list')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Project'
-        context['back_url'] = reverse('accounting:project_list')
-        context['breadcrumbs'] = [
-            ('Projects', reverse('accounting:project_list')),
-            ('Create Project', None)
-        ]
-        return context
 
 
 class ProjectUpdateView(LoginRequiredMixin, UpdateView):
@@ -1038,26 +779,6 @@ class AccountingPeriodListView(LoginRequiredMixin, UserOrganizationMixin, ListVi
         context['page_title'] = 'Accounting Periods'
         return context
 
-class AccountingPeriodCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
-    model = AccountingPeriod
-    form_class = AccountingPeriodForm
-    template_name = 'accounting/accounting_period_form.html'
-    success_url = reverse_lazy('accounting:accounting_period_list')
-    permission_required = ('accounting', 'accountingperiod', 'add')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
-        return kwargs
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Accounting Period'
-        context['back_url'] = reverse('accounting:accounting_period_list')
-        return context
 
 class AccountingPeriodUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
     model = AccountingPeriod
@@ -1121,22 +842,6 @@ class JournalTypeListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
         context['page_title'] = 'Journal Types'
         return context
 
-class JournalTypeCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
-    model = JournalType
-    form_class = JournalTypeForm
-    template_name = 'accounting/journal_type_form.html'
-    success_url = reverse_lazy('accounting:journal_type_list')
-    permission_required = ('accounting', 'journaltype', 'add')
-
-    def form_valid(self, form):
-        form.instance.organization = self.get_organization()
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Journal Type'
-        context['back_url'] = reverse('accounting:journal_type_list')
-        return context
 
 class JournalTypeUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
     model = JournalType
@@ -1243,31 +948,6 @@ class TaxTypeListView(LoginRequiredMixin, ListView):
         return context
 
 
-class TaxTypeCreateView(LoginRequiredMixin, CreateView):
-    model = TaxType
-    form_class = TaxTypeForm
-    template_name = 'accounting/tax_type_form.html'
-    success_url = reverse_lazy('accounting:tax_type_list')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Tax Type'
-        context['back_url'] = reverse('accounting:tax_type_list')
-        context['breadcrumbs'] = [
-            ('Tax Types', reverse('accounting:tax_type_list')),
-            ('Create Tax Type', None)
-        ]
-        return context
 
 
 class TaxTypeUpdateView(LoginRequiredMixin, UpdateView):
@@ -1321,31 +1001,6 @@ class ProjectListView(LoginRequiredMixin, ListView):
         return context
 
 
-class ProjectCreateView(LoginRequiredMixin, CreateView):
-    model = Project
-    form_class = ProjectForm
-    template_name = 'accounting/project_form.html'
-    success_url = reverse_lazy('accounting:project_list')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Project'
-        context['back_url'] = reverse('accounting:project_list')
-        context['breadcrumbs'] = [
-            ('Projects', reverse('accounting:project_list')),
-            ('Create Project', None)
-        ]
-        return context
 
 
 class ProjectUpdateView(LoginRequiredMixin, UpdateView):
@@ -1398,26 +1053,6 @@ class AccountingPeriodListView(LoginRequiredMixin, UserOrganizationMixin, ListVi
         context['page_title'] = 'Accounting Periods'
         return context
 
-class AccountingPeriodCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
-    model = AccountingPeriod
-    form_class = AccountingPeriodForm
-    template_name = 'accounting/accounting_period_form.html'
-    success_url = reverse_lazy('accounting:accounting_period_list')
-    permission_required = ('accounting', 'accountingperiod', 'add')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.organization
-        return kwargs
-    def form_valid(self, form):
-        form.instance.organization = self.request.user.organization
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Accounting Period'
-        context['back_url'] = reverse('accounting:accounting_period_list')
-        return context
 
 class AccountingPeriodUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
     model = AccountingPeriod
@@ -1481,22 +1116,6 @@ class JournalTypeListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
         context['page_title'] = 'Journal Types'
         return context
 
-class JournalTypeCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
-    model = JournalType
-    form_class = JournalTypeForm
-    template_name = 'accounting/journal_type_form.html'
-    success_url = reverse_lazy('accounting:journal_type_list')
-    permission_required = ('accounting', 'journaltype', 'add')
-
-    def form_valid(self, form):
-        form.instance.organization = self.get_organization()
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Journal Type'
-        context['back_url'] = reverse('accounting:journal_type_list')
-        return context
 
 class JournalTypeUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, UpdateView):
     model = JournalType

@@ -11,9 +11,11 @@ class DynamicFormMixin:
     Mixin that adds dynamic field configuration capabilities to forms.
     """
     def __init__(self, *args, **kwargs):
-        # Extract field configuration before calling parent __init__
         self.field_config = kwargs.pop('field_config', {})
+        schema_fields = kwargs.pop('schema_fields', None)
         super().__init__(*args, **kwargs)
+        if schema_fields:
+            self.add_fields_from_schema(schema_fields)
         self.configure_fields()
 
     def configure_fields(self):
@@ -57,6 +59,39 @@ class DynamicFormMixin:
     def get_layout(self) -> List[Dict]:
         """Get the form layout configuration."""
         return getattr(self, 'layout', [])
+
+    def add_fields_from_schema(self, schema_fields):
+        """
+        Add fields to the form based on schema metadata.
+        """
+        from django import forms
+        for f in schema_fields:
+            field_type = f['DataType']
+            name = f['FieldName']
+            label = f.get('DisplayName', name)
+            required = f.get('IsRequired', False)
+            help_text = f.get('HelpText', '')
+            initial = f.get('DefaultValue', None)
+            widget_attrs = {'placeholder': f.get('Placeholder', '')}
+            if field_type in ('varchar', 'text'):
+                field = forms.CharField(label=label, required=required, help_text=help_text, initial=initial, widget=forms.TextInput(attrs=widget_attrs))
+            elif field_type in ('int', 'bigint'):
+                field = forms.IntegerField(label=label, required=required, help_text=help_text, initial=initial, widget=forms.NumberInput(attrs=widget_attrs))
+            elif field_type in ('decimal', 'float'):
+                field = forms.FloatField(label=label, required=required, help_text=help_text, initial=initial, widget=forms.NumberInput(attrs=widget_attrs))
+            elif field_type == 'date':
+                field = forms.DateField(label=label, required=required, help_text=help_text, initial=initial, widget=forms.DateInput(attrs=widget_attrs))
+            elif field_type == 'boolean':
+                field = forms.BooleanField(label=label, required=required, help_text=help_text, initial=initial)
+            elif field_type == 'select':
+                field = forms.ChoiceField(label=label, required=required, help_text=help_text, choices=f.get('Options', []), initial=initial)
+            else:
+                field = forms.CharField(label=label, required=required, help_text=help_text, initial=initial, widget=forms.TextInput(attrs=widget_attrs))
+            self.add_field(name, field, config={
+                'enabled': f.get('IsActive', True),
+                'widget_attrs': widget_attrs,
+                'css_classes': ['udf-field'],
+            })
 
 
 class DynamicForm(DynamicFormMixin, forms.Form):

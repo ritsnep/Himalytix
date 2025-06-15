@@ -10,7 +10,7 @@ from .serializers import FiscalYearSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from accounting.models import ChartOfAccount, Journal, CurrencyExchangeRate
-from accounting.services import post_journal, close_period
+from accounting.services import post_journal, close_period, get_trial_balance
 from .serializers import (
     ChartOfAccountSerializer,
     JournalSerializer,
@@ -71,3 +71,20 @@ class JournalImportView(APIView):
             else:
                 logger.debug("Invalid row: %s", serializer.errors)
         return Response({"created": created})
+
+
+class TrialBalanceView(APIView):
+    permission_classes = [IsAuthenticated, IsOrganizationMember]
+    renderer_classes = [renderers.JSONRenderer, renderers.BrowsableAPIRenderer]
+
+    def get(self, request):
+        fiscal_year = request.query_params.get("fiscal_year")
+        if not fiscal_year:
+            return Response({"detail": "fiscal_year parameter required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            fy = FiscalYear.objects.get(pk=fiscal_year, organization=request.user.organization)
+        except FiscalYear.DoesNotExist:
+            raise Http404
+
+        data = get_trial_balance(request.user.organization, fy)
+        return Response({"results": data})

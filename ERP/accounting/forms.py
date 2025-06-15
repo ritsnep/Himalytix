@@ -162,11 +162,35 @@ class CostCenterForm(BootstrapFormMixin, forms.ModelForm):
             instance.save()
         return instance
 
+# class AccountTypeForm(BootstrapFormMixin, forms.ModelForm):
+#     class Meta:
+#         model = AccountType
+#         fields = ('name', 'nature', 'classification', 'balance_sheet_category', 
+#                   'income_statement_category', 'display_order', 'system_type')
+#         widgets = {
+#             'name': forms.TextInput(attrs={'class': 'form-control'}),
+#             'nature': forms.Select(attrs={'class': 'form-select'}),
+#             'classification': forms.TextInput(attrs={'class': 'form-control'}),
+#             'balance_sheet_category': forms.TextInput(attrs={'class': 'form-control'}),
+#             'income_statement_category': forms.TextInput(attrs={'class': 'form-control'}),
+#             'display_order': forms.NumberInput(attrs={'class': 'form-control'}),
+#             'system_type': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+#         }
+
 class AccountTypeForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = AccountType
-        fields = ('name', 'nature', 'classification', 'balance_sheet_category', 
-                  'income_statement_category', 'display_order', 'system_type')
+        fields = (
+            'name',
+            'nature',
+            'classification',
+            'balance_sheet_category',
+            'income_statement_category',
+            'display_order',
+            'root_code_prefix',
+            'root_code_step',
+            'system_type',
+        )
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'nature': forms.Select(attrs={'class': 'form-select'}),
@@ -174,9 +198,10 @@ class AccountTypeForm(BootstrapFormMixin, forms.ModelForm):
             'balance_sheet_category': forms.TextInput(attrs={'class': 'form-control'}),
             'income_statement_category': forms.TextInput(attrs={'class': 'form-control'}),
             'display_order': forms.NumberInput(attrs={'class': 'form-control'}),
+            'root_code_prefix': forms.TextInput(attrs={'class': 'form-control'}),
+            'root_code_step': forms.NumberInput(attrs={'class': 'form-control'}),
             'system_type': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
-
 class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = ChartOfAccount

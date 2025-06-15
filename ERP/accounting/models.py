@@ -228,6 +228,10 @@ class AccountType(models.Model):
     cash_flow_category = models.CharField(max_length=50, null=True, blank=True)
     system_type = models.BooleanField(default=True)
     display_order = models.IntegerField()
+    root_code_prefix = models.CharField(max_length=10, null=True, blank=True,
+                                        help_text="Starting prefix for top level account codes")
+    root_code_step = models.PositiveIntegerField(default=100,
+                                                help_text="Increment step for generating top level codes")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(null=True, blank=True)
     is_archived = models.BooleanField(default=False)
@@ -240,6 +244,16 @@ class AccountType(models.Model):
     def __str__(self):
         return f"{self.code} - {self.name}"
     def save(self, *args, **kwargs):
+        if not self.root_code_prefix:
+            self.root_code_prefix = {
+                'asset': '1000',
+                'liability': '2000',
+                'equity': '3000',
+                'income': '4000',
+                'expense': '5000',
+            }.get(self.nature, '9000')
+        if not self.root_code_step:
+            self.root_code_step = 100
         if not self.code:
             prefix = self.NATURE_CODE_PREFIX.get(self.nature, 'ACC')
             # Get max code with the same prefix
@@ -282,14 +296,19 @@ class Currency(models.Model):
         return f"{self.currency_code} - {self.currency_name}"
 
 
+
 class ChartOfAccount(models.Model):
+    # Default starting codes for each account nature. New top level accounts are
+    # created using these prefixes and incremented in steps of ``100``.
+    # The values also determine the length used when zero padding generated codes.
     NATURE_ROOT_CODE = {
-    'asset': '1',
-    'liability': '2',
-    'equity': '3',
-    'income': '4',
-    'expense': '5',
+        'asset': '1000',
+        'liability': '2000',
+        'equity': '3000',
+        'income': '4000',
+        'expense': '5000',
     }
+    ROOT_STEP = 100
     account_id = models.AutoField(primary_key=True)
     organization = models.ForeignKey(
         Organization,
@@ -332,6 +351,13 @@ class ChartOfAccount(models.Model):
 
     def __str__(self):
         return f"{self.account_code} - {self.account_name}"
+
+    def total_balance(self):
+        """Return current balance including balances of all child accounts."""
+        total = self.current_balance
+        for child in ChartOfAccount.objects.filter(parent_account=self):
+            total += child.total_balance()
+        return total
     def save(self, *args, **kwargs):
         if not self.account_code:
             if self.parent_account:
@@ -358,29 +384,32 @@ class ChartOfAccount(models.Model):
             else:
                 # Generate top-level code based on account_type nature
                 root_code = self.account_type and self.account_type.nature
-                root_digit = {
-                    'asset': 1,
-                    'liability': 2,
-                    'equity': 3,
-                    'income': 4,
-                    'expense': 5,
-                }.get(root_code, 9)
+                root_prefix = (
+                    self.account_type.root_code_prefix
+                    or self.NATURE_ROOT_CODE.get(root_code, '9000')
+                )
+                step = self.account_type.root_code_step or self.ROOT_STEP
 
                 top_levels = ChartOfAccount.objects.filter(
                     parent_account__isnull=True,
                     organization=self.organization,
-                    account_code__startswith=str(root_digit)
+                    account_code__startswith=root_prefix[0]
                 )
                 max_code = 0
                 for acc in top_levels:
                     try:
                         acc_num = int(acc.account_code)
-                        if acc_num > max_code:
+                        if str(acc_num).startswith(root_prefix[0]) and acc_num > max_code:
                             max_code = acc_num
                     except ValueError:
                         continue
 
-                self.account_code = str(max_code + 1)
+                if max_code >= int(root_prefix):
+                    next_code = max_code + step
+                else:
+                    next_code = int(root_prefix)
+
+                self.account_code = str(next_code).zfill(len(root_prefix))
 
         # Set tree_path for easier hierarchy querying
         if self.parent_account:
@@ -389,6 +418,7 @@ class ChartOfAccount(models.Model):
             self.tree_path = self.account_code
 
         super(ChartOfAccount, self).save(*args, **kwargs)
+
 
 
 class CurrencyExchangeRate(models.Model):

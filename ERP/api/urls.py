@@ -5,6 +5,7 @@ from .views import (
     JournalViewSet,
     JournalImportView,
     CurrencyExchangeRateViewSet,
+    TrialBalanceView,
 )
 
 router = DefaultRouter()
@@ -15,4 +16,5 @@ router.register(r'currencies/exchange-rates', CurrencyExchangeRateViewSet, basen
 urlpatterns = [
     path('', include(router.urls)),
     path('journal-import/', JournalImportView.as_view(), name='journal-import'),
+    path('trial-balance/', TrialBalanceView.as_view(), name='trial-balance'),
 ]
