@@ -10,6 +10,7 @@ from accounting.models import (
     Journal,
     JournalLine,
     GeneralLedger,
+    VoucherModeConfig,
 )
 from accounting.services import post_journal
 
@@ -89,3 +90,13 @@ class JournalTests(TestCase):
         self.acc2.refresh_from_db()
         self.assertEqual(self.acc1.current_balance, 100)
         self.assertEqual(self.acc2.current_balance, -100)
+        
+    def test_default_voucher_config_created(self):
+        jt2 = JournalType.objects.create(
+            organization=self.org,
+            code="SA",
+            name="Sales",
+        )
+        self.assertTrue(
+            VoucherModeConfig.objects.filter(journal_type=jt2, organization=self.org).exists()
+        )

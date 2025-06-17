@@ -7,8 +7,11 @@ from .views_mixins import UserOrganizationMixin, PermissionRequiredMixin
 from django.urls import reverse, reverse_lazy
 from django.contrib import messages  # Add this import for messages
 from django.db import transaction    # Add this import for transaction
-from django.http import HttpResponseServerError  # Add this import for error handling
-from django.shortcuts import get_object_or_404  # Add this import for get_object_or_404
+from django.http import HttpResponseServerError, HttpResponse  # Add this import for error handling and HttpResponse
+from django.shortcuts import get_object_or_404, redirect  # Add this import for get_object_or_404
+import logging
+
+logger = logging.getLogger(__name__)
 
 class FiscalYearCreateView(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = FiscalYear
@@ -132,6 +135,7 @@ class AccountTypeCreateView(LoginRequiredMixin, CreateView):
         ]
         return context
 
+
 class ChartOfAccountCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
     model = ChartOfAccount
     form_class = ChartOfAccountForm
@@ -145,18 +149,55 @@ class ChartOfAccountCreateView(PermissionRequiredMixin, LoginRequiredMixin, User
         return kwargs
 
     def form_valid(self, form):
-        form.instance.organization = self.get_organization()
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        try:
+            with transaction.atomic():
+                form.instance.organization = self.get_organization()
+                form.instance.created_by = self.request.user
+                
+                # Save the form
+                response = super().form_valid(form)
+                
+                # If it's an HTMX request, return a success message
+                if self.request.headers.get('HX-Request'):
+                    messages.success(self.request, "Chart of Account created successfully.")
+                    return HttpResponse(
+                        f'<div class="alert alert-success">Chart of Account created successfully. Redirecting...</div>'
+                        f'<script>setTimeout(function() {{ window.location.href = "{self.success_url}"; }}, 1000);</script>',
+                        status=200
+                    )
+                
+                messages.success(self.request, "Chart of Account created successfully.")
+                return response
+                
+        except Exception as e:
+            logger.error(f"Error creating chart of account: {str(e)}")
+            if self.request.headers.get('HX-Request'):
+                return HttpResponse(
+                    f'<div class="alert alert-danger">Error creating Chart of Account: {str(e)}</div>',
+                    status=400
+                )
+            messages.error(self.request, f"Error creating Chart of Account: {str(e)}")
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        logger.error(f"Form validation errors: {form.errors}")
+        if self.request.headers.get('HX-Request'):
+            from django.template.loader import render_to_string
+            html = render_to_string(self.template_name, self.get_context_data(form=form), request=self.request)
+            return HttpResponse(html, status=400)
+        return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form_title'] = 'Create Chart of Account'
-        context['back_url'] = reverse('accounting:chart_of_accounts_list')
-        context['breadcrumbs'] = [
-            ('Chart of Accounts', reverse('accounting:chart_of_accounts_list')),
-            ('Create Chart of Account', None)
-        ]
+        context.update({
+            'form_title': 'Create Chart of Account',
+            'page_title': 'Create Chart of Account',
+            'breadcrumbs': [
+                ('Chart of Accounts', reverse('accounting:chart_of_accounts_list')),
+                ('Create Chart of Account', None)
+            ],
+            'form_post_url': reverse('accounting:chart_of_accounts_create')
+        })
         return context
 
 class CurrencyCreateView(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
@@ -370,6 +411,7 @@ class JournalCreateView(LoginRequiredMixin, CreateView):
         })
         return context
     
+   
     def form_valid(self, form):
         try:
             context = self.get_context_data()
@@ -383,10 +425,37 @@ class JournalCreateView(LoginRequiredMixin, CreateView):
                 if lines.is_valid():
                     lines.instance = self.object
                     lines.save()
+                    for lf in lines.forms:
+                        if lf.cleaned_data.get("DELETE"):
+                            continue
+                        if lf.cleaned_data.get("save_as_default"):
+                            jt = form.cleaned_data.get("journal_type")
+                            org = self.request.user.get_active_organization()
+                            config = VoucherModeConfig.objects.filter(
+                                organization=org,
+                                journal_type=jt,
+                                is_default=True,
+                            ).first()
+                            if config:
+                                order = config.defaults.count() + 1
+                                VoucherModeDefault.objects.create(
+                                    config=config,
+                                    account=lf.cleaned_data.get("account"),
+                                    default_debit=lf.cleaned_data.get("debit_amount", 0) > 0,
+                                    default_credit=lf.cleaned_data.get("credit_amount", 0) > 0,
+                                    default_amount=lf.cleaned_data.get("debit_amount") or lf.cleaned_data.get("credit_amount"),
+                                    default_tax_code=lf.cleaned_data.get("tax_code"),
+                                    default_department=lf.cleaned_data.get("department").pk if lf.cleaned_data.get("department") else 0,
+                                    default_project=lf.cleaned_data.get("project").pk if lf.cleaned_data.get("project") else 0,
+                                    default_cost_center=lf.cleaned_data.get("cost_center").pk if lf.cleaned_data.get("cost_center") else 0,
+                                    default_description=lf.cleaned_data.get("description"),
+                                    display_order=order,
+                                    created_by=self.request.user,
+                                )
                 else:
                     # If line forms are invalid, return form_invalid
                     messages.error(self.request, "Please correct the errors in the journal lines.")
-                    return self.form_invalid(form) # Re-render with errors
+                    return self.form_invalid(form)  # Re-render with errors
 
             messages.success(self.request, "Journal created successfully.")
             return super().form_valid(form)
@@ -394,6 +463,7 @@ class JournalCreateView(LoginRequiredMixin, CreateView):
             logger.error(f"Error creating journal: {e}")
             messages.error(self.request, f"An error occurred while creating the journal: {e}")
             return HttpResponseServerError("Internal Server Error") # More informative error
+        
         
 class JournalTypeCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
     model = JournalType

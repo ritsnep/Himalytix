@@ -23,6 +23,8 @@
     <link href="{% static 'css/icons.min.css'%}" rel="stylesheet" type="text/css" />
     <!-- App Css-->
     <link href="{% static 'css/app.min.css'%}" id="app-style" rel="stylesheet" type="text/css" />
+    <!-- Toastr CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" type="text/css" />
     {% endblock css %}
 
 </head>
@@ -62,9 +64,41 @@
     <script src="{% static 'libs/feather-icons/dist/feather.min.js'%}"></script>
     <!-- pace js -->
     <script src="{% static 'libs/pace-js/pace.min.js'%}"></script>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <!-- Toastr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     {% block extra_js %}
     {% endblock extra_js %}
     <script src="{% static 'js/app.js'%}"></script>
+
+    <script>
+        // Configure toastr
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
+        // HTMX Toast Notifications
+        document.body.addEventListener('showMessage', function(evt) {
+            const message = evt.detail.message;
+            const type = evt.detail.type || 'success';
+            toastr[type](message);
+        });
+    </script>
     {% endblock javascript %}
 </body>
 

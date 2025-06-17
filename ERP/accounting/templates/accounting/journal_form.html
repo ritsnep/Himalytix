@@ -115,6 +115,7 @@
                                     <th>Cost Center</th>
                                     <th>Tax Code</th>
                                     <th>Memo</th>
+                                    <th>Save Default?</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -165,6 +166,9 @@
                                         <td>
                                             {{ formset_form.memo }}
                                             {% if formset_form.memo.errors %}<div class="invalid-feedback d-block">{{ formset_form.memo.errors }}</div>{% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ formset_form.save_as_default }}
                                         </td>
                                         <td>
                                             {# Delete Checkbox for existing lines, Remove button for all #}

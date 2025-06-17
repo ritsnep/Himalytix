@@ -53,6 +53,7 @@ urlpatterns = [
     path('chart-of-accounts/create/', views.ChartOfAccountCreateView.as_view(), name='chart_of_accounts_create'),
     path('chart-of-accounts/<int:pk>/update/', views.ChartOfAccountUpdateView.as_view(), name='chart_of_accounts_update'),
     path('chart-of-accounts/<int:pk>/delete/', ChartOfAccountDeleteView.as_view(), name='chart_of_accounts_delete'),
+    path('chart-of-accounts/form-fields/', views.ChartOfAccountFormFieldsView.as_view(), name='chart_of_accounts_form_fields'),
 
     # Account Type URLs
     path('account-types/', views.AccountTypeListView.as_view(), name='account_type_list'),
@@ -95,4 +96,7 @@ urlpatterns = [
     path('journal-types/create/', views.JournalTypeCreateView.as_view(), name='journal_type_create'),
     path('journal-types/<int:journal_type_id>/', views.JournalTypeDetailView.as_view(), name='journal_type_detail'),
     path('journal-types/<int:journal_type_id>/edit/', views.JournalTypeUpdateView.as_view(), name='journal_type_update'),
+
+    # AJAX URLs
+    path('ajax/get-next-account-code/', views.get_next_account_code, name='get_next_account_code'),
 ]

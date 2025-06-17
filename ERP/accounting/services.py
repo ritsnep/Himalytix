@@ -90,6 +90,14 @@ def post_journal_with_params(params: JournalPostParams) -> Journal:
         journal.save()
 
         for line in journal.lines.select_related("account").all():
+            acc = line.account
+            if acc.require_department and not line.department:
+                raise ValidationError(f"Department required for account {acc.account_code}")
+            if acc.require_project and not line.project_id:
+                raise ValidationError(f"Project required for account {acc.account_code}")
+            if acc.require_cost_center and not line.cost_center:
+                raise ValidationError(f"Cost center required for account {acc.account_code}")
+
             line.functional_debit_amount = line.debit_amount * journal.exchange_rate
             line.functional_credit_amount = line.credit_amount * journal.exchange_rate
             line.save()
@@ -125,32 +133,6 @@ def post_journal_with_params(params: JournalPostParams) -> Journal:
         journal.save()
     return journal
 
-def post_journal_with_params(params: JournalPostParams) -> Journal:
-    """Post a journal using parameters."""
-    journal = params.journal
-    if journal.status != "draft":
-        raise ValidationError("Only draft journals can be posted")
-    if journal.total_debit != journal.total_credit:
-        raise ValidationError("Journal not balanced")
-    with transaction.atomic():
-        if journal.period.status != "open":
-            raise ValidationError("Accounting period is closed")
-        jt = JournalType.objects.select_for_update().get(pk=journal.journal_type.pk)
-        if not journal.journal_number:
-            #create journal number
-            journal.journal_number = jt.get_next_journal_number(journal.period)  # get_next_journal_number
-        journal.save()
-        for line in journal.lines.all():
-            line.save()
-        journal.status = "posted"
-        journal.save()
-        # ...code to assign journal number...
-        if journal.journal_type.is_auto_post:
-            # If the journal type is auto-post, we can skip further processing
-            logger.info("Journal type is auto-post, skipping further processing for journal_id=%s", journal.pk)
-            pass
-        # ...existing code for posting journal...
-    return journal
 
 
 def create_voucher(user, config_id: int, header_data: dict, lines_data: list):

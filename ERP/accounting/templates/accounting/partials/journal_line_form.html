@@ -45,6 +45,9 @@
         {{ form.memo }}
         {% if form.memo.errors %}<div class="invalid-feedback d-block">{{ form.memo.errors }}</div>{% endif %}
     </td>
+    <td class="text-center">
+        {{ form.save_as_default }}
+    </td>
     <td>
         {# Hidden input for the 'DELETE' checkbox for formsets (only for existing forms, will be handled by JS for new ones) #}
         {% if form.instance.pk %}

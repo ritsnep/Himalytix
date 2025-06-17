@@ -1,0 +1,154 @@
+{% load static %}
+
+<!-- Bank Account Fields -->
+{% if form.is_bank_account.value %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label for="{{ form.bank_name.id_for_label }}" class="form-label">Bank Name</label>
+            {{ form.bank_name }}
+            {% if form.bank_name.errors %}
+            <div class="error-message">{{ form.bank_name.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label for="{{ form.bank_branch.id_for_label }}" class="form-label">Bank Branch</label>
+            {{ form.bank_branch }}
+            {% if form.bank_branch.errors %}
+            <div class="error-message">{{ form.bank_branch.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label for="{{ form.account_number.id_for_label }}" class="form-label">Account Number</label>
+            {{ form.account_number }}
+            {% if form.account_number.errors %}
+            <div class="error-message">{{ form.account_number.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label for="{{ form.swift_code.id_for_label }}" class="form-label">SWIFT Code</label>
+            {{ form.swift_code }}
+            {% if form.swift_code.errors %}
+            <div class="error-message">{{ form.swift_code.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Control Account Fields -->
+{% if form.is_control_account.value %}
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="mb-3">
+            <label for="{{ form.currency.id_for_label }}" class="form-label required-field">Currency</label>
+            {{ form.currency }}
+            {% if form.currency.errors %}
+            <div class="error-message">{{ form.currency.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="mb-3">
+            <label for="{{ form.last_reconciled_date.id_for_label }}" class="form-label">Last Reconciled Date</label>
+            {{ form.last_reconciled_date }}
+            {% if form.last_reconciled_date.errors %}
+            <div class="error-message">{{ form.last_reconciled_date.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="mb-3">
+            <div class="form-check">
+                {{ form.allow_manual_journal }}
+                <label class="form-check-label" for="{{ form.allow_manual_journal.id_for_label }}">
+                    Allow Manual Journal
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="mb-3">
+            <label for="{{ form.control_account_type.id_for_label }}" class="form-label required-field">Control Account Type</label>
+            {{ form.control_account_type }}
+            {% if form.control_account_type.errors %}
+            <div class="error-message">{{ form.control_account_type.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="mb-3">
+            <div class="form-check">
+                {{ form.require_cost_center }}
+                <label class="form-check-label" for="{{ form.require_cost_center.id_for_label }}">
+                    Require Cost Center
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="mb-3">
+            <div class="form-check">
+                {{ form.require_project }}
+                <label class="form-check-label" for="{{ form.require_project.id_for_label }}">
+                    Require Project
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="mb-3">
+            <div class="form-check">
+                {{ form.require_department }}
+                <label class="form-check-label" for="{{ form.require_department.id_for_label }}">
+                    Require Department
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="mb-3">
+            <label for="{{ form.default_tax_code.id_for_label }}" class="form-label">Default Tax Code</label>
+            {{ form.default_tax_code }}
+            {% if form.default_tax_code.errors %}
+            <div class="error-message">{{ form.default_tax_code.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Hidden Fields -->
+{{ form.account_code }}
+{{ form.account_level }}
+{{ form.tree_path }}
+{{ form.display_order }}
+
+<script>
+document.addEventListener('htmx:afterSwap', function(evt) {
+    // Reinitialize Pristine after HTMX updates
+    const form = document.querySelector('form');
+    if (form) {
+        const pristine = new Pristine(form, {
+            classTo: 'form-group',
+            errorClass: 'has-error',
+            successClass: 'has-success',
+            errorTextParent: 'form-group',
+            errorTextTag: 'div',
+            errorTextClass: 'error-message'
+        });
+    }
+});
+</script> 

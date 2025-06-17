@@ -118,11 +118,32 @@ class FiscalYear(models.Model):
         if overlapping.exists():
             raise ValidationError("Fiscal year dates overlap with another fiscal year for this organization.")
 
-        # Optionally: Check for gaps (not enforced here, but can be added)
-        # previous = FiscalYear.objects.filter(organization_id=self.organization_id, end_date__lt=self.start_date).order_by('-end_date').first()
-        # if previous and (self.start_date - previous.end_date).days > 1:
-        #     raise ValidationError("There is a gap between this fiscal year and the previous one.")
+   
+        previous = (
+            FiscalYear.objects.filter(
+                organization_id=self.organization_id,
+                end_date__lt=self.start_date,
+            )
+            .order_by('-end_date')
+            .first()
+        )
+        if previous and (self.start_date - previous.end_date).days != 1:
+            raise ValidationError(
+                "Fiscal year must start the day after the previous fiscal year ends."
+            )
 
+        next_fy = (
+            FiscalYear.objects.filter(
+                organization_id=self.organization_id,
+                start_date__gt=self.end_date,
+            )
+            .order_by('start_date')
+            .first()
+        )
+        if next_fy and (next_fy.start_date - self.end_date).days != 1:
+            raise ValidationError(
+                "Fiscal year must end the day before the next fiscal year starts."
+            )
     def save(self, *args, **kwargs):
         logger.info(f"Saving FiscalYear: {self.code}")
         if not self.code:
@@ -393,7 +414,9 @@ class ChartOfAccount(models.Model):
             total += child.total_balance()
         return total
     def save(self, *args, **kwargs):
+        logger.debug(f"ChartOfAccount.save: Called for pk={self.pk}, account_code={self.account_code}")
         if not self.account_code:
+            logger.debug("ChartOfAccount.save: Generating account_code...")
             if self.parent_account:
                 # Generate child code
                 siblings = ChartOfAccount.objects.filter(
@@ -415,6 +438,7 @@ class ChartOfAccount(models.Model):
 
                 next_suffix = max_suffix + 1
                 self.account_code = f"{base_code}.{next_suffix:02d}"
+                logger.debug(f"ChartOfAccount.save: Generated child account_code={self.account_code}")
             else:
                 # Generate top-level code based on account_type nature
                 root_code = self.account_type and self.account_type.nature
@@ -427,13 +451,13 @@ class ChartOfAccount(models.Model):
                 top_levels = ChartOfAccount.objects.filter(
                     parent_account__isnull=True,
                     organization=self.organization,
-                    account_code__startswith=root_prefix[0]
+                    account_code__startswith=root_prefix  # <-- FIXED: use full prefix
                 )
                 max_code = 0
                 for acc in top_levels:
                     try:
                         acc_num = int(acc.account_code)
-                        if str(acc_num).startswith(root_prefix[0]) and acc_num > max_code:
+                        if str(acc_num).startswith(root_prefix) and acc_num > max_code:
                             max_code = acc_num
                     except ValueError:
                         continue
@@ -444,13 +468,14 @@ class ChartOfAccount(models.Model):
                     next_code = int(root_prefix)
 
                 self.account_code = str(next_code).zfill(len(root_prefix))
-
+                logger.debug(f"ChartOfAccount.save: Generated top-level account_code={self.account_code}")
         # Set tree_path for easier hierarchy querying
         if self.parent_account:
             self.tree_path = f"{self.parent_account.tree_path}/{self.account_code}" if self.parent_account.tree_path else self.account_code
         else:
             self.tree_path = self.account_code
 
+        logger.debug(f"ChartOfAccount.save: Saving with account_code={self.account_code}")
         super(ChartOfAccount, self).save(*args, **kwargs)
 
 

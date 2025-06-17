@@ -10,6 +10,9 @@ from django import forms
 from .models import FiscalYear
 from .utils import get_active_currency_choices
 from .forms_mixin import BootstrapFormMixin
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # class FiscalYearForm(forms.ModelForm):
@@ -203,13 +206,48 @@ class AccountTypeForm(BootstrapFormMixin, forms.ModelForm):
             'system_type': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
+    account_code = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+    opening_balance = forms.DecimalField(
+        required=True,
+        initial=0.00,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'value': '0.00',
+            'step': '0.01'
+        })
+    )
+    current_balance = forms.DecimalField(
+        required=True,
+        initial=0.00,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'value': '0.00',
+            'step': '0.01'
+        })
+    )
+    reconciled_balance = forms.DecimalField(
+        required=True,
+        initial=0.00,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'value': '0.00',
+            'step': '0.01'
+        })
+    )
+    account_level = forms.IntegerField(
+        required=True,
+        initial=1,
+        widget=forms.HiddenInput()
+    )
+
     class Meta:
         model = ChartOfAccount
         fields = [
-            'organization',
             'parent_account',
             'account_type',
-            'account_code',
             'account_name',
             'description',
             'is_active',
@@ -231,9 +269,8 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
             'display_order'
         ]
         widgets = {
-            'account_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'account_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'account_type': forms.Select(attrs={'class': 'form-select'}),
+            'account_name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'account_type': forms.Select(attrs={'class': 'form-select', 'required': True}),
             'parent_account': forms.Select(attrs={'class': 'form-select'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -245,51 +282,105 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
             'require_department': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'default_tax_code': forms.TextInput(attrs={'class': 'form-control'}),
             'currency': forms.Select(attrs={'class': 'form-select'}),
-            'allow_manual_journal': forms.CheckboxInput(attrs={'class': 'form-check-input'})
+            'last_reconciled_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'allow_manual_journal': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'tree_path': forms.HiddenInput(),
+            'display_order': forms.NumberInput(attrs={'class': 'form-control', 'value': '0'})
         }
 
     def __init__(self, *args, **kwargs):
         self.organization = kwargs.pop('organization', None)
         super().__init__(*args, **kwargs)
-        
+
         if self.organization:
-            # Filter parent choices to only show accounts from the same organization
             self.fields['parent_account'].queryset = ChartOfAccount.objects.filter(
                 organization=self.organization,
                 is_active=True
             )
-            # Filter account type choices
             self.fields['account_type'].queryset = AccountType.objects.filter(
                 is_archived=False
             )
-            
-            # Set up currency choices
             currency_choices = [(currency.currency_code, f"{currency.currency_code} - {currency.currency_name}") 
                                for currency in Currency.objects.filter(is_active=True)]
             self.fields['currency'].widget = forms.Select(attrs={'class': 'form-select'})
             self.fields['currency'].choices = currency_choices
 
-        # Filter AccountType if parent is selected
-        parent = self.initial.get('parent_account') or self.data.get('parent_account')
-        if parent:
-            try:
-                parent_obj = ChartOfAccount.objects.get(pk=parent)
-                self.fields['account_type'].queryset = AccountType.objects.filter(
-                    pk=parent_obj.account_type.pk
-                )
-                self.parent_account_type = parent_obj.account_type
-            except ChartOfAccount.DoesNotExist:
-                self.parent_account_type = None
-        else:
-            self.parent_account_type = None
+        # Set default values for required fields
+        if not self.instance.pk:
+            self.initial.update({
+                'opening_balance': 0.00,
+                'current_balance': 0.00,
+                'reconciled_balance': 0.00,
+                'account_level': 1,
+                'is_active': True
+            })
+
+        # Generate account code for new instances
+        if not self.instance.pk:
+            from .models import AutoIncrementCodeGenerator
+            code_generator = AutoIncrementCodeGenerator(ChartOfAccount, 'account_code', prefix='', suffix='')
+            generated_code = code_generator.generate_code()
+            self.initial['account_code'] = generated_code
+            self.fields['account_code'].initial = generated_code
+
+    def clean_account_code(self):
+        # For new instances, use the generated code
+        if not self.instance.pk:
+            return self.initial.get('account_code', '')
+        # For existing instances, keep the current code
+        return self.instance.account_code
 
     def clean(self):
         cleaned_data = super().clean()
         parent = cleaned_data.get('parent_account')
         account_type = cleaned_data.get('account_type')
+        
+        # Validate account type vs parent
         if parent and account_type and parent.account_type != account_type:
             self.add_error('account_type', "Account type must match the parent account's type.")
+        
+        # Set account code if not set
+        if not cleaned_data.get('account_code') and not self.instance.pk:
+            cleaned_data['account_code'] = self.initial.get('account_code', '')
+            
+        # Set default values for required fields if not provided
+        if not cleaned_data.get('opening_balance'):
+            cleaned_data['opening_balance'] = 0.00
+        if not cleaned_data.get('current_balance'):
+            cleaned_data['current_balance'] = 0.00
+        if not cleaned_data.get('reconciled_balance'):
+            cleaned_data['reconciled_balance'] = 0.00
+        if not cleaned_data.get('account_level'):
+            cleaned_data['account_level'] = 1
+            
         return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        # Set organization for new instances
+        if self.organization and not instance.pk:
+            instance.organization = self.organization
+            
+        # Set account code for new instances
+        if not instance.pk:
+            instance.account_code = self.cleaned_data.get('account_code', '')
+            
+        # Set account level based on parent
+        if instance.parent_account:
+            instance.account_level = instance.parent_account.account_level + 1
+        else:
+            instance.account_level = 1
+            
+        # Set tree path
+        if instance.parent_account:
+            instance.tree_path = f"{instance.parent_account.tree_path}/{instance.account_id}" if instance.parent_account.tree_path else str(instance.account_id)
+        else:
+            instance.tree_path = str(instance.account_id)
+            
+        if commit:
+            instance.save()
+        return instance
 
 class CurrencyForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
@@ -515,12 +606,16 @@ class TaxCodeForm(BootstrapFormMixin, forms.ModelForm):
 class VoucherModeConfigForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = VoucherModeConfig
-        fields = ('name', 'description', 'is_default', 'layout_style', 
-                  'show_account_balances', 'show_tax_details', 'show_dimensions', 
-                  'allow_multiple_currencies', 'require_line_description', 'default_currency')
+        fields = (
+            'name', 'description', 'journal_type', 'is_default',
+            'layout_style', 'show_account_balances', 'show_tax_details',
+            'show_dimensions', 'allow_multiple_currencies',
+            'require_line_description', 'default_currency'
+        )
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'journal_type': forms.Select(attrs={'class': 'form-select'}),
             'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'layout_style': forms.Select(attrs={'class': 'form-select'}),
             'show_account_balances': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -624,6 +719,7 @@ class JournalForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class JournalLineForm(BootstrapFormMixin, forms.ModelForm):
+    save_as_default = forms.BooleanField(required=False, label="Save as default")
     class Meta:
         model = JournalLine
         fields = [
@@ -708,10 +804,20 @@ class JournalLineForm(BootstrapFormMixin, forms.ModelForm):
         
         if (debit == 0 and credit == 0) or (debit > 0 and credit > 0):
             # Add error to the form directly
-            raise forms.ValidationError("A journal line must have either a Debit amount or a Credit amount, but not both, and not neither.")
-        
-        return cleaned_data
+            raise forms.ValidationError(
+                "A journal line must have either a Debit amount or a Credit amount, but not both, and not neither."
+            )
 
+        account = cleaned_data.get("account")
+        if account:
+            if account.require_department and not cleaned_data.get("department"):
+                self.add_error("department", "Department required for this account.")
+            if account.require_project and not cleaned_data.get("project"):
+                self.add_error("project", "Project required for this account.")
+            if account.require_cost_center and not cleaned_data.get("cost_center"):
+                self.add_error("cost_center", "Cost center required for this account.")
+
+        return cleaned_data
 # Ensure JournalLineFormSet passes organization to each form
 JournalLineFormSet = inlineformset_factory(
     Journal, JournalLine,
@@ -725,25 +831,6 @@ JournalLineFormSet = inlineformset_factory(
     ]
 )
 
-class VoucherModeConfigForm(BootstrapFormMixin, forms.ModelForm):
-    class Meta:
-        model = VoucherModeConfig
-        fields = [
-            'name', 'description', 'journal_type', 'is_default',
-            'layout_style', 'show_account_balances', 'show_tax_details',
-            'show_dimensions', 'allow_multiple_currencies',
-            'require_line_description', 'default_currency'
-        ]
-    
-    def __init__(self, *args, **kwargs):
-        self.organization = kwargs.pop('organization', None)
-        super().__init__(*args, **kwargs)
-        
-        if self.organization:
-            self.fields['journal_type'].queryset = JournalType.objects.filter(
-                organization=self.organization,
-                is_active=True
-            )
 
 class VoucherModeDefaultForm(BootstrapFormMixin, forms.ModelForm):
     account_code = forms.CharField(required=False)
@@ -769,6 +856,7 @@ class VoucherModeDefaultForm(BootstrapFormMixin, forms.ModelForm):
         organization = kwargs.pop('organization', None)
         config_id = kwargs.pop('config_id', None)
         super().__init__(*args, **kwargs)
+        self.organization = organization
         
         if organization:
             self.fields['default_department'].queryset = Department.objects.filter(
