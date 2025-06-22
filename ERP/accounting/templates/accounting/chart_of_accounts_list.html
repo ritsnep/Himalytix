@@ -1,64 +1,67 @@
-{% extends 'partials/base.html' %}
+{% extends 'accounting/_list_base.html' %}
 {% load static %}
 
 {% block title %}Chart of Accounts{% endblock %}
+{% block breadcrumb %}Chart of Accounts{% endblock %}
+{% block add_url %}{{ create_url }}{% endblock %}
 
-{% block content %}
-<div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Chart of Accounts</h4>
-                            <div class="d-flex justify-content-end mb-2">
-                                <a href="{{ create_url }}" class="btn btn-success mb-2">
-                                    <i class="mdi mdi-plus me-1"></i> New Chart of Account
-                                </a>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Code</th>
-                                            <th>Name</th>
-                                            <th>Description</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for account in accounts %}
-                                        <tr>
-                                            <td>{{ account.account_code }}</td>
-                                            <td>{{ account.account_name }}</td>
-                                            <td>{{ account.description }}</td>
-                                            <td>
-                                                {% if account.is_active %}
-                                                    <span class="badge bg-success">Active</span>
-                                                {% else %}
-                                                    <span class="badge bg-danger">Inactive</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <a href="{% url 'accounting:chart_of_accounts_update' account.pk %}" class="btn btn-sm btn-primary me-1">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                        {% if not accounts %}
-                                        <tr><td colspan="5" class="text-center">No chart of accounts found.</td></tr>
-                                        {% endif %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% block list_header %}
+<h4 class="card-title">Chart of Accounts</h4>
 {% endblock %}
+
+{% block create_button %}
+<a href="{{ create_url }}" class="btn btn-success mb-2">
+    <i class="mdi mdi-plus me-1"></i> New Chart of Account
+</a>
+{% endblock %}
+
+{% block table_head %}
+<thead>
+  <tr>
+    <th>Account Code</th>
+    <th>Account Name</th>
+    <th>Type</th>
+    <th>Status</th>
+    <th>Action</th>
+  </tr>
+</thead>
+{% endblock %}
+
+{% block table_body %}
+<tbody>
+  {% for account in accounts %}
+  <tr>
+    <td>{{ account.account_code }}</td>
+    <td>{{ account.account_name }}</td>
+    <td>{{ account.account_type.name }}</td>
+    <td>
+      {% if account.is_active %}
+        <span class="badge bg-success">Active</span>
+      {% else %}
+        <span class="badge bg-danger">Inactive</span>
+      {% endif %}
+    </td>
+    <td>
+      {% if perms.accounting.change_chartofaccount %}
+        <a href="{% url 'accounting:chart_of_accounts_update' account.pk %}" class="btn btn-sm btn-primary" title="Edit this account">
+          <i class="fas fa-edit"></i> Edit
+        </a>
+      {% else %}
+        <button class="btn btn-sm btn-primary" title="No permission to edit" disabled>Edit</button>
+      {% endif %}
+      {% if perms.accounting.delete_chartofaccount %}
+        <a href="{% url 'accounting:chart_of_accounts_delete' account.pk %}" class="btn btn-sm btn-danger ms-1" title="Delete this account">
+          <i class="fas fa-trash"></i> Delete
+        </a>
+      {% else %}
+        <button class="btn btn-sm btn-danger ms-1" title="No permission to delete" disabled>Delete</button>
+      {% endif %}
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="5" class="text-center">No chart of accounts found.</td></tr>
+  {% endfor %}
+  <!-- {% include "accounting/partials/chart_of_accounts_tree.html" with accounts=account_tree level=0 %} -->
+</tbody>
+{% endblock %}
+

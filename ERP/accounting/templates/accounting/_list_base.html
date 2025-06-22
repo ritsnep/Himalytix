@@ -6,35 +6,78 @@
     <link href="{% static 'libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css" />
     <link href="{% static 'libs/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css' %}" rel="stylesheet" type="text/css" />
     <link href="{% static 'libs/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'libs/datatables.net-fixedheader-bs4/css/fixedHeader.bootstrap4.min.css' %}" rel="stylesheet" type="text/css" />
+    <style>
+        /* Compact table and controls */
+        .dataTables_wrapper .dt-buttons {
+            margin-bottom: 0 !important;
+        }
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 0 !important;
+        }
+        .dataTables_wrapper .row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .dataTables_wrapper .row > div {
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .card-body {
+            padding: 1rem 1.25rem;
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .dt-buttons .btn {
+            margin-right: 0.25rem;
+        }
+        .dataTables_filter label {
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
 {% endblock extra_css %}
 
 {% block content %}
     <div class="main-content">
         <div class="page-content">
             <div class="container-fluid">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h4 class="card-title mb-0">
-                                {{ page_title|default:"List" }}
-                            </h4>
-                            {% if create_url and create_button_text %}
-                            <a href="{{ create_url }}" class="btn btn-success">
-                                <i class="mdi mdi-plus me-1"></i> {{ create_button_text }}
-                            </a>
-                            {% endif %}
+                <div class="card mb-0">
+                    <div class="card-body pb-2 pt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+                            <div class="d-flex align-items-center mb-2 mb-md-0">
+                                <h4 class="card-title mb-0 me-3">
+                                    {{ page_title|default:"List" }}
+                                </h4>
+                                {% if create_url and create_button_text %}
+                                <a href="{{ create_url }}" class="btn btn-success btn-sm ms-2">
+                                    <i class="mdi mdi-plus me-1"></i> {{ create_button_text }}
+                                </a>
+                                {% endif %}
+                            </div>
+                            <!-- DataTables search and export buttons will be injected here -->
+                            <div id="datatable-controls" class="d-flex align-items-center"></div>
                         </div>
-                        <div class="table-responsive mb-0">
-                            <table id="datatable-buttons" class="table table-bordered dt-responsive nowrap w-100">
-                                {% block table_head %}{% endblock table_head %}
-                                {% block table_body %}{% endblock table_body %}
-                            </table>
+                        <div class="table-rep-plugin">
+                            <div class="table-responsive mb-0">
+                                <table id="datatable-buttons" class="table table-bordered table-sm dt-responsive nowrap w-100 mb-0">
+                                    {% block table_head %}{% endblock table_head %}
+                                    {% block table_body %}{% endblock table_body %}
+                                    <tfoot>
+                                        {% block table_foot %}{% endblock table_foot %}
+                                    </tfoot>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    {% include 'partials/footer.html' %}
 {% endblock content %}
 
 {% block extra_js %}
@@ -53,21 +96,77 @@
 <!-- DataTables Responsive -->
 <script src="{% static 'libs/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
 <script src="{% static 'libs/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js' %}"></script>
-
+<!-- DataTables FixedHeader -->
+<script src="{% static 'libs/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
 <script>
 $(document).ready(function() {
-    $('#datatable-buttons').DataTable({
-        dom: 'Bfrtip',
+    var table = $('#datatable-buttons').DataTable({
+        dom: 'Blfrtip',
         buttons: [
-            { extend: 'copy', className: 'btn btn-light btn-sm' },
-            { extend: 'csv', className: 'btn btn-light btn-sm' },
-            { extend: 'excel', className: 'btn btn-light btn-sm' },
-            { extend: 'pdf', className: 'btn btn-light btn-sm' },
-            { extend: 'print', className: 'btn btn-light btn-sm' },
-            { extend: 'colvis', className: 'btn btn-light btn-sm' }
+            { 
+                extend: 'copy', 
+                className: 'btn btn-light btn-sm',
+                text: '<i class="mdi mdi-content-copy" data-bs-toggle="tooltip" title="Copy"></i>',
+                attr: { title: 'Copy', 'data-bs-toggle': 'tooltip', 'data-bs-placement': 'top' }
+            },
+            { 
+                extend: 'csv', 
+                className: 'btn btn-light btn-sm',
+                text: '<i class="mdi mdi-file-delimited" data-bs-toggle="tooltip" title="CSV"></i>',
+                attr: { title: 'CSV', 'data-bs-toggle': 'tooltip', 'data-bs-placement': 'top' }
+            },
+            { 
+                extend: 'excel', 
+                className: 'btn btn-light btn-sm',
+                text: '<i class="mdi mdi-file-excel" data-bs-toggle="tooltip" title="Excel"></i>',
+                attr: { title: 'Excel', 'data-bs-toggle': 'tooltip', 'data-bs-placement': 'top' }
+            },
+            { 
+                extend: 'pdf', 
+                className: 'btn btn-light btn-sm',
+                text: '<i class="mdi mdi-file-pdf" data-bs-toggle="tooltip" title="PDF"></i>',
+                attr: { title: 'PDF', 'data-bs-toggle': 'tooltip', 'data-bs-placement': 'top' }
+            },
+            { 
+                extend: 'print', 
+                className: 'btn btn-light btn-sm',
+                text: '<i class="mdi mdi-printer" data-bs-toggle="tooltip" title="Print"></i>',
+                attr: { title: 'Print', 'data-bs-toggle': 'tooltip', 'data-bs-placement': 'top' }
+            },
+            { 
+                extend: 'colvis', 
+                className: 'btn btn-light btn-sm',
+                text: '<i class="mdi mdi-view-column" data-bs-toggle="tooltip" title="Column Visibility"></i>',
+                attr: { title: 'Column Visibility', 'data-bs-toggle': 'tooltip', 'data-bs-placement': 'top' }
+            }
         ],
         responsive: true,
+        fixedHeader: true,
+        lengthMenu: [[10, 20, 40, 50, -1], [10, 20, 40, 50, "All"]],
+        pageLength: 10
     });
+    // Column search (if tfoot inputs are present)
+    table.columns().every(function() {
+        var that = this;
+        $('input', this.footer()).on('keyup change clear', function() {
+            if (that.search() !== this.value) {
+                that.search(this.value).draw();
+            }
+        });
+    });
+    // Move search and buttons to the custom controls div
+    var wrapper = $('#datatable-buttons_wrapper');
+    var filter = wrapper.find('.dataTables_filter');
+    var buttons = wrapper.find('.dt-buttons');
+    var controls = $('#datatable-controls');
+    controls.append(buttons.addClass('me-2'));
+    controls.append(filter);
+    // Initialize Bootstrap tooltips for DataTables buttons
+    if (window.bootstrap) {
+        buttons.find('[data-bs-toggle="tooltip"]').each(function() {
+            new bootstrap.Tooltip(this);
+        });
+    }
 });
 </script>
 {% endblock extra_js %}

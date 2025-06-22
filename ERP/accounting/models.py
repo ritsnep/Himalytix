@@ -6,6 +6,8 @@ from usermanagement.models import CustomUser, Organization
 from django.utils.crypto import get_random_string
 from django.db.models import Max
 import logging
+from django.core.exceptions import ValidationError
+from django.db import transaction
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
@@ -403,6 +405,11 @@ class ChartOfAccount(models.Model):
     class Meta:
         unique_together = ('organization', 'account_code')
         ordering = ['account_code']
+        indexes = [
+            models.Index(fields=['parent_account']),
+            models.Index(fields=['account_type']),
+            models.Index(fields=['is_active']),
+        ]
 
     def __str__(self):
         return f"{self.account_code} - {self.account_name}"
@@ -413,19 +420,101 @@ class ChartOfAccount(models.Model):
         for child in ChartOfAccount.objects.filter(parent_account=self):
             total += child.total_balance()
         return total
+    def clean(self):
+        # Circular reference check
+        if self.parent_account:
+            ancestor = self.parent_account
+            depth = 1
+            while ancestor:
+                if ancestor == self:
+                    raise ValidationError("Circular parent relationship detected.")
+                ancestor = ancestor.parent_account
+                depth += 1
+                if depth > 10:
+                    raise ValidationError("Account tree is too deep (max 10 levels).")
+        # Suffix overflow check for children
+        org_id = getattr(self, 'organization_id', None) or (self.organization.pk if hasattr(self, 'organization') and self.organization else None)
+        if self.parent_account:
+            if not org_id:
+                raise ValidationError("Organization must be set before validating child accounts.")
+            siblings = ChartOfAccount.objects.filter(parent_account=self.parent_account, organization_id=org_id)
+            if siblings.count() >= 99:
+                raise ValidationError("Maximum number of child accounts (99) reached for this parent.")
+        super().clean()
     def save(self, *args, **kwargs):
-        logger.debug(f"ChartOfAccount.save: Called for pk={self.pk}, account_code={self.account_code}")
-        if not self.account_code:
-            logger.debug("ChartOfAccount.save: Generating account_code...")
+        with transaction.atomic():
+            self.full_clean()
+            logger.debug(f"ChartOfAccount.save: Called for pk={self.pk}, account_code={self.account_code}")
+            if not self.account_code:
+                logger.debug("ChartOfAccount.save: Generating account_code...")
+                if self.parent_account:
+                    siblings = ChartOfAccount.objects.filter(
+                        parent_account=self.parent_account,
+                        organization=self.organization,
+                    )
+                    sibling_codes = siblings.values_list('account_code', flat=True)
+                    base_code = self.parent_account.account_code
+                    max_suffix = 0
+                    for code in sibling_codes:
+                        if code.startswith(base_code + "."):
+                            try:
+                                suffix = int(code.replace(base_code + ".", ""))
+                                if suffix > max_suffix:
+                                    max_suffix = suffix
+                            except ValueError:
+                                continue
+                    next_suffix = max_suffix + 1
+                    if next_suffix > 99:
+                        raise ValidationError("Maximum number of child accounts (99) reached for this parent.")
+                    self.account_code = f"{base_code}.{next_suffix:02d}"
+                    logger.debug(f"ChartOfAccount.save: Generated child account_code={self.account_code}")
+                else:
+                    root_code = self.account_type and self.account_type.nature
+                    root_prefix = (
+                        self.account_type.root_code_prefix
+                        or self.NATURE_ROOT_CODE.get(root_code, '9000')
+                    )
+                    step = self.account_type.root_code_step or self.ROOT_STEP
+                    top_levels = ChartOfAccount.objects.filter(
+                        parent_account__isnull=True,
+                        organization=self.organization,
+                        account_code__startswith=root_prefix
+                    )
+                    max_code = 0
+                    for acc in top_levels:
+                        try:
+                            acc_num = int(acc.account_code)
+                            if str(acc_num).startswith(root_prefix) and acc_num > max_code:
+                                max_code = acc_num
+                        except ValueError:
+                            continue
+                    if max_code >= int(root_prefix):
+                        next_code = max_code + step
+                    else:
+                        next_code = int(root_prefix)
+                    self.account_code = str(next_code).zfill(len(root_prefix))
+                    logger.debug(f"ChartOfAccount.save: Generated top-level account_code={self.account_code}")
             if self.parent_account:
-                # Generate child code
-                siblings = ChartOfAccount.objects.filter(
-                    parent_account=self.parent_account,
-                    organization=self.organization,
-                )
+                self.tree_path = f"{self.parent_account.tree_path}/{self.account_code}" if self.parent_account.tree_path else self.account_code
+            else:
+                self.tree_path = self.account_code
+            logger.debug(f"ChartOfAccount.save: Saving with account_code={self.account_code}")
+            super(ChartOfAccount, self).save(*args, **kwargs)
+    @classmethod
+    def get_next_code(cls, org_id, parent_id, account_type_id):
+        from django.db.models import Q
+        from django.db import transaction
+        if not org_id:
+            return None
+        with transaction.atomic():
+            if parent_id:
+                try:
+                    parent = cls.objects.get(pk=parent_id)
+                except cls.DoesNotExist:
+                    return None
+                siblings = cls.objects.filter(parent_account=parent, organization_id=org_id)
                 sibling_codes = siblings.values_list('account_code', flat=True)
-
-                base_code = self.parent_account.account_code
+                base_code = parent.account_code
                 max_suffix = 0
                 for code in sibling_codes:
                     if code.startswith(base_code + "."):
@@ -435,23 +524,23 @@ class ChartOfAccount(models.Model):
                                 max_suffix = suffix
                         except ValueError:
                             continue
-
                 next_suffix = max_suffix + 1
-                self.account_code = f"{base_code}.{next_suffix:02d}"
-                logger.debug(f"ChartOfAccount.save: Generated child account_code={self.account_code}")
+                if next_suffix > 99:
+                    raise ValidationError("Maximum number of child accounts (99) reached for this parent.")
+                return f"{base_code}.{next_suffix:02d}"
             else:
-                # Generate top-level code based on account_type nature
-                root_code = self.account_type and self.account_type.nature
-                root_prefix = (
-                    self.account_type.root_code_prefix
-                    or self.NATURE_ROOT_CODE.get(root_code, '9000')
-                )
-                step = self.account_type.root_code_step or self.ROOT_STEP
-
-                top_levels = ChartOfAccount.objects.filter(
+                from .models import AccountType
+                try:
+                    at = AccountType.objects.get(pk=account_type_id)
+                except AccountType.DoesNotExist:
+                    return None
+                root_code = at.nature
+                root_prefix = at.root_code_prefix or cls.NATURE_ROOT_CODE.get(root_code, '9000')
+                step = at.root_code_step or cls.ROOT_STEP
+                top_levels = cls.objects.filter(
                     parent_account__isnull=True,
-                    organization=self.organization,
-                    account_code__startswith=root_prefix  # <-- FIXED: use full prefix
+                    organization_id=org_id,
+                    account_code__startswith=root_prefix
                 )
                 max_code = 0
                 for acc in top_levels:
@@ -461,24 +550,11 @@ class ChartOfAccount(models.Model):
                             max_code = acc_num
                     except ValueError:
                         continue
-
                 if max_code >= int(root_prefix):
                     next_code = max_code + step
                 else:
                     next_code = int(root_prefix)
-
-                self.account_code = str(next_code).zfill(len(root_prefix))
-                logger.debug(f"ChartOfAccount.save: Generated top-level account_code={self.account_code}")
-        # Set tree_path for easier hierarchy querying
-        if self.parent_account:
-            self.tree_path = f"{self.parent_account.tree_path}/{self.account_code}" if self.parent_account.tree_path else self.account_code
-        else:
-            self.tree_path = self.account_code
-
-        logger.debug(f"ChartOfAccount.save: Saving with account_code={self.account_code}")
-        super(ChartOfAccount, self).save(*args, **kwargs)
-
-
+                return str(next_code).zfill(len(root_prefix))
 
 class CurrencyExchangeRate(models.Model):
     rate_id = models.AutoField(primary_key=True)

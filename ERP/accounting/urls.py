@@ -99,4 +99,5 @@ urlpatterns = [
 
     # AJAX URLs
     path('ajax/get-next-account-code/', views.get_next_account_code, name='get_next_account_code'),
+
 ]

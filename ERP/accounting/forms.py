@@ -206,9 +206,16 @@ class AccountTypeForm(BootstrapFormMixin, forms.ModelForm):
             'system_type': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
+    organization = forms.CharField(widget=forms.HiddenInput(), required=False)
     account_code = forms.CharField(
         required=False,
-        widget=forms.HiddenInput()
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'readonly': True,
+            'maxlength': '50',
+            'pattern': r'^[0-9]+(\.[0-9]{2})*$',
+            'title': 'Account code must be numeric, optionally with dot and two digits for children.'
+        })
     )
     opening_balance = forms.DecimalField(
         required=True,
@@ -216,7 +223,10 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
             'value': '0.00',
-            'step': '0.01'
+            'step': '0.01',
+            'min': '0',
+            'max': '999999999999.9999',
+            'title': 'Opening balance must be a positive number.'
         })
     )
     current_balance = forms.DecimalField(
@@ -225,7 +235,10 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
             'value': '0.00',
-            'step': '0.01'
+            'step': '0.01',
+            'min': '-999999999999.9999',
+            'max': '999999999999.9999',
+            'title': 'Current balance can be negative or positive.'
         })
     )
     reconciled_balance = forms.DecimalField(
@@ -234,13 +247,15 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
             'value': '0.00',
-            'step': '0.01'
+            'step': '0.01',
+            'min': '-999999999999.9999',
+            'max': '999999999999.9999',
+            'title': 'Reconciled balance can be negative or positive.'
         })
     )
     account_level = forms.IntegerField(
-        required=True,
-        initial=1,
-        widget=forms.HiddenInput()
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '10', 'title': 'Account level (1-10)'})
     )
 
     class Meta:
@@ -269,30 +284,35 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
             'display_order'
         ]
         widgets = {
-            'account_name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
-            'account_type': forms.Select(attrs={'class': 'form-select', 'required': True}),
-            'parent_account': forms.Select(attrs={'class': 'form-select'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'is_bank_account': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'is_control_account': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'control_account_type': forms.TextInput(attrs={'class': 'form-control'}),
-            'require_cost_center': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'require_project': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'require_department': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'default_tax_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'currency': forms.Select(attrs={'class': 'form-select'}),
-            'last_reconciled_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'allow_manual_journal': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'account_name': forms.TextInput(attrs={'class': 'form-control', 'required': True, 'maxlength': '200', 'placeholder': 'Account Name', 'title': 'Enter the account name (max 200 characters).'}),
+            'account_type': forms.Select(attrs={'class': 'form-select', 'required': True, 'title': 'Select the account type.'}),
+            'parent_account': forms.Select(attrs={'class': 'form-select', 'title': 'Select the parent account if any.'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'maxlength': '500', 'placeholder': 'Description (optional)', 'title': 'Describe the account (optional, max 500 characters).'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input', 'title': 'Is this account active?'}),
+            'is_bank_account': forms.CheckboxInput(attrs={'class': 'form-check-input', 'title': 'Is this a bank account?'}),
+            'is_control_account': forms.CheckboxInput(attrs={'class': 'form-check-input', 'title': 'Is this a control account?'}),
+            'control_account_type': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '50', 'placeholder': 'Control Account Type', 'title': 'Type of control account (optional, max 50 characters).'}),
+            'require_cost_center': forms.CheckboxInput(attrs={'class': 'form-check-input', 'title': 'Require cost center for transactions?'}),
+            'require_project': forms.CheckboxInput(attrs={'class': 'form-check-input', 'title': 'Require project for transactions?'}),
+            'require_department': forms.CheckboxInput(attrs={'class': 'form-check-input', 'title': 'Require department for transactions?'}),
+            'default_tax_code': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '50', 'placeholder': 'Default Tax Code', 'title': 'Default tax code (optional, max 50 characters).'}),
+            'currency': forms.Select(attrs={'class': 'form-select', 'title': 'Select the currency.'}),
+            'last_reconciled_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'title': 'Last reconciled date.'}),
+            'allow_manual_journal': forms.CheckboxInput(attrs={'class': 'form-check-input', 'title': 'Allow manual journal entries?'}),
             'tree_path': forms.HiddenInput(),
-            'display_order': forms.NumberInput(attrs={'class': 'form-control', 'value': '0'})
+            'display_order': forms.NumberInput(attrs={'class': 'form-control', 'value': '0', 'title': 'Display order (optional).'})
         }
 
     def __init__(self, *args, **kwargs):
         self.organization = kwargs.pop('organization', None)
         super().__init__(*args, **kwargs)
+        initial = kwargs.get('initial', {})
+        for name, field in self.fields.items():
+            if name in initial:
+                field.initial = initial[name]
 
         if self.organization:
+            self.fields['organization'].initial = self.organization.pk
             self.fields['parent_account'].queryset = ChartOfAccount.objects.filter(
                 organization=self.organization,
                 is_active=True
@@ -304,6 +324,9 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
                                for currency in Currency.objects.filter(is_active=True)]
             self.fields['currency'].widget = forms.Select(attrs={'class': 'form-select'})
             self.fields['currency'].choices = currency_choices
+        # Always set organization on the instance for validation
+        if self.organization and not getattr(self.instance, 'organization_id', None):
+            self.instance.organization = self.organization
 
         # Set default values for required fields
         if not self.instance.pk:
@@ -315,20 +338,26 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
                 'is_active': True
             })
 
-        # Generate account code for new instances
+        # Generate account code for new instances using backend logic
         if not self.instance.pk:
-            from .models import AutoIncrementCodeGenerator
-            code_generator = AutoIncrementCodeGenerator(ChartOfAccount, 'account_code', prefix='', suffix='')
-            generated_code = code_generator.generate_code()
-            self.initial['account_code'] = generated_code
-            self.fields['account_code'].initial = generated_code
+            org_id = self.organization.pk if self.organization else None
+            parent_id = self.data.get('parent_account') or self.initial.get('parent_account')
+            account_type_id = self.data.get('account_type') or self.initial.get('account_type')
+            if parent_id == '':
+                parent_id = None
+            if account_type_id == '':
+                account_type_id = None
+            if org_id and (parent_id or account_type_id):
+                generated_code = ChartOfAccount.get_next_code(org_id, parent_id, account_type_id)
+                self.initial['account_code'] = generated_code
+                self.fields['account_code'].initial = generated_code
 
     def clean_account_code(self):
-        # For new instances, use the generated code
-        if not self.instance.pk:
-            return self.initial.get('account_code', '')
-        # For existing instances, keep the current code
-        return self.instance.account_code
+        value = self.cleaned_data.get('account_code') or self.initial.get('account_code', '')
+        import re
+        if value and not re.match(r'^[0-9]+(\.[0-9]{2})*$', value):
+            raise forms.ValidationError('Account code must be numeric, optionally with dot and two digits for children.')
+        return value
 
     def clean(self):
         cleaned_data = super().clean()
@@ -338,6 +367,25 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
         # Validate account type vs parent
         if parent and account_type and parent.account_type != account_type:
             self.add_error('account_type', "Account type must match the parent account's type.")
+        
+        # Circular reference check
+        if parent:
+            ancestor = parent
+            depth = 1
+            while ancestor:
+                if ancestor == self.instance:
+                    self.add_error('parent_account', "Circular parent relationship detected.")
+                    break
+                ancestor = ancestor.parent_account
+                depth += 1
+                if depth > 10:
+                    self.add_error('parent_account', "Account tree is too deep (max 10 levels).")
+                    break
+        # Suffix overflow check for children
+        if parent:
+            siblings = ChartOfAccount.objects.filter(parent_account=parent, organization=self.organization)
+            if siblings.count() >= 99:
+                self.add_error('parent_account', "Maximum number of child accounts (99) reached for this parent.")
         
         # Set account code if not set
         if not cleaned_data.get('account_code') and not self.instance.pk:

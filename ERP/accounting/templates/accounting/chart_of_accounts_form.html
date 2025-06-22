@@ -1,15 +1,16 @@
-{% extends "partials/base.html" %}
+{% extends 'accounting/_form_base.html' %}
 {% load static %}
 
 {% block title %}{{ form_title|default:"Chart of Account" }}{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <style>
     /* Loading state styles */
     .htmx-request .spinner-border {
         display: inline-block !important;
     }
-    
+
     /* Message styles */
     #messages {
         position: fixed;
@@ -18,21 +19,21 @@
         z-index: 1050;
         min-width: 300px;
     }
-    
+
     .alert {
         margin-bottom: 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
+
     /* Form validation styles */
     .is-invalid {
         border-color: #dc3545;
     }
-    
+
     .invalid-feedback {
         display: block;
     }
-    
+
     /* Disable form during submission */
     .htmx-request button[type="submit"] {
         pointer-events: none;
@@ -48,24 +49,30 @@
     .htmx-indicator {
         display: none;
     }
+
     .htmx-request .htmx-indicator {
         display: inline;
     }
+
     .htmx-request.htmx-indicator {
         display: inline;
     }
+
     .error-message {
         color: #dc3545;
         font-size: 0.875rem;
         margin-top: 0.25rem;
     }
+
     .is-valid {
         border-color: #198754;
     }
+
     .permission-disabled {
         opacity: 0.7;
         pointer-events: none;
     }
+
     .required-field::after {
         content: " *";
         color: #dc3545;
@@ -73,15 +80,324 @@
 </style>
 {% endblock %}
 
+{% block form_content %}
+<div class="card">
+
+    <div class="card-body">
+        <form id="chart-of-account-form" class="session-preserve" method="post" novalidate
+            hx-post="{{ form_post_url }}"
+            hx-trigger="submit" hx-target="#chart-of-account-form" hx-swap="outerHTML"
+            hx-indicator=".spinner-border">
+            {% csrf_token %}
+            {{ form.organization }}
+            <div id="form-response"></div>
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                <strong>There were errors with your submission:</strong>
+                <ul>
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            <!-- Basic Info -->
+            <fieldset class="mb-4">
+                <legend>
+                    <button class="btn btn-link p-0" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#basic-info"
+                            aria-expanded="true" aria-controls="basic-info">
+                        Basic Info
+                    </button>
+                </legend>
+                <div id="basic-info" class="collapse show">
+                    <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.account_code.id_for_label }}" class="form-label">Account Code</label>
+                        {{ form.account_code }}
+                        {% if form.account_code.errors %}
+                        <div class="error-message">{{ form.account_code.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.account_name.id_for_label }}" class="form-label required-field">Account Name</label>
+                        {{ form.account_name }}
+                        {% if form.account_name.errors %}
+                        <div class="error-message">{{ form.account_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.account_type.id_for_label }}" class="form-label required-field">Account Type</label>
+                        <select name="{{ form.account_type.name }}" id="{{ form.account_type.id_for_label }}"
+                            class="form-select{% if form.account_type.errors %} is-invalid{% endif %}">
+                            {% for option in form.account_type.field.choices %}
+                                <option value="{{ option.0 }}"{% if option.0 == form.account_type.value %} selected{% endif %}>{{ option.1 }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.account_type.errors %}
+                        <div class="error-message">{{ form.account_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.parent_account.id_for_label }}" class="form-label">Parent Account</label>
+                        <select name="{{ form.parent_account.name }}" id="{{ form.parent_account.id_for_label }}" class="form-select">
+                            <option value="">---------</option>
+                            {% for account in form.parent_account.field.queryset %}
+                                <option value="{{ account.pk }}" data-account-type="{{ account.account_type_id }}"{% if account.pk == form.parent_account.value %} selected{% endif %}>
+                                    {{ account.account_code }} - {{ account.account_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.parent_account.errors %}
+                        <div class="error-message">{{ form.parent_account.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.currency.id_for_label }}" class="form-label">Currency</label>
+                        {{ form.currency }}
+                        {% if form.currency.errors %}
+                        <div class="error-message">{{ form.currency.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="error-message">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+            <!-- Account Settings -->
+            <fieldset class="mb-4">
+                <legend>
+                    <button class="btn btn-link p-0" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#account-settings"
+                            aria-expanded="true" aria-controls="account-settings">
+                        Account Settings
+                    </button>
+                </legend>
+                <div id="account-settings" class="collapse show">
+                    <div class="row">
+                <div class="col-md-3">
+                    <div class="form-check mb-3">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check mb-3">
+                        {{ form.is_bank_account }}
+                        <label class="form-check-label" for="{{ form.is_bank_account.id_for_label }}">Bank Account</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check mb-3">
+                        {{ form.is_control_account }}
+                        <label class="form-check-label" for="{{ form.is_control_account.id_for_label }}">Control Account</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check mb-3">
+                        {{ form.allow_manual_journal }}
+                        <label class="form-check-label" for="{{ form.allow_manual_journal.id_for_label }}">Allow Manual Journal</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-check mb-3">
+                        {{ form.require_cost_center }}
+                        <label class="form-check-label" for="{{ form.require_cost_center.id_for_label }}">Require Cost Center</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mb-3">
+                        {{ form.require_project }}
+                        <label class="form-check-label" for="{{ form.require_project.id_for_label }}">Require Project</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mb-3">
+                        {{ form.require_department }}
+                        <label class="form-check-label" for="{{ form.require_department.id_for_label }}">Require Department</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.default_tax_code.id_for_label }}" class="form-label">Default Tax Code</label>
+                        {{ form.default_tax_code }}
+                        {% if form.default_tax_code.errors %}
+                        <div class="error-message">{{ form.default_tax_code.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.display_order.id_for_label }}" class="form-label">Display Order</label>
+                        {{ form.display_order }}
+                        {% if form.display_order.errors %}
+                        <div class="error-message">{{ form.display_order.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.control_account_type.id_for_label }}" class="form-label">Control Account Type</label>
+                        {{ form.control_account_type }}
+                        {% if form.control_account_type.errors %}
+                        <div class="error-message">{{ form.control_account_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- Account Balances -->
+    <fieldset class="mb-4">
+        <legend>
+            <button class="btn btn-link p-0" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#account-balances"
+                    aria-expanded="true" aria-controls="account-balances">
+                Account Balances
+            </button>
+        </legend>
+        <div id="account-balances" class="collapse show">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Opening Balance</label>
+                        <div class="form-control-plaintext">{{ form.opening_balance.value|default:"0.00" }}</div>
+                        {{ form.opening_balance.as_hidden }}
+                        {% if form.opening_balance.errors %}
+                        <div class="error-message">{{ form.opening_balance.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Current Balance</label>
+                        <div class="form-control-plaintext">{{ form.current_balance.value|default:"0.00" }}</div>
+                        {{ form.current_balance.as_hidden }}
+                        {% if form.current_balance.errors %}
+                        <div class="error-message">{{ form.current_balance.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Reconciled Balance</label>
+                        <div class="form-control-plaintext">{{ form.reconciled_balance.value|default:"0.00" }}</div>
+                        {{ form.reconciled_balance.as_hidden }}
+                        {% if form.reconciled_balance.errors %}
+                        <div class="error-message">{{ form.reconciled_balance.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Last Reconciled Date</label>
+                        <div class="form-control-plaintext">{{ form.last_reconciled_date.value|default:"—" }}</div>
+                    </div>
+                </div>
+            </div>
+            </fieldset>
+            <!-- Collapsible Advanced Settings -->
+            <button type="button" class="btn btn-link" id="toggle-advanced">Show/Hide Advanced Settings</button>
+            <div id="advanced-section" class="d-none">
+                <div class="row">
+                    <!-- Place advanced fields here, e.g. display_order, tree_path, control_account_type, etc. -->
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="{{ form.display_order.id_for_label }}" class="form-label">Display Order</label>
+                            {{ form.display_order }}
+                            {% if form.display_order.errors %}
+                            <div class="error-message">{{ form.display_order.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="{{ form.control_account_type.id_for_label }}" class="form-label">Control Account Type</label>
+                            {{ form.control_account_type }}
+                            {% if form.control_account_type.errors %}
+                            <div class="error-message">{{ form.control_account_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Add more advanced fields as needed -->
+                </div>
+            </div>
+                         <!-- Dynamic Fields -->
+                         <fieldset class="mb-4">
+                            <legend>
+                                <button class="btn btn-link p-0" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#udf-section"
+                                        aria-expanded="true" aria-controls="udf-section">
+                                    UDFs
+                                </button>
+                            </legend>
+                            <div id="udf-section" class="collapse show">
+                                <div id="dynamic-fields"
+                                     hx-get="{% url 'accounting:chart_of_accounts_form_fields' %}"
+                                     hx-trigger="change from:#id_is_bank_account, change from:#id_is_control_account"
+                                     hx-target="#dynamic-fields"
+                                     hx-swap="innerHTML">
+                                    {% include 'accounting/chart_of_accounts_form_fields.html' %}
+                                </div>
+                            </div>
+                        </fieldset>
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ back_url|default:form_post_url }}" class="btn btn-secondary">Back</a>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock %}
+
 {% block extra_js %}
+{{ block.super }}
 <script src="{% static 'libs/pristinejs/dist/pristine.min.js' %}"></script>
 <script>
+ 
     function initPristine() {
         var form = document.getElementById('chart-of-account-form');
         if (form && !form._pristineInitialized) {
             form._pristineInitialized = true;
             form.pristine = new Pristine(form);
-            form.addEventListener('submit', function(evt) {
+            // Add custom validator for account_type vs parent_account
+            form.pristine.addValidator(
+                document.getElementById('id_account_type'),
+                function(value) {
+                    var parentSelect = document.getElementById('id_parent_account');
+                    if (!parentSelect || !parentSelect.value) return true; // No parent, always valid
+                    var selectedOption = parentSelect.options[parentSelect.selectedIndex];
+                    var parentType = selectedOption.getAttribute('data-account-type');
+                    if (!parentType) return true; // No data, skip
+                    return value === parentType;
+                },
+                "Account type must match the parent account's type."
+            );
+            form.addEventListener('submit', function (evt) {
                 if (!form.pristine.validate()) {
                     evt.preventDefault();
                     return false;
@@ -90,31 +406,31 @@
             // Dynamic field updates
             var accountType = document.getElementById('id_account_type');
             if (accountType) {
-                accountType.addEventListener('change', function(evt) {
+                accountType.addEventListener('change', function (evt) {
                     htmx.trigger('#dynamic-fields', 'refresh');
                 });
             }
             var isBankAccount = document.getElementById('id_is_bank_account');
             if (isBankAccount) {
-                isBankAccount.addEventListener('change', function(evt) {
+                isBankAccount.addEventListener('change', function (evt) {
                     htmx.trigger('#dynamic-fields', 'refresh');
                 });
             }
             var isControlAccount = document.getElementById('id_is_control_account');
             if (isControlAccount) {
-                isControlAccount.addEventListener('change', function(evt) {
+                isControlAccount.addEventListener('change', function (evt) {
                     htmx.trigger('#dynamic-fields', 'refresh');
                 });
             }
         }
     }
     document.addEventListener('DOMContentLoaded', initPristine);
-    document.body.addEventListener('htmx:afterSwap', function(evt) {
+    document.body.addEventListener('htmx:afterSwap', function (evt) {
         if (evt.target && evt.target.id === 'chart-of-account-form') {
             initPristine();
         }
     });
-    document.body.addEventListener('htmx:afterRequest', function(evt) {
+    document.body.addEventListener('htmx:afterRequest', function (evt) {
         // Only show a toast for server errors (status 500+), not for validation errors (400)
         if (evt.detail.xhr && evt.detail.xhr.status >= 500) {
             toastr.error('A server error occurred. Please try again.');
@@ -122,208 +438,98 @@
         // For validation errors (400), do not show a generic toast; errors will be visible in the form
     });
 </script>
-{% endblock %}
+<script type="module">
+import { setupAutoFill } from "{% static 'js/htmx-autofill.js' %}";
 
-{% block content %}
-<div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <form id="chart-of-account-form" method="post" novalidate
-                                  hx-post="{{ form_post_url }}"
-                                  hx-trigger="submit"
-                                  hx-target="#chart-of-account-form"
-                                  hx-swap="outerHTML"
-                                  hx-indicator=".spinner-border"
-                                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                                {% csrf_token %}
+window.initAutoFills = function () {
+    setupAutoFill({
+        triggerSelectors: [
+            "#id_organization",
+            "#id_parent_account",
+            "#id_account_type"
+        ],
+        targetSelector: "#id_account_code",
+        url: "{% url 'accounting:get_next_account_code' %}",
+        paramsCallback: () => ({
+            organization: document.querySelector("#id_organization")?.value,
+            parent_account: document.querySelector("#id_parent_account")?.value,
+            account_type: document.querySelector("#id_account_type")?.value,
+        }),
+        valueCallback: (data) => {
+            document.querySelector("#id_account_code").value = data.next_code || "";
+        }
+    });
+};
+window.initAutoFills();
+</script>
+<script>
+const FORM_KEY = 'pending_chart_of_accounts_form_v1';
 
-                                <!-- Form Response Container -->
-                                <div id="form-response"></div>
+function serializeForm(form) {
+    const data = {};
+    new FormData(form).forEach((v, k) => {
+        if (data[k]) {
+            if (!Array.isArray(data[k])) data[k] = [data[k]];
+            data[k].push(v);
+        } else {
+            data[k] = v;
+        }
+    });
+    return data;
+}
 
-                                {% if form.non_field_errors %}
-                                <div class="alert alert-danger">
-                                    {% for error in form.non_field_errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
+function saveFormToStorage(form) {
+    const data = serializeForm(form);
+    data['__path__'] = window.location.pathname;
+    localStorage.setItem(FORM_KEY, JSON.stringify(data));
+}
 
-                                <!-- Basic Info -->
-                                <h5 class="mb-3">Basic Info</h5>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.account_code.id_for_label }}" class="form-label">Account Code</label>
-                                            {{ form.account_code }}
-                                            {% if form.account_code.errors %}
-                                            <div class="error-message">{{ form.account_code.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.account_name.id_for_label }}" class="form-label required-field">Account Name</label>
-                                            {{ form.account_name }}
-                                            {% if form.account_name.errors %}
-                                            <div class="error-message">{{ form.account_name.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.account_type.id_for_label }}" class="form-label required-field">Account Type</label>
-                                            {{ form.account_type }}
-                                            {% if form.account_type.errors %}
-                                            <div class="error-message">{{ form.account_type.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
+window.addEventListener('beforeunload', function() {
+    const form = document.getElementById('chart-of-account-form');
+    if (form) saveFormToStorage(form);
+});
 
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.parent_account.id_for_label }}" class="form-label">Parent Account</label>
-                                            {{ form.parent_account }}
-                                            {% if form.parent_account.errors %}
-                                            <div class="error-message">{{ form.parent_account.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.currency.id_for_label }}" class="form-label">Currency</label>
-                                            {{ form.currency }}
-                                            {% if form.currency.errors %}
-                                            <div class="error-message">{{ form.currency.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
-                                            {{ form.description }}
-                                            {% if form.description.errors %}
-                                            <div class="error-message">{{ form.description.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Account Settings -->
-                                <h5 class="mt-4 mb-3">Account Settings</h5>
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="form-check mb-3">
-                                            {{ form.is_active }}
-                                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-check mb-3">
-                                            {{ form.is_bank_account }}
-                                            <label class="form-check-label" for="{{ form.is_bank_account.id_for_label }}">Bank Account</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-check mb-3">
-                                            {{ form.is_control_account }}
-                                            <label class="form-check-label" for="{{ form.is_control_account.id_for_label }}">Control Account</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-check mb-3">
-                                            {{ form.allow_manual_journal }}
-                                            <label class="form-check-label" for="{{ form.allow_manual_journal.id_for_label }}">Allow Manual Journal</label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Balances -->
-                                <h5 class="mt-4 mb-3">Balances</h5>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.opening_balance.id_for_label }}" class="form-label required-field">Opening Balance</label>
-                                            {{ form.opening_balance }}
-                                            {% if form.opening_balance.errors %}
-                                            <div class="error-message">{{ form.opening_balance.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.current_balance.id_for_label }}" class="form-label required-field">Current Balance</label>
-                                            {{ form.current_balance }}
-                                            {% if form.current_balance.errors %}
-                                            <div class="error-message">{{ form.current_balance.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.reconciled_balance.id_for_label }}" class="form-label required-field">Reconciled Balance</label>
-                                            {{ form.reconciled_balance }}
-                                            {% if form.reconciled_balance.errors %}
-                                            <div class="error-message">{{ form.reconciled_balance.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Additional fields for logic completeness -->
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.last_reconciled_date.id_for_label }}" class="form-label">Last Reconciled Date</label>
-                                            {{ form.last_reconciled_date }}
-                                            {% if form.last_reconciled_date.errors %}
-                                            <div class="error-message">{{ form.last_reconciled_date.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label for="{{ form.display_order.id_for_label }}" class="form-label">Display Order</label>
-                                            {{ form.display_order }}
-                                            {% if form.display_order.errors %}
-                                            <div class="error-message">{{ form.display_order.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Dynamic Fields -->
-                                <div id="dynamic-fields"
-                                     hx-get="{% url 'accounting:chart_of_accounts_form_fields' %}"
-                                     hx-trigger="change from:#id_is_bank_account, change from:#id_is_control_account"
-                                     hx-target="#dynamic-fields"
-                                     hx-swap="innerHTML">
-                                    {% include 'accounting/chart_of_accounts_form_fields.html' %}
-                                </div>
-
-                                <!-- Form Actions -->
-                                <div class="d-flex justify-content-between mt-4">
-                                    <a href="{% url 'accounting:chart_of_accounts_list' %}" class="btn btn-secondary">Cancel</a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <span class="htmx-indicator">
-                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                            Saving...
-                                        </span>
-                                        <span class="htmx-settled">
-                                            Save
-                                        </span>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+window.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('chart-of-account-form');
+    // Focus on first error field
+    var errorField = document.querySelector('.is-invalid, .error-message');
+    if (errorField) {
+        var input = errorField.closest('.form-group')?.querySelector('input, select, textarea');
+        if (input) input.focus();
+    }
+    // Collapsible advanced section
+    var advBtn = document.getElementById('toggle-advanced');
+    if (advBtn) {
+        advBtn.addEventListener('click', function() {
+            var adv = document.getElementById('advanced-section');
+            if (adv) adv.classList.toggle('d-none');
+        });
+    }
+});
+</script>
+<script>
+document.body.addEventListener('htmx:configRequest', function(event) {
+    event.detail.headers['X-CSRFToken'] = getCookie('csrftoken');
+});
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+<script>
+// Call this after logout to clear form data
+if (window.location.pathname === '/account/logout/' || window.location.pathname === '/accounts/logout/') {
+    document.body.dispatchEvent(new Event('clearFormStorage'));
+}
+</script>
 {% endblock %}

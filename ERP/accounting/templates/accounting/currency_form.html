@@ -21,9 +21,9 @@
                 </div>
                 {% endif %}
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
+                <div class="row row-cols-1 row-cols-sm-2 g-3 mb-3">
+                    <div class="col">
+                        <div class="form-group">
                             <label for="{{ form.currency_code.id_for_label }}" class="form-label">Currency Code</label>
                             {{ form.currency_code }}
                             {% if form.currency_code.errors %}
@@ -33,8 +33,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
+                    <div class="col">
+                        <div class="form-group">
                             <label for="{{ form.currency_name.id_for_label }}" class="form-label">Currency Name</label>
                             {{ form.currency_name }}
                             {% if form.currency_name.errors %}
@@ -46,9 +46,9 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
+                <div class="row row-cols-1 row-cols-sm-2 g-3 mb-3">
+                    <div class="col">
+                        <div class="form-group">
                             <label for="{{ form.symbol.id_for_label }}" class="form-label">Symbol</label>
                             {{ form.symbol }}
                             {% if form.symbol.errors %}
@@ -58,8 +58,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
+                    <div class="col">
+                        <div class="form-group">
                             <div class="form-check">
                                 {{ form.is_active }}
                                 <label class="form-check-label" for="{{ form.is_active.id_for_label }}">

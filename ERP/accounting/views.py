@@ -15,6 +15,8 @@ from .models import AccountType, Currency, CurrencyExchangeRate, FiscalYear, Tax
 from .forms import AccountTypeForm, ChartOfAccountForm, CostCenterForm, CurrencyExchangeRateForm, CurrencyForm, DepartmentForm, FiscalYearForm, ProjectForm, TaxAuthorityForm, TaxTypeForm
 from django.contrib import messages
 from django.db.models import F
+from django.http import JsonResponse
+from .models import ChartOfAccount  # adjust as needed
 
 from .serializers import VoucherModeConfigSerializer
 
@@ -39,6 +41,13 @@ from .views_list import *
 from .views_create import *
 from .views_update import *
 from .views_delete import *
+from .forms import ChartOfAccountForm
+from django.views.decorators.csrf import csrf_exempt
+from utils.form_restore import get_pending_form_initial, clear_pending_form
+from django.db.models import Prefetch
+import logging
+
+logger = logging.getLogger(__name__)
 
 class HTMXAccountAutocompleteView(LoginRequiredMixin, View):
     def get(self, request):
@@ -58,7 +67,7 @@ class HTMXJournalLineFormView(LoginRequiredMixin, View):
         # Create a single empty form from the formset
         # We need a dummy instance to create the formset for a single extra form
         # Or, we can just instantiate JournalLineForm directly with a prefix
-        form = JournalLineForm(prefix=f'lines-{form_index}', organization=organization)
+        # form = JournalLineForm(prefix=f'lines-{form_index}', organization=organization)
         
         # Manually set required attributes for new form for client-side validation
         # These are set in the forms.py now, but can be reinforced here if needed
@@ -372,10 +381,10 @@ class ChartOfAccountListView(LoginRequiredMixin, ListView):
     paginate_by = None  # Show all for tree
 
     def get_queryset(self):
-        # Return all accounts for the org, ordered for tree
+        # Prefetch parent_account and account_type to avoid N+1
         return ChartOfAccount.objects.filter(
             organization=self.request.user.organization
-        ).order_by('account_code')
+        ).select_related('parent_account', 'account_type').order_by('account_code')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -491,6 +500,10 @@ class ChartOfAccountUpdateView(PermissionRequiredMixin, LoginRequiredMixin, Upda
         context['form_post_url'] = reverse('accounting:chart_of_accounts_update', kwargs={'pk': self.object.pk})
         return context
 
+    def handle_no_permission(self):
+        logger.warning(f"User {self.request.user} denied permission to update ChartOfAccount {self.get_object().pk if self.get_object() else ''}")
+        return super().handle_no_permission()
+
 class ChartOfAccountDeleteView(PermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = ChartOfAccount
     template_name = 'accounting/chart_of_accounts_confirm_delete.html'
@@ -500,12 +513,27 @@ class ChartOfAccountDeleteView(PermissionRequiredMixin, LoginRequiredMixin, Dele
     def get_queryset(self):
         return ChartOfAccount.objects.filter(organization=self.request.user.organization)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = self.get_object()
+        context['form_title'] = 'Delete Chart of Account'
+        context['page_title'] = 'Delete Chart of Account'
+        context['breadcrumbs'] = [
+            ('Chart of Accounts', reverse_lazy('accounting:chart_of_accounts_list')),
+            (f'Delete: {obj.account_code} - {obj.account_name}', None)
+        ]
+        return context
+
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
         if ChartOfAccount.objects.filter(parent_account=self.object).exists():
             messages.error(request, "Cannot delete an account that has sub-accounts. Please remove or reassign its children first.")
             return redirect(self.success_url)
         return super().delete(request, *args, **kwargs)
+
+    def handle_no_permission(self):
+        logger.warning(f"User {self.request.user} denied permission to delete ChartOfAccount {self.get_object().pk if self.get_object() else ''}")
+        return super().handle_no_permission()
 
 # Account Type Views
 class AccountTypeListView(LoginRequiredMixin, ListView):
@@ -923,61 +951,120 @@ class JournalTypeDetailView(LoginRequiredMixin, UserOrganizationMixin, DetailVie
     def get_queryset(self):
         return super().get_queryset()
 
+
 def get_next_account_code(request):
-    """
-    AJAX endpoint to get the next account code based on account_type and/or parent_account.
-    """
-    org_id = request.GET.get('organization')
-    account_type_id = request.GET.get('account_type')
-    parent_id = request.GET.get('parent_account')
-
-    if not org_id:
-        return JsonResponse({'error': 'Organization required'}, status=400)
-
+    org_id = request.GET.get("organization")
+    parent_id = request.GET.get("parent_account")
+    account_type = request.GET.get("account_type")
+    if not org_id or org_id == "undefined":
+        return JsonResponse({"error": "Missing or invalid organization"}, status=400)
+    if not parent_id and not account_type:
+        return JsonResponse({"next_code": ""})  # Don't try to look up if both are empty
+    if account_type == "":
+        account_type = None
+    if parent_id == "":
+        parent_id = None
     try:
-        if parent_id:
-            parent = ChartOfAccount.objects.get(pk=parent_id, organization_id=org_id)
-            # Generate next child code
-            siblings = ChartOfAccount.objects.filter(parent_account=parent, organization_id=org_id)
-            sibling_codes = siblings.values_list('account_code', flat=True)
-            base_code = parent.account_code
-            max_suffix = 0
-            for code in sibling_codes:
-                if code.startswith(base_code + "."):
-                    try:
-                        suffix = int(code.replace(base_code + ".", ""))
-                        if suffix > max_suffix:
-                            max_suffix = suffix
-                    except ValueError:
-                        continue
-            next_suffix = max_suffix + 1
-            next_code = f"{base_code}.{next_suffix:02d}"
-        elif account_type_id:
-            account_type = AccountType.objects.get(pk=account_type_id)
-            root_prefix = account_type.root_code_prefix or ChartOfAccount.NATURE_ROOT_CODE.get(account_type.nature, '9000')
-            step = account_type.root_code_step or ChartOfAccount.ROOT_STEP
-            top_levels = ChartOfAccount.objects.filter(
-                parent_account__isnull=True,
-                organization_id=org_id,
-                account_code__startswith=root_prefix[0]
-            )
-            max_code = 0
-            for acc in top_levels:
-                try:
-                    acc_num = int(acc.account_code)
-                    if str(acc_num).startswith(root_prefix[0]) and acc_num > max_code:
-                        max_code = acc_num
-                except ValueError:
-                    continue
-            if max_code >= int(root_prefix):
-                next_code = str(max_code + step).zfill(len(root_prefix))
-            else:
-                next_code = root_prefix
+        next_code = ChartOfAccount.get_next_code(org_id, parent_id, account_type)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    return JsonResponse({"next_code": next_code})
+
+# def get_next_account_code(self, root_prefix, org_id):
+#     """
+#     Get the next account code based on the root prefix and organization ID.
+#     """
+#     top_levels = ChartOfAccount.objects.filter(
+#         parent_account__isnull=True,
+#         organization_id=org_id,
+#         account_code__startswith=root_prefix  # Use full root_prefix
+#     )
+#     max_code = 0
+#     for acc in top_levels:
+#         try:
+#             acc_num = int(acc.account_code)
+#             if str(acc_num).startswith(root_prefix) and acc_num > max_code:  # Use full root_prefix
+#                 max_code = acc_num
+#         except ValueError:
+#             continue
+#     return max_code
+
+
+# This part seems to be a part of a view function
+def get_next_account_code_view(self, request):
+    try:
+        root_prefix = self.request.GET.get('root_prefix')
+        org_id = self.request.GET.get('org_id')
+        step = self.request.GET.get('step')  # Assuming step is passed as a GET parameter
+
+        if not all([root_prefix, org_id, step]):
+            return JsonResponse({'error': 'root_prefix, org_id, and step are required'}, status=400)
+
+        max_code = self.get_next_account_code(root_prefix, org_id)
+
+        if max_code >= int(root_prefix):
+            next_code = str(max_code + int(step)).zfill(len(root_prefix))
         else:
-            return JsonResponse({'error': 'account_type or parent_account required'}, status=400)
+            next_code = root_prefix
+
         return JsonResponse({'next_code': next_code})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+# def get_next_account_code(request):
+#     """
+#     AJAX endpoint to get the next account code based on account_type and/or parent_account.
+#     """
+#     org_id = request.GET.get('organization')
+#     account_type_id = request.GET.get('account_type')
+#     parent_id = request.GET.get('parent_account')
+
+#     if not org_id:
+#         return JsonResponse({'error': 'Organization required'}, status=400)
+
+#     try:
+#         if parent_id:
+#             parent = ChartOfAccount.objects.get(pk=parent_id, organization_id=org_id)
+#             # Generate next child code
+#             siblings = ChartOfAccount.objects.filter(parent_account=parent, organization_id=org_id)
+#             sibling_codes = siblings.values_list('account_code', flat=True)
+#             base_code = parent.account_code
+#             max_suffix = 0
+#             for code in sibling_codes:
+#                 if code.startswith(base_code + "."):
+#                     try:
+#                         suffix = int(code.replace(base_code + ".", ""))
+#                         if suffix > max_suffix:
+#                             max_suffix = suffix
+#                     except ValueError:
+#                         continue
+#             next_suffix = max_suffix + 1
+#             next_code = f"{base_code}.{next_suffix:02d}"
+#         elif account_type_id:
+#             account_type = AccountType.objects.get(pk=account_type_id)
+#             root_prefix = account_type.root_code_prefix or ChartOfAccount.NATURE_ROOT_CODE.get(account_type.nature, '9000')
+#             step = account_type.root_code_step or ChartOfAccount.ROOT_STEP
+#             top_levels = ChartOfAccount.objects.filter(
+#                 parent_account__isnull=True,
+#                 organization_id=org_id,
+#                 account_code__startswith=root_prefix[0]
+#             )
+#             max_code = 0
+#             for acc in top_levels:
+#                 try:
+#                     acc_num = int(acc.account_code)
+#                     if str(acc_num).startswith(root_prefix[0]) and acc_num > max_code:
+#                         max_code = acc_num
+#                 except ValueError:
+#                     continue
+#             if max_code >= int(root_prefix):
+#                 next_code = str(max_code + step).zfill(len(root_prefix))
+#             else:
+#                 next_code = root_prefix
+#         else:
+#             return JsonResponse({'error': 'account_type or parent_account required'}, status=400)
+#         return JsonResponse({'next_code': next_code})
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=400)
 
 class ChartOfAccountFormFieldsView(LoginRequiredMixin, View):
     """HTMX view for dynamic form fields."""
@@ -1013,3 +1100,40 @@ class ChartOfAccountFormFieldsView(LoginRequiredMixin, View):
 #             ('Create Chart of Account', None)
 #         ]
 #         return context
+
+@login_required
+@csrf_exempt
+def chart_of_accounts_create(request):
+    initial = get_pending_form_initial(request)
+    clear_storage_script = None
+    org = getattr(request.user, 'organization', None)
+    if request.method == 'POST':
+        form = ChartOfAccountForm(request.POST, organization=org)
+        # Ensure organization is set on the instance before validation
+        if org is not None:
+            form.instance.organization = org
+        if form.is_valid():
+            form.save()
+            clear_pending_form(request)
+            clear_storage_script = """
+            <script>
+            document.body.dispatchEvent(new Event('clearFormStorage'));
+            </script>
+            """
+            # HTMX-aware redirect
+            if request.headers.get('HX-Request'):
+                from django.http import HttpResponse
+                response = HttpResponse()
+                response['HX-Redirect'] = reverse('accounting:chart_of_accounts_list')
+                response['HX-Trigger'] = 'clearFormStorage'
+                return response
+            else:
+                response = redirect('accounting:chart_of_accounts_list')
+                response['HX-Trigger'] = 'clearFormStorage'
+                return response
+    else:
+        form = ChartOfAccountForm(initial=initial, organization=org)
+    context = {'form': form, 'form_post_url': request.path}
+    if clear_storage_script:
+        context['clear_storage_script'] = clear_storage_script
+    return render(request, 'accounting/chart_of_accounts_form.html', context)
