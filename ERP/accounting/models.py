@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from usermanagement.models import CustomUser, Organization
 from django.utils.crypto import get_random_string
-from django.db.models import Max
+from django.db.models import Max, Q, F, CheckConstraint
 import logging
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -74,6 +74,7 @@ class FiscalYear(models.Model):
     archived_at = models.DateTimeField(null=True, blank=True)
     archived_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_fiscal_years')
     is_default = models.BooleanField(default=False)
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
 
     class Meta:
         db_table = 'fiscal_years'
@@ -83,6 +84,12 @@ class FiscalYear(models.Model):
             models.Index(fields=['organization', 'is_current']),
             models.Index(fields=['organization', 'status']),
         ]
+        constraints = [
+            CheckConstraint(check=Q(start_date__lt=F('end_date')), name='fiscalyear_start_before_end'),
+        ]
+        # For DBA: Add UNIQUE WHERE is_current=1 and is_default=1 on (organization)
+        # For DBA: CLUSTERED INDEX (organization, start_date)
+        # For DBA: SYSTEM-VERSIONED TEMPORAL TABLE
 
     def __str__(self):
         return f"{self.code} - {self.name}"
@@ -190,10 +197,18 @@ class AccountingPeriod(models.Model):
     is_archived = models.BooleanField(default=False)
     archived_at = models.DateTimeField(null=True, blank=True)
     is_current = models.BooleanField(default=False)
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
     
     class Meta:
         unique_together = ('fiscal_year', 'period_number')
         ordering = ['fiscal_year', 'period_number']
+        constraints = [
+            CheckConstraint(check=Q(start_date__lt=F('end_date')), name='period_start_before_end'),
+        ]
+        # For DBA: UNIQUE (fiscal_year_id, period_number)
+        # For DBA: FILTERED INDEX WHERE status='open'
+        # For DBA: CHECK start/end inside parent FY
+        # For DBA: ROWVERSION
 
     def __str__(self):
         return f"{self.fiscal_year.name} - {self.name}"
@@ -209,12 +224,26 @@ class Department(models.Model):
         on_delete=models.CASCADE,
         related_name='departments'
     )
+    code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=100)
-    # Add other department fields as needed
+    is_active = models.BooleanField(default=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
 
     def __str__(self):
         # This will make Department objects display their name in dropdowns and elsewhere
         return self.name 
+
+    class Meta:
+        ordering = ['name']
+        constraints = [
+            CheckConstraint(check=Q(start_date__lt=F('end_date')), name='department_start_before_end'),
+        ]
+        # For DBA: NONCLUSTERED UNIQUE (organization_id, code)
+        # For DBA: FILTERED INDEX WHERE is_active=1
 
 class Project(models.Model):
     project_id = models.AutoField(primary_key=True)  # Add this line
@@ -227,9 +256,15 @@ class Project(models.Model):
     end_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
     
     class Meta:
         ordering = ['name']
+        constraints = [
+            CheckConstraint(check=Q(start_date__lt=F('end_date')), name='project_start_before_end'),
+        ]
+        # For DBA: NONCLUSTERED UNIQUE (organization_id, code)
+        # For DBA: FILTERED INDEX WHERE is_active=1
         
     def __str__(self):
         return f"{self.code} - {self.name}"
@@ -240,17 +275,23 @@ class Project(models.Model):
         super(Project, self).save(*args, **kwargs)
 class CostCenter(models.Model):
     cost_center_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
-    code = models.CharField(max_length=20, unique=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='cost_centers',null=True, blank=True)
+    code = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
     class Meta:
         ordering = ['name']
+        constraints = [
+            CheckConstraint(check=Q(start_date__lt=F('end_date')), name='costcenter_start_before_end'),
+        ]
+        # For DBA: NONCLUSTERED UNIQUE (organization_id, code)
+        # For DBA: FILTERED INDEX WHERE is_active=1
     def __str__(self):
         return f"{self.code} - {self.name}"
     def save(self, *args, **kwargs):
@@ -297,6 +338,7 @@ class AccountType(models.Model):
     archived_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_account_types')
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_account_types')
     updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_account_types')
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
     
     def __str__(self):
         return f"{self.code} - {self.name}"
@@ -334,6 +376,12 @@ class AccountType(models.Model):
 
         super(AccountType, self).save(*args, **kwargs)
 
+    class Meta:
+        # ... existing meta ...
+        constraints = [
+            CheckConstraint(check=Q(root_code_step__gt=0), name='accounttype_root_code_step_positive'),
+        ]
+        # For DBA: PAGE compression, mark as static reference
 
 class Currency(models.Model):
     currency_code = models.CharField(max_length=3, primary_key=True)
@@ -344,6 +392,7 @@ class Currency(models.Model):
     updated_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_currencies')
     updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_currencies')
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
 
     class Meta:
         verbose_name_plural = "Currencies"
@@ -401,6 +450,7 @@ class ChartOfAccount(models.Model):
     is_archived = models.BooleanField(default=False)
     archived_at = models.DateTimeField(null=True, blank=True)
     archived_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_accounts')
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
     
     class Meta:
         unique_together = ('organization', 'account_code')
@@ -410,6 +460,9 @@ class ChartOfAccount(models.Model):
             models.Index(fields=['account_type']),
             models.Index(fields=['is_active']),
         ]
+        # For DBA: Clustered on (organization_id, account_code); non-clustered on parent_account
+        # For DBA: tree_path as persisted hierarchyid
+        # For DBA: PAGE compression
 
     def __str__(self):
         return f"{self.account_code} - {self.account_name}"
@@ -576,10 +629,14 @@ class CurrencyExchangeRate(models.Model):
     is_archived = models.BooleanField(default=False)
     archived_at = models.DateTimeField(null=True, blank=True)
     archived_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_exchange_rates')
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
     
     class Meta:
         unique_together = ('organization', 'from_currency', 'to_currency', 'rate_date')
         ordering = ['-rate_date']
+        # For DBA: Composite UNIQUE (org, from, to, rate_date, is_average_rate)
+        # For DBA: Clustered index (rate_date DESC, from_currency, to_currency)
+        # For DBA: Partition by RANGE RIGHT (rate_date) when rows > 10M
 
     def __str__(self):
         return f"{self.from_currency.currency_code}/{self.to_currency.currency_code} @ {self.exchange_rate} on {self.rate_date}"
@@ -608,10 +665,13 @@ class JournalType(models.Model):
     is_archived = models.BooleanField(default=False)
     archived_at = models.DateTimeField(null=True, blank=True)
     archived_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_journal_types')
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
     
     class Meta:
         unique_together = ('organization', 'code')
         ordering = ('name',)
+        # For DBA: Replace auto_numbering_next with CREATE SEQUENCE per (org, type)
+        # For DBA: CHECK (requires_approval = 0 OR is_system_type = 0) if mutually exclusive
     def __str__(self):
         return f"{self.code} - {self.name}"
 
@@ -675,11 +735,12 @@ class Journal(models.Model):
     is_locked = models.BooleanField(default=False)
     locked_at = models.DateTimeField(null=True, blank=True)
     locked_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='locked_journals')
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
 
     class Meta:
         unique_together = ('organization', 'journal_number')
         ordering = ['-journal_date', '-journal_number']
-
+        # For DBA: Partition monthly by journal_date
     def __str__(self):
         return f"{self.journal_number} - {self.journal_type.name}"
 
@@ -713,11 +774,14 @@ class JournalLine(models.Model):
     is_archived = models.BooleanField(default=False)
     archived_at = models.DateTimeField(null=True, blank=True)
     archived_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_journal_lines')
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
     
     class Meta:
         unique_together = ('journal', 'line_number')
         ordering = ['journal', 'line_number']
-
+        # For DBA: Partition monthly by journal.journal_date
+        # For DBA: Non-clustered index (account_id, period_id)
+        # For DBA: CHECK (debit_amount = 0 OR credit_amount = 0)
     def __str__(self):
         return f"Line {self.line_number} of {self.journal.journal_number}"
 
@@ -881,6 +945,7 @@ class VoucherModeConfig(models.Model):
     is_archived = models.BooleanField(default=False)
     archived_at = models.DateTimeField(null=True, blank=True)
     archived_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_voucher_configs')
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
     
     class Meta:
         unique_together = ('organization', 'code')
@@ -965,6 +1030,7 @@ class GeneralLedger(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     is_archived = models.BooleanField(default=False)
     archived_at = models.DateTimeField(null=True, blank=True)
+    rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
     
     # archived_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
     # created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
@@ -974,6 +1040,9 @@ class GeneralLedger(models.Model):
             models.Index(fields=['account', 'transaction_date']),
             models.Index(fields=['transaction_date', 'account']),
         ]
+        # For DBA: CLUSTERED COLUMNSTORE once >10M rows; narrow row-store NC index on (org, account, transaction_date)
+        # For DBA: Monthly partitioning; move cold partitions to slower filegroup
+        # For DBA: Make balance_after a PERSISTED computed column
 
     def __str__(self):
         return f"GL Entry {self.gl_entry_id} for {self.account.account_code}"

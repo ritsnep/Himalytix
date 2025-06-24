@@ -1,4 +1,35 @@
 {% extends 'accounting/_form_base.html' %}
 {% block form_fields %}
-    {{ form.as_p }}
+    <div class="row">
+        <div class="col-md-6">{{ form.code.label_tag }}{{ form.code }}</div>
+        <div class="col-md-6">{{ form.name.label_tag }}{{ form.name }}</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">{{ form.description.label_tag }}{{ form.description }}</div>
+        <div class="col-md-6">{{ form.auto_numbering_prefix.label_tag }}{{ form.auto_numbering_prefix }}</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">{{ form.auto_numbering_suffix.label_tag }}{{ form.auto_numbering_suffix }}</div>
+        <div class="col-md-6">{{ form.auto_numbering_next.label_tag }}{{ form.auto_numbering_next }}</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">{{ form.is_system_type.label_tag }}{{ form.is_system_type }}</div>
+        <div class="col-md-6">{{ form.requires_approval.label_tag }}{{ form.requires_approval }}</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">{{ form.is_active.label_tag }}{{ form.is_active }}</div>
+        <div class="col-md-6">{{ form.is_archived.label_tag }}{{ form.is_archived }}</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">{{ form.archived_at.label_tag }}{{ form.archived_at }}</div>
+        <div class="col-md-6">{{ form.archived_by.label_tag }}{{ form.archived_by }}</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">{{ form.created_at.label_tag }}{{ form.created_at }}</div>
+        <div class="col-md-6">{{ form.created_by.label_tag }}{{ form.created_by }}</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">{{ form.updated_at.label_tag }}{{ form.updated_at }}</div>
+        <div class="col-md-6">{{ form.updated_by.label_tag }}{{ form.updated_by }}</div>
+    </div>
 {% endblock %}

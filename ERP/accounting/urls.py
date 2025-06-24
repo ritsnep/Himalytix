@@ -59,6 +59,7 @@ urlpatterns = [
     path('account-types/', views.AccountTypeListView.as_view(), name='account_type_list'),
     path('account-types/create/', views.AccountTypeCreateView.as_view(), name='account_type_create'),
     path('account-types/<int:pk>/edit/', views.AccountTypeUpdateView.as_view(), name='account_type_update'),
+    path('account-types/<int:pk>/delete/', views.AccountTypeDeleteView.as_view(), name='account_type_delete'),
 
     # Currency URLs
     path('currencies/', views.CurrencyListView.as_view(), name='currency_list'),

@@ -206,12 +206,24 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
+        'file': {                               # <--- new handler
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs/app.log',   # path for your log text file
+            'formatter': 'verbose',
+        },
+    },
+    'formatters': {                            # optional formatting
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
     },
     'root': {
-        'handlers': ['console'],
+        'handlers': ['console', 'file'],       # output to both terminal and file
         'level': 'INFO',
     },
 }
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

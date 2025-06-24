@@ -18,4 +18,20 @@ class VoucherModeDefaultDeleteView(LoginRequiredMixin, View):
         messages.success(request, "Voucher default line deleted successfully.")
         return redirect(reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': config_id}))
 
+class AccountTypeDeleteView(LoginRequiredMixin, DeleteView):
+    model = AccountType
+    template_name = 'accounting/account_type_confirm_delete.html'
+    success_url = reverse_lazy('accounting:account_type_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = self.get_object()
+        context['form_title'] = 'Delete Account Type'
+        context['page_title'] = 'Delete Account Type'
+        context['breadcrumbs'] = [
+            ('Account Types', reverse_lazy('accounting:account_type_list')),
+            (f'Delete: {obj.code} - {obj.name}', None)
+        ]
+        return context
+
 # Add other DeleteView classes here as needed

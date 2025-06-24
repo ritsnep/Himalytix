@@ -14,6 +14,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from django.db import models
 
 class FiscalYearListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
     model = FiscalYear
@@ -52,7 +53,14 @@ class CostCenterListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        return CostCenter.objects.filter(organization_id=self.request.user.organization)
+        today = timezone.now().date()
+        return CostCenter.objects.filter(
+            organization_id=self.request.user.organization,
+            is_active=True
+        ).filter(
+            models.Q(start_date__isnull=True) | models.Q(start_date__lte=today),
+            models.Q(end_date__isnull=True) | models.Q(end_date__gte=today)
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -107,6 +115,16 @@ class DepartmentListView(LoginRequiredMixin, ListView):
     model = Department
     template_name = 'accounting/department_list.html'
     context_object_name = 'departments'
+
+    def get_queryset(self):
+        today = timezone.now().date()
+        return Department.objects.filter(
+            organization=self.request.user.organization,
+            is_active=True
+        ).filter(
+            models.Q(start_date__isnull=True) | models.Q(start_date__lte=today),
+            models.Q(end_date__isnull=True) | models.Q(end_date__gte=today)
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -232,8 +250,13 @@ class ProjectListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
+        today = timezone.now().date()
         return Project.objects.filter(
-            organization=self.request.user.organization
+            organization=self.request.user.organization,
+            is_active=True
+        ).filter(
+            models.Q(start_date__isnull=True) | models.Q(start_date__lte=today),
+            models.Q(end_date__isnull=True) | models.Q(end_date__gte=today)
         ).order_by('code')
 
     def get_context_data(self, **kwargs):

@@ -125,6 +125,17 @@ class AccountTypeCreateView(LoginRequiredMixin, CreateView):
         form.instance.created_by = self.request.user
         return super().form_valid(form)
 
+    def form_invalid(self, form):
+        logger.error(f"AccountType form errors: {form.errors.as_json()}")
+        # Add Django messages for each error
+        for field, errors in form.errors.items():
+            for error in errors:
+                if field == '__all__':
+                    messages.error(self.request, error)
+                else:
+                    messages.error(self.request, f"{field}: {error}")
+        return super().form_invalid(form)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Create Account Type'

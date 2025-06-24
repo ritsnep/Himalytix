@@ -1,0 +1,21 @@
+[2025-06-23 23:32:21,711] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-23 23:32:21,711] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-23 23:32:21,711] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-23 23:32:21,711] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-23 23:32:21,755] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-23 23:33:10,527] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-23 23:33:10,527] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-23 23:33:10,542] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-23 23:33:10,542] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-23 23:33:11,976] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-23 23:33:11,976] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-23 23:33:11,976] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-23 23:33:11,976] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-23 23:33:12,030] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-23 23:34:25,225] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\forms.py changed, reloading.
+[2025-06-23 23:34:27,648] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-23 23:34:27,648] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-23 23:34:27,649] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-23 23:34:27,649] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-23 23:34:27,697] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-23 23:36:18,102] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\forms.py changed, reloading.

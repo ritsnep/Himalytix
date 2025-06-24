@@ -184,27 +184,43 @@ class AccountTypeForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = AccountType
         fields = (
+            'code',
             'name',
             'nature',
             'classification',
             'balance_sheet_category',
             'income_statement_category',
+            'cash_flow_category',
             'display_order',
             'root_code_prefix',
             'root_code_step',
             'system_type',
+            'is_archived',
         )
         widgets = {
+            'code': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'nature': forms.Select(attrs={'class': 'form-select'}),
             'classification': forms.TextInput(attrs={'class': 'form-control'}),
             'balance_sheet_category': forms.TextInput(attrs={'class': 'form-control'}),
             'income_statement_category': forms.TextInput(attrs={'class': 'form-control'}),
+            'cash_flow_category': forms.TextInput(attrs={'class': 'form-control'}),
             'display_order': forms.NumberInput(attrs={'class': 'form-control'}),
             'root_code_prefix': forms.TextInput(attrs={'class': 'form-control'}),
             'root_code_step': forms.NumberInput(attrs={'class': 'form-control'}),
             'system_type': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_archived': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['root_code_step'].required = False
+        if not self.initial.get('root_code_step'):
+            self.initial['root_code_step'] = 100
+        self.fields['root_code_step'].initial = self.initial['root_code_step']
+        self.fields['code'].required = False
+        self.fields['code'].widget.attrs['readonly'] = True
+
 class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
     organization = forms.CharField(widget=forms.HiddenInput(), required=False)
     account_code = forms.CharField(
@@ -263,6 +279,7 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
         fields = [
             'parent_account',
             'account_type',
+            'account_code',
             'account_name',
             'description',
             'is_active',
@@ -532,9 +549,24 @@ class CurrencyExchangeRateForm(BootstrapFormMixin, forms.ModelForm):
 class JournalTypeForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = JournalType
-        fields = ('code', 'name', 'description', 'auto_numbering_prefix', 
-                  'auto_numbering_suffix', 'auto_numbering_next', 
-                  'is_system_type', 'requires_approval', 'is_active')
+        fields = (
+            'code',
+            'name',
+            'description',
+            'auto_numbering_prefix',
+            'auto_numbering_suffix',
+            'auto_numbering_next',
+            'is_system_type',
+            'requires_approval',
+            'is_active',
+            'is_archived',
+            'archived_at',
+            'archived_by',
+            'created_at',
+            'created_by',
+            'updated_at',
+            'updated_by',
+        )
         widgets = {
             'code': forms.TextInput(attrs={'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -545,6 +577,13 @@ class JournalTypeForm(BootstrapFormMixin, forms.ModelForm):
             'is_system_type': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'requires_approval': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_archived': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'archived_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'archived_by': forms.Select(attrs={'class': 'form-select'}),
+            'created_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'created_by': forms.Select(attrs={'class': 'form-select'}),
+            'updated_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'updated_by': forms.Select(attrs={'class': 'form-select'}),
         }
         
     def __init__(self, *args, **kwargs):
@@ -699,7 +738,6 @@ class VoucherModeConfigForm(BootstrapFormMixin, forms.ModelForm):
         return instance
 
 class JournalForm(BootstrapFormMixin, forms.ModelForm):
-    # Override currency_code to be a ChoiceField populated from Currency model for a dropdown
     currency_code = forms.ChoiceField(
         choices=[], # Will be populated dynamically in __init__
         widget=forms.Select(attrs={
@@ -712,29 +750,51 @@ class JournalForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Journal
         fields = [
-            'journal_type', 'period', 'journal_date', 
-            'reference', 'description', 'currency_code',
-            'exchange_rate'
+            'journal_type', 'period', 'journal_date', 'reference', 'description', 'currency_code', 'exchange_rate',
+            'status', 'is_recurring', 'recurring_template', 'is_reversal', 'reversed_journal', 'reversal_reason',
+            'posted_at', 'posted_by', 'approved_at', 'approved_by',
+            'created_at', 'created_by', 'updated_at', 'updated_by',
+            'is_archived', 'archived_at', 'archived_by',
+            'is_locked', 'locked_at', 'locked_by',
         ]
         widgets = {
             'journal_type': forms.Select(attrs={'class': 'form-select'}),
             'period': forms.Select(attrs={'class': 'form-select'}),
             'journal_date': forms.DateInput(attrs={
-                'class': 'form-control datepicker', # Ensure datepicker class is applied
+                'class': 'form-control datepicker',
                 'required': 'required',
                 'data-pristine-required-message': "Please select a journal date."
             }),
             'reference': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            # currency_code widget is overridden above
             'exchange_rate': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.000001',
                 'required': 'required',
                 'data-pristine-required-message': "Please enter an exchange rate.",
                 'data-pristine-min-message': "Exchange rate must be positive.",
-                'min': '0.000001' # Client-side validation for non-zero rate
+                'min': '0.000001'
             }),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'is_recurring': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'recurring_template': forms.Select(attrs={'class': 'form-select'}),
+            'is_reversal': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'reversed_journal': forms.Select(attrs={'class': 'form-select'}),
+            'reversal_reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'posted_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'posted_by': forms.Select(attrs={'class': 'form-select'}),
+            'approved_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'approved_by': forms.Select(attrs={'class': 'form-select'}),
+            'created_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'created_by': forms.Select(attrs={'class': 'form-select'}),
+            'updated_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'updated_by': forms.Select(attrs={'class': 'form-select'}),
+            'is_archived': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'archived_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'archived_by': forms.Select(attrs={'class': 'form-select'}),
+            'is_locked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'locked_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'locked_by': forms.Select(attrs={'class': 'form-select'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -866,6 +926,7 @@ class JournalLineForm(BootstrapFormMixin, forms.ModelForm):
                 self.add_error("cost_center", "Cost center required for this account.")
 
         return cleaned_data
+
 # Ensure JournalLineFormSet passes organization to each form
 JournalLineFormSet = inlineformset_factory(
     Journal, JournalLine,
