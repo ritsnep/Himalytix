@@ -8,6 +8,7 @@ import os
 import sys
 
 from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 
 print("Before adding erp to sys.path:")
 print(sys.path)
@@ -21,12 +22,13 @@ django.setup()
 
 
 from django.contrib.auth import get_user_model
-from usermanagement.models import CustomUser, Organization
+from usermanagement.models import CustomUser, Organization, Module, Entity, Permission, Role, UserRole
 from accounting.models import (
     FiscalYear, AccountingPeriod, Department, Project, CostCenter,
     AccountType, ChartOfAccount, Currency, JournalType, TaxAuthority, 
     TaxType, TaxCode, VoucherModeConfig
 )
+from django.utils import timezone
 
 def create_default_data():
     """
@@ -103,7 +105,7 @@ def create_default_data():
             status='open',
             is_current=True,
             is_default=True,
-            created_by=superuser.id
+            created_by=superuser
         )
         print(f"Created fiscal year: {fiscal_year.name}")
     else:
@@ -157,8 +159,10 @@ def create_default_data():
     ]
     
     for dept_name in departments_data:
+        code = dept_name[:10].upper().replace(' ', '_')
         department, created = Department.objects.get_or_create(
             organization=organization,
+            code=code,
             name=dept_name
         )
         if created:
@@ -195,9 +199,11 @@ def create_default_data():
     ]
     
     for cc_data in cost_centers_data:
+        code = cc_data['name'][:10].upper().replace(' ', '_')
         cost_center, created = CostCenter.objects.get_or_create(
             name=cc_data['name'],
-            organization=organization.id,
+            organization=organization,
+            code=code,
             defaults={
                 'description': cc_data['description'],
                 'is_active': True
@@ -316,32 +322,47 @@ def create_default_data():
         {'account_name': 'Repair and Maintenance', 'account_type': expenses},
     ]
  
-
+    npr_currency = Currency.objects.get(currency_code='NPR')
     for acc_data in accounts_data:
-        # Check if an account with the same organization and account_name exists
-        account = ChartOfAccount.objects.filter(
+        # Check for existing account by organization, name, and type
+        existing_account = ChartOfAccount.objects.filter(
             organization=organization,
-            account_name=acc_data['account_name']
+            account_name=acc_data['account_name'],
+            account_type=acc_data['account_type'],
+            is_bank_account=acc_data.get('is_bank_account', False),
+            is_control_account=acc_data.get('is_control_account', False)
         ).first()
-        if account:
-            print(f"Using existing chart of account: {account.account_name}")
+        if existing_account:
+            print(f"Account already exists: {existing_account.account_name} (type: {existing_account.account_type.name})")
             continue
 
+        # Predict the next account_code that would be generated
+        next_code = ChartOfAccount.get_next_code(
+            org_id=organization.id,
+            parent_id=None,
+            account_type_id=acc_data['account_type'].account_type_id
+        )
+        if ChartOfAccount.objects.filter(organization=organization, account_code=next_code).exists():
+            print(f"Account code {next_code} already exists for organization. Skipping account '{acc_data['account_name']}'.")
+            continue
+
+        temp_account = ChartOfAccount(
+            organization=organization,
+            account_name=acc_data['account_name'],
+            account_type=acc_data['account_type'],
+            description=f"Default {acc_data['account_name']} account",
+            is_active=True,
+            created_by=superuser,
+            currency=npr_currency,
+            is_bank_account=acc_data.get('is_bank_account', False),
+            is_control_account=acc_data.get('is_control_account', False)
+        )
         try:
-            account = ChartOfAccount.objects.create(
-                organization=organization,
-                account_name=acc_data['account_name'],
-                account_type=acc_data['account_type'],
-                description=f"Default {acc_data['account_name']} account",
-                is_active=True,
-                is_bank_account=acc_data.get('is_bank_account', False),
-                is_control_account=acc_data.get('is_control_account', False),
-                currency_code='NPR',
-                created_by=superuser
-            )
-            print(f"Created chart of account: {account.account_name}")
-        except IntegrityError:
-            print(f"Chart of account '{acc_data['account_name']}' already exists for this organization. Skipping.")
+            temp_account.save()
+            print(f"Created account: {temp_account.account_name} (code: {temp_account.account_code})")
+        except ValidationError as e:
+            print(f"Skipped account '{acc_data['account_name']}': {e}")
+            continue
     # Create default journal types
     journal_types_data = [
         {'name': 'General Journal', 'description': 'General journal entries', 'auto_numbering_prefix': 'GJ'},
@@ -468,6 +489,108 @@ def create_default_data():
     if created:
         print(f"Created voucher mode config: {voucher_config.name}")
     
+    # --- Default Security Setup: Modules, Entities, Permissions, Roles ---
+    # 1. Create default module
+    accounting_module, _ = Module.objects.get_or_create(
+        name='Accounting',
+        code='accounting',
+        description='Accounting module',
+        icon='fas fa-calculator',
+        display_order=1,
+        is_active=True
+    )
+    if not hasattr(accounting_module, 'created_by'):
+        pass  # No created_by field to set
+
+    # 2. Create default entities for the module
+    entities_data = [
+        {'name': 'Fiscal Year', 'code': 'fiscalyear', 'description': 'Fiscal Year management'},
+        {'name': 'Accounting Period', 'code': 'accountingperiod', 'description': 'Accounting Period management'},
+        {'name': 'Chart of Account', 'code': 'chartofaccount', 'description': 'Chart of Accounts management'},
+        {'name': 'Department', 'code': 'department', 'description': 'Department management'},
+        {'name': 'Project', 'code': 'project', 'description': 'Project management'},
+        {'name': 'Cost Center', 'code': 'costcenter', 'description': 'Cost Center management'},
+        {'name': 'Journal Type', 'code': 'journaltype', 'description': 'Journal Type management'},
+        {'name': 'Tax Authority', 'code': 'taxauthority', 'description': 'Tax Authority management'},
+        {'name': 'Tax Type', 'code': 'taxtype', 'description': 'Tax Type management'},
+        {'name': 'Tax Code', 'code': 'taxcode', 'description': 'Tax Code management'},
+        {'name': 'Voucher Mode Config', 'code': 'vouchermodeconfig', 'description': 'Voucher Mode Config management'},
+    ]
+    entity_objs = []
+    for ent in entities_data:
+        entity, _ = Entity.objects.get_or_create(
+            module=accounting_module,
+            code=ent['code'],
+            defaults={
+                'name': ent['name'],
+                'description': ent['description'],
+                'is_active': True
+            }
+        )
+        entity_objs.append(entity)
+
+    # 3. Create permissions for each entity (CRUD)
+    actions = ['view', 'add', 'change', 'delete']
+    permission_objs = []
+    for entity in entity_objs:
+        for action in actions:
+            perm, _ = Permission.objects.get_or_create(
+                module=accounting_module,
+                entity=entity,
+                action=action,
+                defaults={
+                    'name': f'Can {action} {entity.name}',
+                    'codename': f'{accounting_module.code}_{entity.code}_{action}',
+                    'description': f'Can {action} {entity.name}',
+                    'is_active': True
+                }
+            )
+            permission_objs.append(perm)
+
+    # 4. Create roles: Administrator (all permissions), User (view only)
+    admin_role, _ = Role.objects.get_or_create(
+        name='Administrator',
+        code='ADMIN',
+        organization=organization,
+        defaults={
+            'description': 'Full access to all features',
+            'is_system': True,
+            'is_active': True,
+            'created_by': superuser,
+            'updated_by': superuser
+        }
+    )
+    user_role, _ = Role.objects.get_or_create(
+        name='User',
+        code='USER',
+        organization=organization,
+        defaults={
+            'description': 'Basic user access',
+            'is_system': True,
+            'is_active': True,
+            'created_by': superuser,
+            'updated_by': superuser
+        }
+    )
+    # Assign permissions
+    admin_role.permissions.set(permission_objs)
+    admin_role.save()
+    view_perms = [p for p in permission_objs if p.action == 'view']
+    user_role.permissions.set(view_perms)
+    user_role.save()
+
+    # 5. Assign Administrator role to superuser
+    UserRole.objects.get_or_create(
+        user=superuser,
+        role=admin_role,
+        organization=organization,
+        defaults={
+            'is_active': True,
+            'created_by': superuser,
+            'updated_by': superuser
+        }
+    )
+
     print("\nDefault data creation for Nepal completed successfully!")
     print("Summary:")
     print(f"- Organization: {organization.name}")

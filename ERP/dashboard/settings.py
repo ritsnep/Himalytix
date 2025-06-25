@@ -92,20 +92,31 @@ WSGI_APPLICATION = 'dashboard.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'mssql',
+#         'NAME': 'erptest1',
+#         'USER': 'erpuser',
+#         'PASSWORD': 'user@123',
+#         'HOST': 'localhost',
+#         'PORT': '1433',
+#         'OPTIONS': {
+#             'driver': 'ODBC Driver 17 for SQL Server',  # Make sure this driver is installed
+#             'Trusted_Connection': 'no',
+#         },
+#     }
+# }    
+
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'erptest1',
-        'USER': 'erpuser',
-        'PASSWORD': 'user@123',
-        'HOST': 'localhost',
-        'PORT': '1433',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',  # Make sure this driver is installed
-            'Trusted_Connection': 'no',
-        },
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'neondb',
+        'USER': 'neondb_owner',
+        'PASSWORD': 'npg_RQZX3leSNV7F',
+        'HOST': 'ep-white-cloud-a8r61wfa-pooler.eastus2.azure.neon.tech',
+        'PORT': '5432',
     }
-}    
+}
 AUTH_USER_MODEL = 'usermanagement.CustomUser'
     
 

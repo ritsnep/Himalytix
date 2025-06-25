@@ -142,7 +142,7 @@ class ChartOfAccountListView(LoginRequiredMixin, ListView):
     template_name = 'accounting/chart_of_accounts_list.html'
     context_object_name = 'accounts'
     paginate_by = 20
-
+    
     def get_queryset(self):
         return ChartOfAccount.objects.filter(
             organization=self.request.user.organization

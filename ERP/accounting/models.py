@@ -180,7 +180,7 @@ class AccountingPeriod(models.Model):
         ('adjustment', 'Adjustment'),
     ]
 
-    period_id = models.AutoField(primary_key=True)
+    period_id = models.BigAutoField(primary_key=True)
     fiscal_year = models.ForeignKey('FiscalYear', on_delete=models.PROTECT, related_name='periods')
     period_number = models.SmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(16)])
     name = models.CharField(max_length=100)
@@ -246,9 +246,9 @@ class Department(models.Model):
         # For DBA: FILTERED INDEX WHERE is_active=1
 
 class Project(models.Model):
-    project_id = models.AutoField(primary_key=True)  # Add this line
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='projects')  # Add organization relationship
-    code = models.CharField(max_length=20, unique=True)  # Add code field
+    project_id = models.BigAutoField(primary_key=True)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='projects')
+    code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
@@ -274,7 +274,7 @@ class Project(models.Model):
             self.code = code_generator.generate_code()
         super(Project, self).save(*args, **kwargs)
 class CostCenter(models.Model):
-    cost_center_id = models.AutoField(primary_key=True)
+    cost_center_id = models.BigAutoField(primary_key=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='cost_centers',null=True, blank=True)
     code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=100)
@@ -316,7 +316,7 @@ class AccountType(models.Model):
         'income': 'INC',
         'expense': 'EXP',
     }
-    account_type_id = models.AutoField(primary_key=True)
+    account_type_id = models.BigAutoField(primary_key=True)
     code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=100)
     nature = models.CharField(max_length=10, choices=NATURE_CHOICES)
@@ -325,10 +325,10 @@ class AccountType(models.Model):
     income_statement_category = models.CharField(max_length=50, null=True, blank=True)
     cash_flow_category = models.CharField(max_length=50, null=True, blank=True)
     system_type = models.BooleanField(default=True)
-    display_order = models.IntegerField()
+    display_order = models.BigIntegerField()
     root_code_prefix = models.CharField(max_length=10, null=True, blank=True,
                                         help_text="Starting prefix for top level account codes")
-    root_code_step = models.PositiveIntegerField(default=100,
+    root_code_step = models.BigIntegerField(default=100,
                                                 help_text="Increment step for generating top level codes")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(null=True, blank=True)
@@ -415,7 +415,7 @@ class ChartOfAccount(models.Model):
         'expense': '5000',
     }
     ROOT_STEP = 100
-    account_id = models.AutoField(primary_key=True)
+    account_id = models.BigAutoField(primary_key=True)
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
@@ -434,7 +434,7 @@ class ChartOfAccount(models.Model):
     require_project = models.BooleanField(default=False)
     require_department = models.BooleanField(default=False)
     default_tax_code = models.CharField(max_length=50, null=True, blank=True)
-    currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, null=True, blank=True, related_name='accounts')
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True, blank=True, related_name='accounts')
     opening_balance = models.DecimalField(max_digits=19, decimal_places=4, default=0)
     current_balance = models.DecimalField(max_digits=19, decimal_places=4, default=0)
     reconciled_balance = models.DecimalField(max_digits=19, decimal_places=4, default=0)
@@ -442,7 +442,7 @@ class ChartOfAccount(models.Model):
     allow_manual_journal = models.BooleanField(default=True)
     account_level = models.SmallIntegerField(default=1)
     tree_path = models.CharField(max_length=255, null=True, blank=True)
-    display_order = models.IntegerField(null=True, blank=True)
+    display_order = models.BigIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_accounts')
@@ -496,7 +496,6 @@ class ChartOfAccount(models.Model):
         super().clean()
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            self.full_clean()
             logger.debug(f"ChartOfAccount.save: Called for pk={self.pk}, account_code={self.account_code}")
             if not self.account_code:
                 logger.debug("ChartOfAccount.save: Generating account_code...")
@@ -507,17 +506,21 @@ class ChartOfAccount(models.Model):
                     )
                     sibling_codes = siblings.values_list('account_code', flat=True)
                     base_code = self.parent_account.account_code
-                    max_suffix = 0
+                    used_suffixes = set()
                     for code in sibling_codes:
                         if code.startswith(base_code + "."):
                             try:
                                 suffix = int(code.replace(base_code + ".", ""))
-                                if suffix > max_suffix:
-                                    max_suffix = suffix
+                                used_suffixes.add(suffix)
                             except ValueError:
                                 continue
-                    next_suffix = max_suffix + 1
-                    if next_suffix > 99:
+                    # Find the first unused suffix from 1 to 99
+                    next_suffix = None
+                    for i in range(1, 100):
+                        if i not in used_suffixes:
+                            next_suffix = i
+                            break
+                    if next_suffix is None:
                         raise ValidationError("Maximum number of child accounts (99) reached for this parent.")
                     self.account_code = f"{base_code}.{next_suffix:02d}"
                     logger.debug(f"ChartOfAccount.save: Generated child account_code={self.account_code}")
@@ -533,24 +536,30 @@ class ChartOfAccount(models.Model):
                         organization=self.organization,
                         account_code__startswith=root_prefix
                     )
-                    max_code = 0
+                    used_codes = set()
                     for acc in top_levels:
                         try:
                             acc_num = int(acc.account_code)
-                            if str(acc_num).startswith(root_prefix) and acc_num > max_code:
-                                max_code = acc_num
+                            if str(acc_num).startswith(root_prefix):
+                                used_codes.add(acc_num)
                         except ValueError:
                             continue
-                    if max_code >= int(root_prefix):
-                        next_code = max_code + step
-                    else:
-                        next_code = int(root_prefix)
+                    # Find the first unused code in the sequence
+                    start_code = int(root_prefix)
+                    next_code = None
+                    for i in range(start_code, start_code + step * 99, step):
+                        if i not in used_codes:
+                            next_code = i
+                            break
+                    if next_code is None:
+                        raise ValidationError("Maximum number of top-level accounts (99) reached for this type.")
                     self.account_code = str(next_code).zfill(len(root_prefix))
                     logger.debug(f"ChartOfAccount.save: Generated top-level account_code={self.account_code}")
             if self.parent_account:
                 self.tree_path = f"{self.parent_account.tree_path}/{self.account_code}" if self.parent_account.tree_path else self.account_code
             else:
                 self.tree_path = self.account_code
+            self.full_clean()
             logger.debug(f"ChartOfAccount.save: Saving with account_code={self.account_code}")
             super(ChartOfAccount, self).save(*args, **kwargs)
     @classmethod
@@ -610,7 +619,7 @@ class ChartOfAccount(models.Model):
                 return str(next_code).zfill(len(root_prefix))
 
 class CurrencyExchangeRate(models.Model):
-    rate_id = models.AutoField(primary_key=True)
+    rate_id = models.BigAutoField(primary_key=True)
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
@@ -643,7 +652,7 @@ class CurrencyExchangeRate(models.Model):
 
 
 class JournalType(models.Model):
-    journal_type_id = models.AutoField(primary_key=True)
+    journal_type_id = models.BigAutoField(primary_key=True)
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
@@ -654,7 +663,7 @@ class JournalType(models.Model):
     description = models.TextField(null=True, blank=True)
     auto_numbering_prefix = models.CharField(max_length=10, null=True, blank=True)
     auto_numbering_suffix = models.CharField(max_length=10, null=True, blank=True)
-    auto_numbering_next = models.IntegerField(default=1)
+    auto_numbering_next = models.BigIntegerField(default=1)
     is_system_type = models.BooleanField(default=False)
     requires_approval = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -697,7 +706,7 @@ class Journal(models.Model):
         ('reversed', 'Reversed'),
     ]
 
-    journal_id = models.AutoField(primary_key=True)
+    journal_id = models.BigAutoField(primary_key=True)
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
@@ -745,9 +754,9 @@ class Journal(models.Model):
         return f"{self.journal_number} - {self.journal_type.name}"
 
 class JournalLine(models.Model):
-    journal_line_id = models.AutoField(primary_key=True)
+    journal_line_id = models.BigAutoField(primary_key=True)
     journal = models.ForeignKey(Journal, on_delete=models.CASCADE, related_name='lines')
-    line_number = models.IntegerField()
+    line_number = models.BigIntegerField()
     account = models.ForeignKey(ChartOfAccount, on_delete=models.PROTECT)
     description = models.TextField(null=True, blank=True)
     debit_amount = models.DecimalField(max_digits=19, decimal_places=4, default=0)
@@ -786,7 +795,7 @@ class JournalLine(models.Model):
         return f"Line {self.line_number} of {self.journal.journal_number}"
 
 class TaxAuthority(models.Model):
-    authority_id = models.AutoField(primary_key=True)
+    authority_id = models.BigAutoField(primary_key=True)
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,  # Changed from CASCADE to PROTECT for consistency
@@ -832,7 +841,7 @@ class TaxType(models.Model):
         ('annually', 'Annually'),
     ]
     
-    tax_type_id = models.AutoField(primary_key=True)
+    tax_type_id = models.BigAutoField(primary_key=True)
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,  # Changed from CASCADE to PROTECT for consistency
@@ -867,7 +876,7 @@ class TaxType(models.Model):
         super(TaxType, self).save(*args, **kwargs)
 
 class TaxCode(models.Model):
-    tax_code_id = models.AutoField(primary_key=True)
+    tax_code_id = models.BigAutoField(primary_key=True)
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,  # Changed from CASCADE to PROTECT for consistency
@@ -918,7 +927,7 @@ class VoucherModeConfig(models.Model):
         ('detailed', 'Detailed'),
     ]
     
-    config_id = models.AutoField(primary_key=True)
+    config_id = models.BigAutoField(primary_key=True)
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,  # Changed from CASCADE to PROTECT for consistency
@@ -960,7 +969,7 @@ class VoucherModeConfig(models.Model):
 
 # Added missing model from second file
 class VoucherModeDefault(models.Model):
-    default_id = models.AutoField(primary_key=True)
+    default_id = models.BigAutoField(primary_key=True)
     config = models.ForeignKey(VoucherModeConfig, on_delete=models.CASCADE, related_name='defaults')
     account = models.ForeignKey(ChartOfAccount, on_delete=models.CASCADE, null=True, blank=True)
     account_type = models.ForeignKey(AccountType, on_delete=models.CASCADE, null=True, blank=True)
@@ -968,15 +977,15 @@ class VoucherModeDefault(models.Model):
     default_credit = models.BooleanField(default=False)
     default_amount = models.DecimalField(max_digits=19, decimal_places=4, null=True, blank=True)
     default_tax_code = models.ForeignKey(TaxCode, on_delete=models.SET_NULL, null=True, blank=True)
-    default_department = models.IntegerField(default=0)
+    default_department = models.BigIntegerField(default=0)
     # models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
-    default_project = models.IntegerField(default=0)
+    default_project = models.BigIntegerField(default=0)
     # models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True)
-    default_cost_center = models.IntegerField(default=0)
+    default_cost_center = models.BigIntegerField(default=0)
     # models.ForeignKey(CostCenter, on_delete=models.SET_NULL, null=True, blank=True)
     default_description = models.TextField(null=True, blank=True)
     is_required = models.BooleanField(default=False)
-    display_order = models.IntegerField(default=0)
+    display_order = models.BigIntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_voucherdefaultconfigs')
@@ -1019,7 +1028,7 @@ class GeneralLedger(models.Model):
     functional_debit_amount = models.DecimalField(max_digits=19, decimal_places=4, default=0)
     functional_credit_amount = models.DecimalField(max_digits=19, decimal_places=4, default=0)
     department = models.ForeignKey('Department', on_delete=models.SET_NULL, null=True, blank=True)
-    project = models.IntegerField(null=True, blank=True)
+    project = models.BigIntegerField(null=True, blank=True)
     # models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True)
     cost_center = models.ForeignKey('CostCenter', on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
