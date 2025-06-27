@@ -4,7 +4,7 @@ from django.apps import apps
 from .models import (
     CustomUser, Module, Entity,
     Organization, OrganizationAddress, OrganizationContact,
-    Permission, Role, UserOrganization, UserRole
+    Permission, Role, UserOrganization, UserRole, UserPermission
 )
 @admin.register(UserOrganization)
 class UserOrganizationAdmin(admin.ModelAdmin):
@@ -93,7 +93,13 @@ class UserRoleAdmin(admin.ModelAdmin):
             return UserRole.objects.none()
         return super().get_queryset(request)
 
+class UserPermissionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'permission', 'organization', 'is_granted')
+    list_filter = ('organization', 'is_granted')
+    search_fields = ('user__username', 'permission__codename')
+
 # Register the admin classes
 admin.site.register(Permission, PermissionAdmin)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(UserRole, UserRoleAdmin)
+admin.site.register(UserPermission, UserPermissionAdmin)

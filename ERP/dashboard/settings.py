@@ -107,14 +107,25 @@ WSGI_APPLICATION = 'dashboard.wsgi.application'
 #     }
 # }    
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'neondb',
+#         'USER': 'neondb_owner',
+#         'PASSWORD': 'npg_RQZX3leSNV7F',
+#         'HOST': 'ep-white-cloud-a8r61wfa-pooler.eastus2.azure.neon.tech',
+#         'PORT': '5432',
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'neondb',
-        'USER': 'neondb_owner',
-        'PASSWORD': 'npg_RQZX3leSNV7F',
-        'HOST': 'ep-white-cloud-a8r61wfa-pooler.eastus2.azure.neon.tech',
-        'PORT': '5432',
+        'NAME': 'erpdb',  # Default local Postgres DB name
+        'USER': 'postgres',  # Default local Postgres user
+        'PASSWORD': '123',   # Your local Postgres password
+        'HOST': 'localhost',
+        'PORT': '5433',
     }
 }
 AUTH_USER_MODEL = 'usermanagement.CustomUser'

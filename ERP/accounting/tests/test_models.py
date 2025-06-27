@@ -1,4 +1,5 @@
 
+from django.forms import ValidationError
 from django.test import TestCase
 from accounting.models import (
     FiscalYear,
@@ -100,3 +101,19 @@ class JournalTests(TestCase):
         self.assertTrue(
             VoucherModeConfig.objects.filter(journal_type=jt2, organization=self.org).exists()
         )
+
+    def test_post_journal_fails_when_line_totals_mismatch(self):
+        journal = Journal.objects.create(
+            organization=self.org,
+            journal_type=self.jt,
+            period=self.period,
+            journal_date="2024-01-15",
+            journal_number="",
+            total_debit=100,
+            total_credit=100,
+        )
+        JournalLine.objects.create(journal=journal, line_number=1, account=self.acc1, debit_amount=80)
+        JournalLine.objects.create(journal=journal, line_number=2, account=self.acc2, credit_amount=100)
+
+        with self.assertRaises(ValidationError):
+            post_journal(journal)

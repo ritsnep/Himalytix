@@ -1,4 +1,11 @@
 from django.utils import timezone
+import logging
+
+# WARNING: This script may create overlapping data if run with create_default_data. Review both scripts before running in production.
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 from usermanagement.models import Organization
 from accounting.models import (
     JournalType, VoucherModeConfig, VoucherModeDefault,
@@ -7,7 +14,7 @@ from accounting.models import (
 
 def create_defaults():
     # First check if organization exists
-    org = Organization.objects.filter(tenant=1).first()
+    org = Organization.objects.first()
     
     if not org:
         # Create default organization

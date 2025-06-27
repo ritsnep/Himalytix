@@ -437,14 +437,21 @@ class ChartOfAccountForm(BootstrapFormMixin, forms.ModelForm):
         else:
             instance.account_level = 1
             
-        # Set tree path
-        if instance.parent_account:
-            instance.tree_path = f"{instance.parent_account.tree_path}/{instance.account_id}" if instance.parent_account.tree_path else str(instance.account_id)
-        else:
-            instance.tree_path = str(instance.account_id)
+        # # Set tree path
+        # if instance.parent_account:
+        #     instance.tree_path = f"{instance.parent_account.tree_path}/{instance.account_id}" if instance.parent_account.tree_path else str(instance.account_id)
+        # else:
+        #     instance.tree_path = str(instance.account_id)
             
         if commit:
             instance.save()
+             # Compute tree path after the instance has an account_id
+            if instance.parent_account:
+                base = instance.parent_account.tree_path or ""
+                instance.tree_path = f"{base}/{instance.account_id}" if base else str(instance.account_id)
+            else:
+                instance.tree_path = str(instance.account_id)
+            instance.save(update_fields=["tree_path"])
         return instance
 
 class CurrencyForm(BootstrapFormMixin, forms.ModelForm):

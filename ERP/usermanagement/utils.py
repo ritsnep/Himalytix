@@ -41,8 +41,8 @@ class PermissionUtils:
                     JOIN usermanagement_userrole ur ON r.id = ur.role_id
                     WHERE ur.user_id = %s 
                     AND ur.organization_id = %s 
-                    AND ur.is_active = 1
-                """, [user.id, organization.id])
+                    AND ur.is_active = %s
+                """, [user.id, organization.id, True])
                 permissions = cursor.fetchall()
                 cache.set(cache_key, permissions, 300)  # Cache for 5 minutes
                 

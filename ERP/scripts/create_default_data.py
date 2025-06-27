@@ -3,12 +3,15 @@ import sys
 import django
 from datetime import datetime, date
 from decimal import Decimal
-
-import os
-import sys
+import logging
 
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
+
+# WARNING: This script may create overlapping data if run with create_defaults. Review both scripts before running in production.
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 print("Before adding erp to sys.path:")
 print(sys.path)
@@ -22,7 +25,7 @@ django.setup()
 
 
 from django.contrib.auth import get_user_model
-from usermanagement.models import CustomUser, Organization, Module, Entity, Permission, Role, UserRole
+from usermanagement.models import CustomUser, Organization, Module, Entity, Permission, Role, UserRole, UserOrganization
 from accounting.models import (
     FiscalYear, AccountingPeriod, Department, Project, CostCenter,
     AccountType, ChartOfAccount, Currency, JournalType, TaxAuthority, 
@@ -34,17 +37,17 @@ def create_default_data():
     """
     Create default data for the accounting system with Nepali fiscal year and NPR currency
     """
-    print("Starting to create default data for Nepal...")
+    logger.info("Starting to create default data for Nepal...")
     
     # Get the superuser (assuming there's only one, or get the first one)
     try:
         superuser = CustomUser.objects.filter(is_superuser=True).first()
         if not superuser:
-            print("No superuser found. Please create a superuser first.")
+            logger.error("No superuser found. Please create a superuser first.")
             return
-        print(f"Using superuser: {superuser.username}")
+        logger.info(f"Using superuser: {superuser.username}")
     except Exception as e:
-        print(f"Error getting superuser: {e}")
+        logger.error(f"Error getting superuser: {e}")
         return
     
     # Create default organization if it doesn't exist
@@ -66,9 +69,9 @@ def create_default_data():
         }
     )
     if created:
-        print(f"Created default organization: {organization.name}")
+        logger.info(f"Created default organization: {organization.name}")
     else:
-        print(f"Using existing organization: {organization.name}")
+        logger.info(f"Using existing organization: {organization.name}")
     
     # Create default currencies with NPR as primary
     currencies_data = [
@@ -89,7 +92,7 @@ def create_default_data():
             }
         )
         if created:
-            print(f"Created currency: {currency.currency_code}")
+            logger.info(f"Created currency: {currency.currency_code}")
     
     # Create Nepali fiscal year 2081-2082 (2024-07-16 to 2025-07-16)
     fiscal_year = FiscalYear.objects.filter(
@@ -107,9 +110,10 @@ def create_default_data():
             is_default=True,
             created_by=superuser
         )
-        print(f"Created fiscal year: {fiscal_year.name}")
+        logger.info(f"Created fiscal year: {fiscal_year.name}")
     else:
-        print(f"Using existing fiscal year: {fiscal_year.name}") 
+        logger.info(f"Using existing fiscal year: {fiscal_year.name}")
+    
     # Create accounting periods for the Nepali fiscal year
     if created:  # Only create periods if fiscal year was just created
         # Nepali months with their English equivalents and date ranges
@@ -144,7 +148,11 @@ def create_default_data():
                 }
             )
             if period_created:
-                print(f"Created accounting period: {period.name}")
+                logger.info(f"Created accounting period: {period.name}")
+            else:
+                logger.info(f"Accounting period already exists: {period.name}")
+    else:
+        logger.info(f"Accounting periods already exist for fiscal year: {fiscal_year.name}")
     
     # Create default departments for Nepal
     departments_data = [
@@ -166,7 +174,7 @@ def create_default_data():
             name=dept_name
         )
         if created:
-            print(f"Created department: {department.name}")
+            logger.info(f"Created department: {department.name}")
     
     # Create default projects
     projects_data = [
@@ -187,7 +195,7 @@ def create_default_data():
             }
         )
         if created:
-            print(f"Created project: {project.name}")
+            logger.info(f"Created project: {project.name}")
     
     # Create default cost centers
     cost_centers_data = [
@@ -210,7 +218,7 @@ def create_default_data():
             }
         )
         if created:
-            print(f"Created cost center: {cost_center.name}")
+            logger.info(f"Created cost center: {cost_center.name}")
     
     # Create default account types
     account_types_data = [
@@ -254,7 +262,7 @@ def create_default_data():
             }
         )
         if created:
-            print(f"Created account type: {account_type.name}")
+            logger.info(f"Created account type: {account_type.name}")
     
     # Create default chart of accounts for Nepal
     # Get account types for reference
@@ -267,102 +275,104 @@ def create_default_data():
     admin_expenses = AccountType.objects.get(name='Administrative Expenses')
     
     accounts_data = [
-        # Assets
-        {'account_name': 'Cash in Hand', 'account_type': current_assets, 'is_bank_account': False},
-        {'account_name': 'Bank Account - NPR', 'account_type': current_assets, 'is_bank_account': True},
-        {'account_name': 'Bank Account - USD', 'account_type': current_assets, 'is_bank_account': True},
-        {'account_name': 'Accounts Receivable', 'account_type': current_assets, 'is_control_account': True},
-        {'account_name': 'Trade Receivables', 'account_type': current_assets},
-        {'account_name': 'Inventory - Raw Materials', 'account_type': current_assets},
-        {'account_name': 'Inventory - Finished Goods', 'account_type': current_assets},
-        {'account_name': 'Prepaid Expenses', 'account_type': current_assets},
-        {'account_name': 'Advance to Suppliers', 'account_type': current_assets},
-        
-        # Fixed Assets
-        {'account_name': 'Land and Building', 'account_type': fixed_assets},
-        {'account_name': 'Office Equipment', 'account_type': fixed_assets},
-        {'account_name': 'Furniture and Fixtures', 'account_type': fixed_assets},
-        {'account_name': 'Computer and Software', 'account_type': fixed_assets},
-        {'account_name': 'Vehicle', 'account_type': fixed_assets},
-        
-        # Liabilities
-        {'account_name': 'Accounts Payable', 'account_type': current_liabilities, 'is_control_account': True},
-        {'account_name': 'Trade Payables', 'account_type': current_liabilities},
-        {'account_name': 'VAT Payable', 'account_type': current_liabilities},
-        {'account_name': 'TDS Payable', 'account_type': current_liabilities},
-        {'account_name': 'Social Security Fund', 'account_type': current_liabilities},
-        {'account_name': 'Citizens Investment Trust', 'account_type': current_liabilities},
-        {'account_name': 'Provident Fund', 'account_type': current_liabilities},
-        {'account_name': 'Salary Payable', 'account_type': current_liabilities},
-        {'account_name': 'Accrued Expenses', 'account_type': current_liabilities},
-        
-        # Equity
-        {'account_name': 'Share Capital', 'account_type': equity},
-        {'account_name': 'Retained Earnings', 'account_type': equity},
-        {'account_name': 'General Reserve', 'account_type': equity},
-        
-        # Revenue
-        {'account_name': 'Sales Revenue', 'account_type': revenue},
-        {'account_name': 'Service Revenue', 'account_type': revenue},
-        {'account_name': 'Export Revenue', 'account_type': revenue},
-        {'account_name': 'Interest Income', 'account_type': revenue},
-        {'account_name': 'Other Income', 'account_type': revenue},
-        
-        # Expenses
-        {'account_name': 'Cost of Goods Sold', 'account_type': expenses},
-        {'account_name': 'Salary and Wages', 'account_type': admin_expenses},
-        {'account_name': 'Office Rent', 'account_type': admin_expenses},
-        {'account_name': 'Utilities', 'account_type': admin_expenses},
-        {'account_name': 'Office Supplies', 'account_type': admin_expenses},
-        {'account_name': 'Professional Fees', 'account_type': admin_expenses},
-        {'account_name': 'Travel and Transportation', 'account_type': expenses},
-        {'account_name': 'Communication Expenses', 'account_type': admin_expenses},
-        {'account_name': 'Depreciation Expense', 'account_type': expenses},
-        {'account_name': 'Bank Charges', 'account_type': expenses},
-        {'account_name': 'Repair and Maintenance', 'account_type': expenses},
+        # Top-level Assets
+        {'account_name': 'Assets', 'account_type': current_assets},
+        {'account_name': 'Cash in Hand', 'account_type': current_assets, 'parent': 'Assets'},
+        {'account_name': 'Bank Account - NPR', 'account_type': current_assets, 'is_bank_account': True, 'parent': 'Assets'},
+        {'account_name': 'Bank Account - USD', 'account_type': current_assets, 'is_bank_account': True, 'parent': 'Assets'},
+        {'account_name': 'Accounts Receivable', 'account_type': current_assets, 'is_control_account': True, 'parent': 'Assets'},
+        {'account_name': 'Trade Receivables', 'account_type': current_assets, 'parent': 'Assets'},
+        {'account_name': 'Inventory - Raw Materials', 'account_type': current_assets, 'parent': 'Assets'},
+        {'account_name': 'Inventory - Finished Goods', 'account_type': current_assets, 'parent': 'Assets'},
+        {'account_name': 'Prepaid Expenses', 'account_type': current_assets, 'parent': 'Assets'},
+        {'account_name': 'Advance to Suppliers', 'account_type': current_assets, 'parent': 'Assets'},
+        # Top-level Fixed Assets
+        {'account_name': 'Fixed Assets', 'account_type': fixed_assets},
+        {'account_name': 'Land and Building', 'account_type': fixed_assets, 'parent': 'Fixed Assets'},
+        {'account_name': 'Office Equipment', 'account_type': fixed_assets, 'parent': 'Fixed Assets'},
+        {'account_name': 'Furniture and Fixtures', 'account_type': fixed_assets, 'parent': 'Fixed Assets'},
+        {'account_name': 'Computer and Software', 'account_type': fixed_assets, 'parent': 'Fixed Assets'},
+        {'account_name': 'Vehicle', 'account_type': fixed_assets, 'parent': 'Fixed Assets'},
+        # Top-level Liabilities
+        {'account_name': 'Liabilities', 'account_type': current_liabilities},
+        {'account_name': 'Accounts Payable', 'account_type': current_liabilities, 'is_control_account': True, 'parent': 'Liabilities'},
+        {'account_name': 'Trade Payables', 'account_type': current_liabilities, 'parent': 'Liabilities'},
+        {'account_name': 'VAT Payable', 'account_type': current_liabilities, 'parent': 'Liabilities'},
+        {'account_name': 'TDS Payable', 'account_type': current_liabilities, 'parent': 'Liabilities'},
+        {'account_name': 'Social Security Fund', 'account_type': current_liabilities, 'parent': 'Liabilities'},
+        {'account_name': 'Citizens Investment Trust', 'account_type': current_liabilities, 'parent': 'Liabilities'},
+        {'account_name': 'Provident Fund', 'account_type': current_liabilities, 'parent': 'Liabilities'},
+        {'account_name': 'Salary Payable', 'account_type': current_liabilities, 'parent': 'Liabilities'},
+        {'account_name': 'Accrued Expenses', 'account_type': current_liabilities, 'parent': 'Liabilities'},
+        # Top-level Equity
+        {'account_name': 'Equity', 'account_type': equity},
+        {'account_name': 'Share Capital', 'account_type': equity, 'parent': 'Equity'},
+        {'account_name': 'Retained Earnings', 'account_type': equity, 'parent': 'Equity'},
+        {'account_name': 'General Reserve', 'account_type': equity, 'parent': 'Equity'},
+        # Top-level Revenue
+        {'account_name': 'Revenue', 'account_type': revenue},
+        {'account_name': 'Sales Revenue', 'account_type': revenue, 'parent': 'Revenue'},
+        {'account_name': 'Service Revenue', 'account_type': revenue, 'parent': 'Revenue'},
+        {'account_name': 'Export Revenue', 'account_type': revenue, 'parent': 'Revenue'},
+        {'account_name': 'Interest Income', 'account_type': revenue, 'parent': 'Revenue'},
+        {'account_name': 'Other Income', 'account_type': revenue, 'parent': 'Revenue'},
+        # Top-level Expenses
+        {'account_name': 'Expenses', 'account_type': expenses},
+        {'account_name': 'Cost of Goods Sold', 'account_type': expenses, 'parent': 'Expenses'},
+        {'account_name': 'Salary and Wages', 'account_type': admin_expenses, 'parent': 'Expenses'},
+        {'account_name': 'Office Rent', 'account_type': admin_expenses, 'parent': 'Expenses'},
+        {'account_name': 'Utilities', 'account_type': admin_expenses, 'parent': 'Expenses'},
+        {'account_name': 'Office Supplies', 'account_type': admin_expenses, 'parent': 'Expenses'},
+        {'account_name': 'Professional Fees', 'account_type': admin_expenses, 'parent': 'Expenses'},
+        {'account_name': 'Travel and Transportation', 'account_type': expenses, 'parent': 'Expenses'},
+        {'account_name': 'Communication Expenses', 'account_type': admin_expenses, 'parent': 'Expenses'},
+        {'account_name': 'Depreciation Expense', 'account_type': expenses, 'parent': 'Expenses'},
+        {'account_name': 'Bank Charges', 'account_type': expenses, 'parent': 'Expenses'},
+        {'account_name': 'Repair and Maintenance', 'account_type': expenses, 'parent': 'Expenses'},
     ]
- 
+
     npr_currency = Currency.objects.get(currency_code='NPR')
+    created_accounts = {}  # Map account name to created account object
     for acc_data in accounts_data:
-        # Check for existing account by organization, name, and type
-        existing_account = ChartOfAccount.objects.filter(
-            organization=organization,
-            account_name=acc_data['account_name'],
-            account_type=acc_data['account_type'],
-            is_bank_account=acc_data.get('is_bank_account', False),
-            is_control_account=acc_data.get('is_control_account', False)
-        ).first()
-        if existing_account:
-            print(f"Account already exists: {existing_account.account_name} (type: {existing_account.account_type.name})")
-            continue
-
-        # Predict the next account_code that would be generated
-        next_code = ChartOfAccount.get_next_code(
-            org_id=organization.id,
-            parent_id=None,
-            account_type_id=acc_data['account_type'].account_type_id
-        )
-        if ChartOfAccount.objects.filter(organization=organization, account_code=next_code).exists():
-            print(f"Account code {next_code} already exists for organization. Skipping account '{acc_data['account_name']}'.")
-            continue
-
-        temp_account = ChartOfAccount(
-            organization=organization,
-            account_name=acc_data['account_name'],
-            account_type=acc_data['account_type'],
-            description=f"Default {acc_data['account_name']} account",
-            is_active=True,
-            created_by=superuser,
-            currency=npr_currency,
-            is_bank_account=acc_data.get('is_bank_account', False),
-            is_control_account=acc_data.get('is_control_account', False)
-        )
-        try:
-            temp_account.save()
-            print(f"Created account: {temp_account.account_name} (code: {temp_account.account_code})")
-        except ValidationError as e:
-            print(f"Skipped account '{acc_data['account_name']}': {e}")
-            continue
+        base_name = acc_data['account_name']
+        suffix = 0
+        while True:
+            account_name = base_name if suffix == 0 else f"{base_name} ({suffix})"
+            parent_account = None
+            if 'parent' in acc_data and acc_data['parent']:
+                parent_account = created_accounts.get(acc_data['parent'])
+            temp_account = ChartOfAccount(
+                organization=organization,
+                account_name=account_name,
+                account_type=acc_data['account_type'],
+                parent_account=parent_account,
+                description=f"Default {account_name} account",
+                is_active=True,
+                created_by=superuser,
+                currency=npr_currency,
+                is_bank_account=acc_data.get('is_bank_account', False),
+                is_control_account=acc_data.get('is_control_account', False)
+            )
+            try:
+                temp_account.save()
+                logger.info(f"Created account: {temp_account.account_name} (code: {temp_account.account_code})")
+                created_accounts[account_name] = temp_account
+                break
+            except ValidationError as e:
+                error_msg = str(e)
+                if ('account code already exists' in error_msg or
+                    'Chart of account with this Organization and Account code already exists' in error_msg or
+                    'account_name' in error_msg):
+                    suffix += 1
+                    continue
+                else:
+                    logger.error(f"Error creating account '{account_name}': {e}")
+                    break
+    # After account creation, print all Chart of Accounts for verification
+    logger.info("\nAll Chart of Accounts for organization:")
+    for acc in ChartOfAccount.objects.filter(organization=organization).order_by('account_code'):
+        parent_name = acc.parent_account.account_name if acc.parent_account else 'None'
+        logger.info(f"{acc.account_code}: {acc.account_name} (parent: {parent_name})")
     # Create default journal types
     journal_types_data = [
         {'name': 'General Journal', 'description': 'General journal entries', 'auto_numbering_prefix': 'GJ'},
@@ -390,9 +400,9 @@ def create_default_data():
             }
         )
         if created:
-            print(f"Created journal type: {journal_type.name}")
+            logger.info(f"Created journal type: {journal_type.name}")
         else:
-            print(f"Using existing journal type: {journal_type.name}")
+            logger.info(f"Using existing journal type: {journal_type.name}")
     
     # Create default tax authority for Nepal
     tax_authority, created = TaxAuthority.objects.get_or_create(
@@ -407,7 +417,7 @@ def create_default_data():
         }
     )
     if created:
-        print(f"Created tax authority: {tax_authority.name}")
+        logger.info(f"Created tax authority: {tax_authority.name}")
     
     # Create default tax types for Nepal
     tax_types_data = [
@@ -430,7 +440,7 @@ def create_default_data():
             }
         )
         if created:
-            print(f"Created tax type: {tax_type.name}")
+            logger.info(f"Created tax type: {tax_type.name}")
         created_tax_types.append(tax_type)
     
     # Create default tax codes for Nepal
@@ -467,7 +477,7 @@ def create_default_data():
             }
         )
         if created:
-            print(f"Created tax code: {tax_code.name}")
+            logger.info(f"Created tax code: {tax_code.name}")
     
     # Create default voucher mode config
     voucher_config, created = VoucherModeConfig.objects.get_or_create(
@@ -487,7 +497,7 @@ def create_default_data():
         }
     )
     if created:
-        print(f"Created voucher mode config: {voucher_config.name}")
+        logger.info(f"Created voucher mode config: {voucher_config.name}")
     
     # --- Default Security Setup: Modules, Entities, Permissions, Roles ---
     # 1. Create default module
@@ -501,6 +511,48 @@ def create_default_data():
     )
     if not hasattr(accounting_module, 'created_by'):
         pass  # No created_by field to set
+
+    # 1.1 Create default system roles for the organization
+    roles_data = [
+        {'name': 'Admin', 'code': 'ADMIN', 'description': 'Full access to all features', 'is_system': True},
+        {'name': 'Clerk', 'code': 'CLERK', 'description': 'Clerk with limited access', 'is_system': True},
+        {'name': 'Manager', 'code': 'MANAGER', 'description': 'Manager with approval rights', 'is_system': True},
+        {'name': 'Auditor', 'code': 'AUDITOR', 'description': 'Auditor with read-only access', 'is_system': True},
+    ]
+    role_objs = {}
+    for role_data in roles_data:
+        if not role_data['code']:
+            logger.warning(f"Skipping role with empty code: {role_data}")
+            continue
+        role, _ = Role.objects.get_or_create(
+            name=role_data['name'],
+            code=role_data['code'],
+            organization=organization,
+            defaults={
+                'description': role_data['description'],
+                'is_system': role_data['is_system'],
+                'is_active': True,
+                'created_by': superuser,
+                'updated_by': superuser
+            }
+        )
+        role_objs[role_data['code']] = role
+
+    # Ensure USER role exists (for user_role assignment below)
+    if 'USER' not in role_objs:
+        user_role_obj, _ = Role.objects.get_or_create(
+            name='User',
+            code='USER',
+            organization=organization,
+            defaults={
+                'description': 'Basic user access',
+                'is_system': True,
+                'is_active': True,
+                'created_by': superuser,
+                'updated_by': superuser
+            }
+        )
+        role_objs['USER'] = user_role_obj
 
     # 2. Create default entities for the module
     entities_data = [
@@ -547,32 +599,9 @@ def create_default_data():
             )
             permission_objs.append(perm)
 
-    # 4. Create roles: Administrator (all permissions), User (view only)
-    admin_role, _ = Role.objects.get_or_create(
-        name='Administrator',
-        code='ADMIN',
-        organization=organization,
-        defaults={
-            'description': 'Full access to all features',
-            'is_system': True,
-            'is_active': True,
-            'created_by': superuser,
-            'updated_by': superuser
-        }
-    )
-    user_role, _ = Role.objects.get_or_create(
-        name='User',
-        code='USER',
-        organization=organization,
-        defaults={
-            'description': 'Basic user access',
-            'is_system': True,
-            'is_active': True,
-            'created_by': superuser,
-            'updated_by': superuser
-        }
-    )
-    # Assign permissions
+    # 4. Assign permissions to roles
+    admin_role = role_objs['ADMIN']
+    user_role = role_objs['USER']
     admin_role.permissions.set(permission_objs)
     admin_role.save()
     view_perms = [p for p in permission_objs if p.action == 'view']
@@ -591,21 +620,35 @@ def create_default_data():
         }
     )
 
-    print("\nDefault data creation for Nepal completed successfully!")
-    print("Summary:")
-    print(f"- Organization: {organization.name}")
-    print(f"- Fiscal Year: {fiscal_year.name} (2024-07-16 to 2025-07-16)")
-    print(f"- Accounting Periods: 12 Nepali months created")
-    print(f"- Departments: {len(departments_data)} departments")
-    print(f"- Projects: {len(projects_data)} projects")
-    print(f"- Cost Centers: {len(cost_centers_data)} cost centers")
-    print(f"- Account Types: {len(account_types_data)} account types")
-    print(f"- Chart of Accounts: {len(accounts_data)} accounts")
-    print(f"- Journal Types: {len(journal_types_data)} journal types")
-    print(f"- Tax Codes: {len(tax_codes_data)} tax codes")
-    print(f"- Currencies: {len(currencies_data)} currencies (NPR as default)")
-    print(f"- Tax Authority: Inland Revenue Department")
-    print(f"- Default Currency: NPR (Nepalese Rupee)")
+    # 6. Auto-assign all users to the organization via UserOrganization
+    all_users = CustomUser.objects.all()
+    for user in all_users:
+        UserOrganization.objects.get_or_create(
+            user=user,
+            organization=organization,
+            defaults={
+                'is_owner': user.is_superuser,
+                'is_active': True,
+                'role': 'owner' if user.is_superuser else 'member'
+            }
+        )
+        logger.info(f"Ensured user '{user.username}' is assigned to organization '{organization.name}'")
+
+    logger.info("\nDefault data creation for Nepal completed successfully!")
+    logger.info("Summary:")
+    logger.info(f"- Organization: {organization.name}")
+    logger.info(f"- Fiscal Year: {fiscal_year.name} (2024-07-16 to 2025-07-16)")
+    logger.info(f"- Accounting Periods: 12 Nepali months created")
+    logger.info(f"- Departments: {len(departments_data)} departments")
+    logger.info(f"- Projects: {len(projects_data)} projects")
+    logger.info(f"- Cost Centers: {len(cost_centers_data)} cost centers")
+    logger.info(f"- Account Types: {len(account_types_data)} account types")
+    logger.info(f"- Chart of Accounts: {len(accounts_data)} accounts")
+    logger.info(f"- Journal Types: {len(journal_types_data)} journal types")
+    logger.info(f"- Tax Codes: {len(tax_codes_data)} tax codes")
+    logger.info(f"- Currencies: {len(currencies_data)} currencies (NPR as default)")
+    logger.info(f"- Tax Authority: Inland Revenue Department")
+    logger.info(f"- Default Currency: NPR (Nepalese Rupee)")
 
 if __name__ == '__main__':
     create_default_data()

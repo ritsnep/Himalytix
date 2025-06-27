@@ -278,3 +278,18 @@ class UserRole(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.role.name} ({self.organization.name})"
+
+class UserPermission(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='explicit_user_permissions')
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, related_name='user_permissions')
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='user_permissions')
+    is_granted = models.BooleanField(default=True, help_text='True=grant, False=revoke')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'permission', 'organization')
+        ordering = ['user', 'organization', 'permission']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.permission.codename} ({'grant' if self.is_granted else 'revoke'})"

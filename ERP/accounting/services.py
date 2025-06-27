@@ -26,8 +26,18 @@ def post_journal(journal: Journal) -> Journal:
     logger.info("post_journal start journal_id=%s", journal.pk)
     if journal.status != "draft":
         raise ValidationError("Only draft journals can be posted")
-    if journal.total_debit != journal.total_credit:
+    line_totals = journal.lines.aggregate(
+        debit_sum=Sum("debit_amount"),
+        credit_sum=Sum("credit_amount"),
+    )
+    debit_sum = line_totals.get("debit_sum") or Decimal("0")
+    credit_sum = line_totals.get("credit_sum") or Decimal("0")
+
+    if debit_sum != credit_sum or journal.total_debit != journal.total_credit:
         raise ValidationError("Journal not balanced")
+
+    if debit_sum != journal.total_debit or credit_sum != journal.total_credit:
+        raise ValidationError("Header totals do not match line totals")
     with transaction.atomic():
         if journal.period.status != "open":
             raise ValidationError("Accounting period is closed")
@@ -78,8 +88,18 @@ def post_journal_with_params(params: JournalPostParams) -> Journal:
     journal = params.journal
     if journal.status != "draft":
         raise ValidationError("Only draft journals can be posted")
-    if journal.total_debit != journal.total_credit:
+    line_totals = journal.lines.aggregate(
+        debit_sum=Sum("debit_amount"),
+        credit_sum=Sum("credit_amount"),
+    )
+    debit_sum = line_totals.get("debit_sum") or Decimal("0")
+    credit_sum = line_totals.get("credit_sum") or Decimal("0")
+
+    if debit_sum != credit_sum or journal.total_debit != journal.total_credit:
         raise ValidationError("Journal not balanced")
+
+    if debit_sum != journal.total_debit or credit_sum != journal.total_credit:
+        raise ValidationError("Header totals do not match line totals")
     with transaction.atomic():
         if journal.period.status != "open":
             raise ValidationError("Accounting period is closed")
