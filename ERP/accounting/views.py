@@ -288,7 +288,8 @@ class VoucherEntryView(PermissionRequiredMixin, LoginRequiredMixin, View):
             'page_title': f'Voucher Entry - {voucher_config.name}',
             'breadcrumbs': [
                 ('Voucher Entry', None),
-            ]
+            ],
+            'perms': list(request.user.get_all_permissions()),
         }
         
         return render(request, self.template_name, context)
@@ -312,6 +313,16 @@ class VoucherEntryView(PermissionRequiredMixin, LoginRequiredMixin, View):
             if not voucher_config:
                 messages.error(request, "No voucher configuration found.")
                 return redirect('accounting:journal_list')
+
+        # Get all voucher configs for selector
+        all_configs = VoucherModeConfig.objects.filter(organization_id=organization.id, is_archived=False)
+        # Get current period
+        current_period = AccountingPeriod.objects.filter(
+            fiscal_year__organization_id=organization.id,
+            is_current=True
+        ).first()
+        # Get default line items
+        default_lines = voucher_config.defaults.filter(is_archived=False).order_by('display_order')
 
         # Process forms
         journal_form = JournalForm(
@@ -421,10 +432,13 @@ class VoucherEntryView(PermissionRequiredMixin, LoginRequiredMixin, View):
             'formset': formset,
             'header_udfs': header_udfs,
             'line_udfs': line_udfs,
+            'default_lines': default_lines,
+            'current_period': current_period,
             'page_title': f'Voucher Entry - {voucher_config.name}',
             'breadcrumbs': [
                 ('Voucher Entry', None),
-            ]
+            ],
+            'perms': list(request.user.get_all_permissions()),
         }
         
         return render(request, self.template_name, context)
