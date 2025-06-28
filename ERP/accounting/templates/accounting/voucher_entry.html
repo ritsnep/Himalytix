@@ -204,8 +204,17 @@
 // --- ENHANCED VOUCHER ENTRY JS ---
 
 // 1. Add/Remove Lines (Component Structure)
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('add-journal-line').addEventListener('click', addJournalLine);
+    document.querySelector('#journal-lines-body').addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-remove-line')) {
+            removeJournalLine(e.target);
+        }
+    });
+});
+
 function addJournalLine() {
-    const tbody = document.querySelector('#journalLines tbody');
+    const tbody = document.getElementById('journal-lines-body');
     const template = document.getElementById('journal-line-template');
     if (template && tbody) {
         const clone = template.content.cloneNode(true);
@@ -226,20 +235,11 @@ function removeJournalLine(btn) {
 }
 
 function updateLineNumbers() {
-    document.querySelectorAll('#journalLines tbody tr').forEach((row, idx) => {
+    document.querySelectorAll('#journal-lines-body tr').forEach((row, idx) => {
         const numCell = row.querySelector('.line-number');
         if (numCell) numCell.textContent = idx + 1;
     });
 }
-
-document.addEventListener('click', function(e) {
-    if (e.target.matches('.btn-add-line')) {
-        addJournalLine();
-    }
-    if (e.target.matches('.btn-remove-line')) {
-        removeJournalLine(e.target);
-    }
-});
 
 // 2. Inline Validation and Error Display
 function validateField(field) {

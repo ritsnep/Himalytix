@@ -37,4 +37,22 @@
             <button type="button" class="btn btn-add-line mt-2" id="add-journal-line">Add Line</button>
         </div>
     </div>
-</div> 
+</div>
+
+<template id="journal-line-template">
+<tr class="journal-line">
+    <td><select class="form-select" name="account"><option value="">Select Account</option></select></td>
+    <td><input type="text" class="form-control" name="description"></td>
+    <td><input type="number" class="form-control" name="debit_amount" step="0.01" min="0"></td>
+    <td><input type="number" class="form-control" name="credit_amount" step="0.01" min="0"></td>
+    {% if voucher_config.show_dimensions %}
+    <td><select class="form-select" name="department"><option value="">Select Department</option></select></td>
+    <td><select class="form-select" name="project"><option value="">Select Project</option></select></td>
+    <td><select class="form-select" name="cost_center"><option value="">Select Cost Center</option></select></td>
+    {% endif %}
+    {% if voucher_config.show_tax_details %}
+    <td><select class="form-select" name="tax_code"><option value="">Select Tax Code</option></select></td>
+    {% endif %}
+    <td><button type="button" class="btn btn-remove-line">Remove</button></td>
+</tr>
+</template> 
