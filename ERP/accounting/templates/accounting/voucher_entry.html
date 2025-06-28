@@ -1,0 +1,782 @@
+{% extends 'accounting/_form_base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'libs/jquery.repeater/jquery.repeater.css' %}">
+<style>
+    .voucher-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .form-section h5 {
+        color: #495057;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .journal-line {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .journal-line:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 4px rgba(0,123,255,0.1);
+    }
+    
+    .line-number {
+        position: absolute;
+        top: -10px;
+        left: 10px;
+        background: #007bff;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .udf-field {
+        margin-bottom: 1rem;
+    }
+    
+    .udf-field label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .udf-field .form-control {
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+    }
+    
+    .udf-field .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+    
+    .totals-section {
+        background: #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .total-row.balance {
+        border-top: 2px solid #007bff;
+        padding-top: 0.5rem;
+        font-size: 1.1rem;
+        color: #007bff;
+    }
+    
+    .btn-add-line {
+        background: #28a745;
+        border: none;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .btn-add-line:hover {
+        background: #218838;
+        transform: translateY(-1px);
+    }
+    
+    .btn-remove-line {
+        background: #dc3545;
+        border: none;
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+        color: white;
+        font-size: 0.8rem;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .btn-remove-line:hover {
+        background: #c82333;
+    }
+    
+    .validation-error {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .account-balance {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .account-balance.positive {
+        color: #28a745;
+    }
+    
+    .account-balance.negative {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+  <div class="page-content">
+<div class="container-fluid">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if breadcrumb.1 %}
+                    <li class="breadcrumb-item"><a href="{{ breadcrumb.1 }}">{{ breadcrumb.0 }}</a></li>
+                {% else %}
+                    <li class="breadcrumb-item active">{{ breadcrumb.0 }}</li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+
+    <!-- Voucher Header -->
+    <div class="voucher-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="mb-1">{{ voucher_config.name }}</h3>
+                <p class="mb-0">{{ voucher_config.description|default:"Voucher Entry Form" }}</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="d-flex flex-column">
+                    <span class="text-white-50">Current Period</span>
+                    <strong>{{ current_period.name }}</strong>
+                    <small class="text-white-50">{{ current_period.start_date|date:"M d, Y" }} - {{ current_period.end_date|date:"M d, Y" }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voucher Type Selector -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="voucher-type-select" class="form-label"><strong>Voucher/Journal Type</strong></label>
+            <select id="voucher-type-select" class="form-select">
+                {% for config in voucher_configs %}
+                    <option value="{{ config.pk }}" {% if config.pk == voucher_config.pk %}selected{% endif %}>{{ config.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var selector = document.getElementById('voucher-type-select');
+            selector.addEventListener('change', function() {
+                var configId = this.value;
+                window.location.href = '/accounting/voucher-entry/' + configId + '/';
+            });
+        });
+    </script>
+
+    <form method="post" id="voucher-form" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <!-- Journal Header Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-file-alt me-2"></i>Journal Header</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ journal_form.journal_date.id_for_label }}" class="form-label">
+                            Journal Date <span class="text-danger">*</span>
+                        </label>
+                        {{ journal_form.journal_date }}
+                        {% if journal_form.journal_date.errors %}
+                            <div class="validation-error">{{ journal_form.journal_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ journal_form.reference.id_for_label }}" class="form-label">Reference</label>
+                        {{ journal_form.reference }}
+                        {% if journal_form.reference.errors %}
+                            <div class="validation-error">{{ journal_form.reference.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ journal_form.currency_code.id_for_label }}" class="form-label">
+                            Currency <span class="text-danger">*</span>
+                        </label>
+                        {{ journal_form.currency_code }}
+                        {% if journal_form.currency_code.errors %}
+                            <div class="validation-error">{{ journal_form.currency_code.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ journal_form.description.id_for_label }}" class="form-label">Description</label>
+                {{ journal_form.description }}
+                {% if journal_form.description.errors %}
+                    <div class="validation-error">{{ journal_form.description.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Header UDFs -->
+        {% if header_udfs %}
+        <div class="row">
+            {% for udf in header_udfs %}
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="udf_header_{{ udf.field_name }}" class="form-label">
+                        {{ udf.display_name }}{% if udf.is_required %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                    {% if udf.field_type == 'text' %}
+                        <input type="text" name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-control" {% if udf.is_required %}required{% endif %} {% if udf.max_length %}maxlength="{{ udf.max_length }}"{% endif %} value="{{ udf.default_value|default:'' }}">
+                    {% elif udf.field_type == 'number' or udf.field_type == 'decimal' %}
+                        <input type="number" name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-control" {% if udf.is_required %}required{% endif %} {% if udf.min_value %}min="{{ udf.min_value }}"{% endif %} {% if udf.max_value %}max="{{ udf.max_value }}"{% endif %} value="{{ udf.default_value|default:'' }}">
+                    {% elif udf.field_type == 'date' %}
+                        <input type="date" name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-control" {% if udf.is_required %}required{% endif %} value="{{ udf.default_value|default:'' }}">
+                    {% elif udf.field_type == 'datetime' %}
+                        <input type="datetime-local" name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-control" {% if udf.is_required %}required{% endif %} value="{{ udf.default_value|default:'' }}">
+                    {% elif udf.field_type == 'select' %}
+                        <select name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-select" {% if udf.is_required %}required{% endif %}>
+                            <option value="">-- Select --</option>
+                            {% for choice in udf.choices %}
+                                <option value="{{ choice.0 }}" {% if udf.default_value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    {% elif udf.field_type == 'multiselect' %}
+                        <select name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-select" multiple {% if udf.is_required %}required{% endif %}>
+                            {% for choice in udf.choices %}
+                                <option value="{{ choice.0 }}" {% if udf.default_value and choice.0 in udf.default_value %}selected{% endif %}>{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    {% elif udf.field_type == 'checkbox' %}
+                        <input type="checkbox" name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-check-input" {% if udf.default_value %}checked{% endif %}>
+                    {% elif udf.field_type == 'textarea' %}
+                        <textarea name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-control" {% if udf.is_required %}required{% endif %} rows="3">{{ udf.default_value|default:'' }}</textarea>
+                    {% elif udf.field_type == 'email' %}
+                        <input type="email" name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-control" {% if udf.is_required %}required{% endif %} value="{{ udf.default_value|default:'' }}">
+                    {% elif udf.field_type == 'phone' %}
+                        <input type="tel" name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-control" {% if udf.is_required %}required{% endif %} value="{{ udf.default_value|default:'' }}">
+                    {% elif udf.field_type == 'url' %}
+                        <input type="url" name="udf_header_{{ udf.field_name }}" id="udf_header_{{ udf.field_name }}" class="form-control" {% if udf.is_required %}required{% endif %} value="{{ udf.default_value|default:'' }}">
+                    {% endif %}
+                    {% if udf.help_text %}<div class="form-text">{{ udf.help_text }}</div>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Journal Lines Section -->
+        <div class="form-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5><i class="fas fa-list me-2"></i>Journal Lines</h5>
+                <button type="button" class="btn btn-add-line" id="add-line-btn">
+                    <i class="fas fa-plus me-1"></i>Add Line
+                </button>
+            </div>
+            
+            <div id="journal-lines-container">
+                {{ formset.management_form }}
+                
+                {% for form in formset %}
+                    <div class="journal-line" data-line-index="{{ forloop.counter0 }}">
+                        <div class="line-number">{{ forloop.counter }}</div>
+                        <button type="button" class="btn-remove-line" onclick="removeLine(this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.account.id_for_label }}" class="form-label">
+                                        Account <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.account }}
+                                    {% if form.account.errors %}
+                                        <div class="validation-error">{{ form.account.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="account-balance" id="balance-{{ forloop.counter0 }}"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        Description {% if voucher_config.require_line_description %}<span class="text-danger">*</span>{% endif %}
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="validation-error">{{ form.description.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.debit_amount.id_for_label }}" class="form-label">Debit Amount</label>
+                                    {{ form.debit_amount }}
+                                    {% if form.debit_amount.errors %}
+                                        <div class="validation-error">{{ form.debit_amount.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.credit_amount.id_for_label }}" class="form-label">Credit Amount</label>
+                                    {{ form.credit_amount }}
+                                    {% if form.credit_amount.errors %}
+                                        <div class="validation-error">{{ form.credit_amount.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.department.id_for_label }}" class="form-label">Department</label>
+                                    {{ form.department }}
+                                    {% if form.department.errors %}
+                                        <div class="validation-error">{{ form.department.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.tax_code.id_for_label }}" class="form-label">Tax Code</label>
+                                    {{ form.tax_code }}
+                                    {% if form.tax_code.errors %}
+                                        <div class="validation-error">{{ form.tax_code.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Line UDFs -->
+                        {% if line_udfs %}
+                            <div class="row">
+                                {% for udf in line_udfs %}
+                                    <div class="col-md-6">
+                                        <div class="udf-field">
+                                            <label for="udf_line_{{ forloop.parentloop.counter0 }}_{{ udf.field_name }}" class="form-label">
+                                                {{ udf.display_name }}
+                                                {% if udf.is_required %}<span class="text-danger">*</span>{% endif %}
+                                            </label>
+                                            
+                                            {% if udf.field_type == 'select' %}
+                                                <select name="udf_line_{{ forloop.parentloop.counter0 }}_{{ udf.field_name }}" 
+                                                        id="udf_line_{{ forloop.parentloop.counter0 }}_{{ udf.field_name }}" 
+                                                        class="form-select"
+                                                        {% if udf.is_required %}required{% endif %}>
+                                                    <option value="">Select {{ udf.display_name }}</option>
+                                                    {% for choice in udf.choices %}
+                                                        <option value="{{ choice }}">{{ choice }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% elif udf.field_type == 'textarea' %}
+                                                <textarea name="udf_line_{{ forloop.parentloop.counter0 }}_{{ udf.field_name }}" 
+                                                          id="udf_line_{{ forloop.parentloop.counter0 }}_{{ udf.field_name }}" 
+                                                          class="form-control"
+                                                          rows="2"
+                                                          {% if udf.is_required %}required{% endif %}></textarea>
+                                            {% elif udf.field_type == 'checkbox' %}
+                                                <div class="form-check">
+                                                    <input type="checkbox" 
+                                                           name="udf_line_{{ forloop.parentloop.counter0 }}_{{ udf.field_name }}" 
+                                                           id="udf_line_{{ forloop.parentloop.counter0 }}_{{ udf.field_name }}" 
+                                                           class="form-check-input">
+                                                    <label class="form-check-label" for="udf_line_{{ forloop.parentloop.counter0 }}_{{ udf.field_name }}">
+                                                        {{ udf.help_text|default:udf.display_name }}
+                                                    </label>
+                                                </div>
+                                            {% else %}
+                                                <input type="{{ udf.field_type }}" 
+                                                       name="udf_line_{{ forloop.parentloop.counter0 }}_{{ udf.field_name }}" 
+                                                       id="udf_line_{{ forloop.parentloop.counter0 }}_{{ udf.field_name }}" 
+                                                       class="form-control"
+                                                       {% if udf.is_required %}required{% endif %}>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Totals Section -->
+        <div class="totals-section">
+            <div class="total-row">
+                <span>Total Debits:</span>
+                <span id="total-debits">$0.00</span>
+            </div>
+            <div class="total-row">
+                <span>Total Credits:</span>
+                <span id="total-credits">$0.00</span>
+            </div>
+            <div class="total-row balance" id="balance-row">
+                <span>Balance:</span>
+                <span id="balance-amount">$0.00</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-section">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'accounting:journal_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Cancel
+                </a>
+                <div>
+                    <button type="button" class="btn btn-info me-2" onclick="saveAsDraft()">
+                        <i class="fas fa-save me-1"></i>Save as Draft
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submit-btn">
+                        <i class="fas fa-check me-1"></i>Post Journal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'libs/jquery.repeater/jquery.repeater.min.js' %}"></script>
+<script>
+let lineCounter = {{ formset|length }};
+let defaultLines = {{ default_lines|safe }};
+
+$(document).ready(function() {
+    // Initialize form validation
+    initializeValidation();
+    
+    // Initialize account autocomplete
+    initializeAccountAutocomplete();
+    
+    // Initialize amount calculations
+    initializeAmountCalculations();
+    
+    // Load default lines if any
+    loadDefaultLines();
+});
+
+function initializeValidation() {
+    // Form validation
+    $('#voucher-form').on('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Real-time validation
+    $('input, select, textarea').on('blur', function() {
+        validateField($(this));
+    });
+}
+
+function validateForm() {
+    let isValid = true;
+    
+    // Validate required fields
+    $('[required]').each(function() {
+        if (!validateField($(this))) {
+            isValid = false;
+        }
+    });
+    
+    // Validate debits equal credits
+    if (!validateBalance()) {
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+function validateField(field) {
+    const value = field.val();
+    const isRequired = field.prop('required');
+    
+    // Remove existing error styling
+    field.removeClass('is-invalid');
+    field.siblings('.validation-error').remove();
+    
+    // Check if required field is empty
+    if (isRequired && (!value || value.trim() === '')) {
+        field.addClass('is-invalid');
+        field.after('<div class="validation-error">This field is required.</div>');
+        return false;
+    }
+    
+    // Validate amount fields
+    if (field.attr('name') && field.attr('name').includes('amount')) {
+        const amount = parseFloat(value) || 0;
+        if (amount < 0) {
+            field.addClass('is-invalid');
+            field.after('<div class="validation-error">Amount cannot be negative.</div>');
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+function validateBalance() {
+    const totalDebits = parseFloat($('#total-debits').text().replace('$', '').replace(',', '')) || 0;
+    const totalCredits = parseFloat($('#total-credits').text().replace('$', '').replace(',', '')) || 0;
+    const balance = totalDebits - totalCredits;
+    
+    const balanceRow = $('#balance-row');
+    const balanceAmount = $('#balance-amount');
+    
+    if (Math.abs(balance) > 0.01) {
+        balanceRow.addClass('text-danger');
+        balanceAmount.text('$' + balance.toFixed(2));
+        return false;
+    } else {
+        balanceRow.removeClass('text-danger').addClass('text-success');
+        balanceAmount.text('$0.00');
+        return true;
+    }
+}
+
+function initializeAccountAutocomplete() {
+    $('select[name*="account"]').on('change', function() {
+        const accountId = $(this).val();
+        const lineIndex = $(this).closest('.journal-line').data('line-index');
+        
+        if (accountId) {
+            // Load account balance
+            $.get('{% url "accounting:htmx_account_autocomplete" %}', {
+                query: accountId
+            }).done(function(data) {
+                if (data.results && data.results.length > 0) {
+                    const account = data.results[0];
+                    updateAccountBalance(lineIndex, account.balance || 0);
+                }
+            });
+        }
+    });
+}
+
+function updateAccountBalance(lineIndex, balance) {
+    const balanceElement = $(`#balance-${lineIndex}`);
+    const formattedBalance = '$' + Math.abs(balance).toFixed(2);
+    
+    if (balance >= 0) {
+        balanceElement.text(`Balance: ${formattedBalance} (Dr)`).removeClass('negative').addClass('positive');
+    } else {
+        balanceElement.text(`Balance: ${formattedBalance} (Cr)`).removeClass('positive').addClass('negative');
+    }
+}
+
+function initializeAmountCalculations() {
+    $(document).on('input', 'input[name*="debit_amount"], input[name*="credit_amount"]', function() {
+        calculateTotals();
+    });
+}
+
+function calculateTotals() {
+    let totalDebits = 0;
+    let totalCredits = 0;
+    
+    $('input[name*="debit_amount"]').each(function() {
+        totalDebits += parseFloat($(this).val()) || 0;
+    });
+    
+    $('input[name*="credit_amount"]').each(function() {
+        totalCredits += parseFloat($(this).val()) || 0;
+    });
+    
+    $('#total-debits').text('$' + totalDebits.toFixed(2));
+    $('#total-credits').text('$' + totalCredits.toFixed(2));
+    
+    validateBalance();
+}
+
+function addLine() {
+    const template = `
+        <div class="journal-line" data-line-index="${lineCounter}">
+            <div class="line-number">${lineCounter + 1}</div>
+            <button type="button" class="btn-remove-line" onclick="removeLine(this)">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Account <span class="text-danger">*</span></label>
+                        <select name="lines-${lineCounter}-account" class="form-select" required>
+                            <option value="">Select Account</option>
+                            {% for account in journal_form.fields.account.queryset %}
+                                <option value="{{ account.pk }}">{{ account.account_code }} - {{ account.account_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" name="lines-${lineCounter}-description" class="form-control">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Debit Amount</label>
+                        <input type="number" name="lines-${lineCounter}-debit_amount" class="form-control" step="0.01" min="0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Credit Amount</label>
+                        <input type="number" name="lines-${lineCounter}-credit_amount" class="form-control" step="0.01" min="0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <select name="lines-${lineCounter}-department" class="form-select">
+                            <option value="">Select Department</option>
+                            {% for dept in journal_form.fields.department.queryset %}
+                                <option value="{{ dept.pk }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Tax Code</label>
+                        <select name="lines-${lineCounter}-tax_code" class="form-select">
+                            <option value="">Select Tax Code</option>
+                            {% for tax in journal_form.fields.tax_code.queryset %}
+                                <option value="{{ tax.pk }}">{{ tax.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="account-balance" id="balance-${lineCounter}"></div>
+        </div>
+    `;
+    
+    $('#journal-lines-container').append(template);
+    
+    // Update management form
+    const totalForms = parseInt($('#id_lines-TOTAL_FORMS').val());
+    $('#id_lines-TOTAL_FORMS').val(totalForms + 1);
+    
+    lineCounter++;
+    
+    // Reinitialize autocomplete for new line
+    initializeAccountAutocomplete();
+}
+
+function removeLine(button) {
+    $(button).closest('.journal-line').remove();
+    
+    // Update line numbers
+    $('.journal-line').each(function(index) {
+        $(this).find('.line-number').text(index + 1);
+        $(this).data('line-index', index);
+    });
+    
+    // Update management form
+    const totalForms = parseInt($('#id_lines-TOTAL_FORMS').val());
+    $('#id_lines-TOTAL_FORMS').val(totalForms - 1);
+    
+    calculateTotals();
+}
+
+function loadDefaultLines() {
+    if (defaultLines && defaultLines.length > 0) {
+        defaultLines.forEach(function(defaultLine, index) {
+            if (index < lineCounter) {
+                const line = $(`.journal-line[data-line-index="${index}"]`);
+                
+                if (defaultLine.account) {
+                    line.find('select[name*="account"]').val(defaultLine.account);
+                }
+                
+                if (defaultLine.default_description) {
+                    line.find('input[name*="description"]').val(defaultLine.default_description);
+                }
+                
+                if (defaultLine.default_amount) {
+                    if (defaultLine.default_debit) {
+                        line.find('input[name*="debit_amount"]').val(defaultLine.default_amount);
+                    } else if (defaultLine.default_credit) {
+                        line.find('input[name*="credit_amount"]').val(defaultLine.default_amount);
+                    }
+                }
+                
+                if (defaultLine.default_tax_code) {
+                    line.find('select[name*="tax_code"]').val(defaultLine.default_tax_code);
+                }
+            }
+        });
+        
+        calculateTotals();
+    }
+}
+
+function saveAsDraft() {
+    // Add a hidden field to indicate draft status
+    $('<input>').attr({
+        type: 'hidden',
+        name: 'save_as_draft',
+        value: 'true'
+    }).appendTo('#voucher-form');
+    
+    $('#voucher-form').submit();
+}
+
+// Event handlers
+$('#add-line-btn').on('click', addLine);
+
+// Initialize on page load
+$(document).ready(function() {
+    calculateTotals();
+});
+</script>
+{% endblock %} 

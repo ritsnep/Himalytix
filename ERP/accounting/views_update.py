@@ -73,52 +73,6 @@ class CostCenterUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrga
         ]
         return context
     
-class JournalUpdateView(LoginRequiredMixin, UpdateView):
-    model = Journal
-    form_class = JournalForm
-    template_name = 'accounting/journal_form.html'
-    success_url = reverse_lazy('accounting:journal_list')
-    
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.get_active_organization()
-        return kwargs
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context['lines'] = JournalLineFormSet(self.request.POST, instance=self.object)
-        else:
-            context['lines'] = JournalLineFormSet(instance=self.object)
-
-        context.update({
-            'form_title': f'Update Journal: {self.object.journal_number}',
-            'page_title': f'Update Journal: {self.object.journal_number}',
-            'breadcrumbs': [
-                ('Journals', reverse('accounting:journal_list')),
-                (f'Update Journal: {self.object.journal_number}', None)
-            ]
-        })
-        return context
-    
-    def form_valid(self, form):
-        context = self.get_context_data()
-        lines = context['lines']
-        
-        with transaction.atomic():
-            form.instance.updated_by = self.request.user
-            self.object = form.save()
-            
-            if lines.is_valid():
-                lines.instance = self.object
-                lines.save()
-            else:
-                # If line forms are invalid, return form_invalid
-                messages.error(self.request, "Please correct the errors in the journal lines.")
-                return self.form_invalid(form) # Re-render with errors
-        messages.success(self.request, "Journal updated successfully.") # Add success message
-        return super().form_valid(form)
-
 class VoucherModeConfigUpdateView(LoginRequiredMixin, UpdateView):
     model = VoucherModeConfig
     form_class = VoucherModeConfigForm
@@ -167,6 +121,7 @@ class VoucherModeDefaultUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         config = get_object_or_404(VoucherModeConfig, pk=self.object.config_id, organization=self.request.user.get_active_organization())
         context.update({
+            'config_id': self.object.config_id,
             'form_title': f'Update Default Line for {config.name}',
             'page_title': f'Update Default Line: {config.name}',
             'breadcrumbs': [

@@ -1,0 +1,123 @@
+{% extends 'accounting/_form_base.html' %}
+{% load static %}
+
+{% block title %}Voucher Configuration Details{% endblock %}
+
+{% block form_content %}
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">{{ page_title|default:"Voucher Configuration Details" }}</h4>
+            <p class="card-title-desc">Details of the voucher configuration.</p>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Basic Information</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Name</th>
+                            <td>{{ config.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Code</th>
+                            <td>{{ config.code }}</td>
+                        </tr>
+                        <tr>
+                            <th>Journal Type</th>
+                            <td>{{ config.journal_type.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Layout Style</th>
+                            <td>{{ config.get_layout_style_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>Default Currency</th>
+                            <td>{{ config.default_currency }}</td>
+                        </tr>
+                        <tr>
+                            <th>Description</th>
+                            <td>{{ config.description|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td>
+                                {% if config.is_default %}
+                                    <span class="badge bg-primary">Default</span>
+                                {% endif %}
+                                {% if config.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Display Settings</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Show Account Balances</th>
+                            <td>{% if config.show_account_balances %}Yes{% else %}No{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>Show Tax Details</th>
+                            <td>{% if config.show_tax_details %}Yes{% else %}No{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>Show Dimensions</th>
+                            <td>{% if config.show_dimensions %}Yes{% else %}No{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>Allow Multiple Currencies</th>
+                            <td>{% if config.allow_multiple_currencies %}Yes{% else %}No{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>Require Line Description</th>
+                            <td>{% if config.require_line_description %}Yes{% else %}No{% endif %}</td>
+                        </tr>
+                    </table>
+
+                    <h5 class="mt-4">Default Line Items</h5>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Account</th>
+                                <th>Type</th>
+                                <th>Debit/Credit</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for default in config.defaults.all %}
+                            <tr>
+                                <td>{% if default.account %}{{ default.account.account_code }} - {{ default.account.account_name }}{% else %}N/A{% endif %}</td>
+                                <td>{% if default.account_type %}{{ default.account_type.name }}{% else %}N/A{% endif %}</td>
+                                <td>
+                                    {% if default.default_debit %}Debit{% elif default.default_credit %}Credit{% else %}N/A{% endif %}
+                                </td>
+                                <td>{{ default.default_amount|default:"N/A" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No default line settings found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'accounting:voucher_default_create' config.pk %}" class="btn btn-info btn-sm">Add Default Line</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+            <a href="{% url 'accounting:voucher_config_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            <a href="{% url 'accounting:voucher_config_update' config.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Configuration
+            </a>
+        </div>
+    </div>
+{% endblock form_content %}

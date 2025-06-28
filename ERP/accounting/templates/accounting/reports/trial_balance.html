@@ -1,0 +1,103 @@
+{% extends 'accounting/_list_base.html' %}
+{% load static %}
+
+{% block title %}Trial Balance{% endblock %}
+{% block breadcrumb %}Trial Balance{% endblock %}
+
+{% block list_header %}
+<div class="d-flex justify-content-between align-items-center">
+    <h4 class="card-title">Trial Balance</h4>
+    <div>
+        <a href="{% url 'accounting:reports_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Reports
+        </a>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="fas fa-print me-1"></i>Print
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% if error %}
+<div class="alert alert-warning" role="alert">
+    {{ error }}
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h5>Organization: {{ organization.name }}</h5>
+                        <p class="text-muted">Period: {{ period.name }}</p>
+                        <p class="text-muted">Date: {{ period.start_date|date:"M d, Y" }} - {{ period.end_date|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <p class="text-muted">Generated: {% now "M d, Y H:i" %}</p>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Account Code</th>
+                                <th>Account Name</th>
+                                <th>Account Type</th>
+                                <th class="text-end">Debit Amount</th>
+                                <th class="text-end">Credit Amount</th>
+                                <th class="text-end">Net Balance</th>
+                                <th>Normal Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for account in trial_balance.accounts %}
+                            <tr>
+                                <td>{{ account.account_code }}</td>
+                                <td>{{ account.account_name }}</td>
+                                <td>{{ account.account_type }}</td>
+                                <td class="text-end">${{ account.debit_amount|floatformat:2 }}</td>
+                                <td class="text-end">${{ account.credit_amount|floatformat:2 }}</td>
+                                <td class="text-end {% if account.net_balance < 0 %}text-danger{% else %}text-success{% endif %}">
+                                    ${{ account.net_balance|floatformat:2 }}
+                                </td>
+                                <td>{{ account.normal_balance }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No accounts found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-dark">
+                            <tr>
+                                <th colspan="3" class="text-end">TOTALS:</th>
+                                <th class="text-end">${{ trial_balance.total_debits|floatformat:2 }}</th>
+                                <th class="text-end">${{ trial_balance.total_credits|floatformat:2 }}</th>
+                                <th class="text-end {% if trial_balance.difference != 0 %}text-danger{% else %}text-success{% endif %}">
+                                    ${{ trial_balance.difference|floatformat:2 }}
+                                </th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                {% if trial_balance.difference != 0 %}
+                <div class="alert alert-danger mt-3" role="alert">
+                    <strong>Warning:</strong> Trial balance is out of balance by ${{ trial_balance.difference|floatformat:2 }}. 
+                    Please review your journal entries.
+                </div>
+                {% else %}
+                <div class="alert alert-success mt-3" role="alert">
+                    <strong>Success:</strong> Trial balance is balanced. Debits equal credits.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

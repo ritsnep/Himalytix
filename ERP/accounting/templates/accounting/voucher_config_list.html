@@ -1,91 +1,204 @@
-{% extends 'partials/base.html' %}
+{% extends 'accounting/_list_base.html' %}
 {% load static %}
 
-{% block title %}Voucher Configurations{% endblock title %}
+{% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class="main-content mt-4"><!-- Added mt-4 for margin-top -->
-    <div class="page-content">
-        <div class="container-fluid">
-            <!-- start page title -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0 font-size-18">Voucher Configurations</h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="javascript: void(0);">Accounting</a></li>
-                                <li class="breadcrumb-item active">Voucher Configurations</li>
-                            </ol>
-                        </div>
-                    </div>
+<div class="main-content">
+  <div class="page-content">
+<div class="container-fluid">
+    <!-- Breadcrumbs -->
+    {% comment %} <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if breadcrumb.1 %}
+                    <li class="breadcrumb-item"><a href="{{ breadcrumb.1 }}">{{ breadcrumb.0 }}</a></li>
+                {% else %}
+                    <li class="breadcrumb-item active">{{ breadcrumb.0 }}</li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav> {% endcomment %}
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">{{ page_title }}</h2>
+            <p class="text-muted mb-0">Configure voucher entry forms and their behavior</p>
+        </div>
+        <div>
+            <a href="{{ create_url }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>{{ create_button_text }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Voucher Configurations List -->
+    <div class="card">
+        <div class="card-body">
+            {% if configs %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Journal Type</th>
+                                <th>Layout Style</th>
+                                <th>Default Currency</th>
+                                <th>UDFs</th>
+                                <th>Defaults</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for config in configs %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ config.name }}</strong>
+                                        {% if config.is_default %}
+                                            <span class="badge bg-primary ms-1">Default</span>
+                                        {% endif %}
+                                        {% if config.description %}
+                                            <br><small class="text-muted">{{ config.description|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ config.journal_type.name }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ config.get_layout_style_display }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ config.default_currency }}</span>
+                                    </td>
+                                    <td>
+                                        {% with udf_count=config.udf_configs.count %}
+                                            {% if udf_count > 0 %}
+                                                <span class="badge bg-warning">{{ udf_count }} UDF{{ udf_count|pluralize }}</span>
+                                            {% else %}
+                                                <span class="text-muted">None</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% with default_count=config.defaults.count %}
+                                            {% if default_count > 0 %}
+                                                <span class="badge bg-info">{{ default_count }} Default{{ default_count|pluralize }}</span>
+                                            {% else %}
+                                                <span class="text-muted">None</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% if config.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'accounting:voucher_config_detail' config.pk %}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'accounting:voucher_config_update' config.pk %}" 
+                                               class="btn btn-sm btn-outline-secondary" 
+                                               title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'accounting:voucher_entry_config' config.pk %}" 
+                                               class="btn btn-sm btn-outline-success" 
+                                               title="Create Voucher">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-info dropdown-toggle" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-cog"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'accounting:voucher_udf_create' %}?voucher_mode={{ config.pk }}">
+                                                            <i class="fas fa-plus me-2"></i>Add UDF
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'accounting:voucher_default_create' config.pk %}">
+                                                            <i class="fas fa-list me-2"></i>Add Default Line
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'accounting:voucher_udf_list' %}">
+                                                            <i class="fas fa-cogs me-2"></i>Manage UDFs
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-            <!-- end page title -->
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Voucher Configurations Found</h5>
+                    <p class="text-muted">Get started by creating your first voucher configuration.</p>
+                    <a href="{{ create_url }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Create First Configuration
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h4 class="card-title">Voucher Configurations</h4>
-                                <a href="{% url 'accounting:voucher_config_create' %}" class="btn btn-primary">
-                                    <i class="bx bx-plus me-1"></i> Add New Configuration
-                                </a>
-                            </div>
-
-                            <div class="table-responsive">
-                                <table class="table table-centered table-nowrap mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Code</th>
-                                            <th>Name</th>
-                                            <th>Journal Type</th>
-                                            <th>Status</th>
-                                            <th>Default</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for config in configs %}
-                                        <tr>
-                                            <td>{{ config.code }}</td>
-                                            <td>{{ config.name }}</td>
-                                            <td>{{ config.journal_type.name }}</td>
-                                            <td>
-                                                {% if config.is_active %}
-                                                <span class="badge badge-soft-success">Active</span>
-                                                {% else %}
-                                                <span class="badge badge-soft-danger">Inactive</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if config.is_default %}
-                                                <span class="badge badge-soft-primary">Default</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <a href="{% url 'accounting:voucher_config_detail' config.pk %}" class="btn btn-sm btn-info">
-                                                    <i class="bx bx-show"></i>
-                                                </a>
-                                                <a href="{% url 'accounting:voucher_config_update' config.pk %}" class="btn btn-sm btn-primary">
-                                                    <i class="bx bx-edit"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        {% empty %}
-                                        <tr>
-                                            <td colspan="6" class="text-center">No voucher configurations found.</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+    <!-- Quick Actions -->
+    {% if configs %}
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cogs me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'accounting:voucher_udf_list' %}" class="btn btn-outline-info">
+                            <i class="fas fa-cogs me-2"></i>Manage UDF Configurations
+                        </a>
+                        <a href="{% url 'accounting:voucher_entry' %}" class="btn btn-outline-success">
+                            <i class="fas fa-plus me-2"></i>Create New Voucher
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Configuration Help
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><i class="fas fa-check text-success me-2"></i>Configure voucher entry forms</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Set up user-defined fields (UDFs)</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Define default line items</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Customize layout and behavior</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
+    {% endif %}
 </div>
-{% endblock content %}
+</div>
+</div>
+{% endblock %} 

@@ -8,6 +8,8 @@ from django.db.models import Max, Q, F, CheckConstraint
 import logging
 from django.core.exceptions import ValidationError
 from django.db import transaction
+import re
+
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
@@ -998,15 +1000,140 @@ class VoucherModeDefault(models.Model):
         ordering = ['display_order']
 
     def __str__(self):
-        return f"Default for {self.config.name}"
+        return f"{self.config.name} - {self.account.account_name if self.account else self.account_type.name if self.account_type else 'Default'}"
 
 
+class VoucherUDFConfig(models.Model):
+    """User-Defined Fields configuration for voucher entry forms"""
+    FIELD_TYPE_CHOICES = [
+        ('text', 'Text'),
+        ('number', 'Number'),
+        ('decimal', 'Decimal'),
+        ('date', 'Date'),
+        ('datetime', 'Date & Time'),
+        ('select', 'Dropdown'),
+        ('multiselect', 'Multi-Select'),
+        ('checkbox', 'Checkbox'),
+        ('textarea', 'Text Area'),
+        ('email', 'Email'),
+        ('phone', 'Phone'),
+        ('url', 'URL'),
+    ]
+    
+    SCOPE_CHOICES = [
+        ('header', 'Voucher Header'),
+        ('line', 'Journal Line'),
+    ]
+    
+    udf_id = models.BigAutoField(primary_key=True)
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.PROTECT,
+        related_name='voucher_udf_configs'
+    )
+    voucher_mode = models.ForeignKey(
+        VoucherModeConfig,
+        on_delete=models.CASCADE,
+        related_name='udf_configs'
+    )
+    field_name = models.CharField(max_length=50, help_text="Internal field name (no spaces, lowercase)")
+    display_name = models.CharField(max_length=100, help_text="User-friendly display name")
+    field_type = models.CharField(max_length=20, choices=FIELD_TYPE_CHOICES, default='text')
+    scope = models.CharField(max_length=10, choices=SCOPE_CHOICES, default='header')
+    is_required = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    default_value = models.TextField(null=True, blank=True)
+    choices = models.JSONField(null=True, blank=True, help_text="For select/multiselect fields")
+    min_value = models.DecimalField(max_digits=19, decimal_places=4, null=True, blank=True)
+    max_value = models.DecimalField(max_digits=19, decimal_places=4, null=True, blank=True)
+    min_length = models.IntegerField(null=True, blank=True)
+    max_length = models.IntegerField(null=True, blank=True)
+    validation_regex = models.CharField(max_length=255, null=True, blank=True)
+    help_text = models.TextField(null=True, blank=True)
+    display_order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_voucher_udfs')
+    updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_voucher_udfs')
+    is_archived = models.BooleanField(default=False)
+    archived_at = models.DateTimeField(null=True, blank=True)
+    archived_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_voucher_udfs')
+    
+    class Meta:
+        unique_together = ('voucher_mode', 'field_name')
+        ordering = ['scope', 'display_order', 'field_name']
+        verbose_name = "Voucher UDF Configuration"
+        verbose_name_plural = "Voucher UDF Configurations"
+    
     def __str__(self):
-        return f"Default for {self.config.name}"
-# Supporting models not in the original schema but needed for relationships
-# class Organization(models.Model):
-#     name = models.CharField(max_length=100)
-#     # Add other organization fields as needed
+        return f"{self.voucher_mode.name} - {self.display_name}"
+    
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        
+        # Validate field name format
+        if not re.match(r'^[a-z][a-z0-9_]*$', self.field_name):
+            raise ValidationError("Field name must start with a letter and contain only lowercase letters, numbers, and underscores.")
+        
+        # Validate choices for select fields
+        if self.field_type in ['select', 'multiselect'] and not self.choices:
+            raise ValidationError("Choices are required for select and multiselect fields.")
+        
+        # Validate numeric constraints
+        if self.field_type in ['number', 'decimal']:
+            if self.min_value is not None and self.max_value is not None:
+                if self.min_value > self.max_value:
+                    raise ValidationError("Minimum value cannot be greater than maximum value.")
+        
+        # Validate length constraints
+        if self.min_length is not None and self.max_length is not None:
+            if self.min_length > self.max_length:
+                raise ValidationError("Minimum length cannot be greater than maximum length.")
+    
+    def get_field_widget_attrs(self):
+        """Get widget attributes for form rendering"""
+        attrs = {
+            'class': 'form-control',
+            'data-field-type': self.field_type,
+            'data-field-name': self.field_name,
+        }
+        
+        if self.is_required:
+            attrs['required'] = 'required'
+        
+        if self.help_text:
+            attrs['title'] = self.help_text
+        
+        if self.field_type == 'number':
+            if self.min_value is not None:
+                attrs['min'] = str(self.min_value)
+            if self.max_value is not None:
+                attrs['max'] = str(self.max_value)
+        elif self.field_type == 'decimal':
+            attrs['step'] = '0.01'
+            if self.min_value is not None:
+                attrs['min'] = str(self.min_value)
+            if self.max_value is not None:
+                attrs['max'] = str(self.max_value)
+        elif self.field_type in ['text', 'textarea']:
+            if self.min_length is not None:
+                attrs['minlength'] = str(self.min_length)
+            if self.max_length is not None:
+                attrs['maxlength'] = str(self.max_length)
+        elif self.field_type == 'date':
+            attrs['type'] = 'date'
+        elif self.field_type == 'datetime':
+            attrs['type'] = 'datetime-local'
+        elif self.field_type == 'email':
+            attrs['type'] = 'email'
+        elif self.field_type == 'phone':
+            attrs['type'] = 'tel'
+        elif self.field_type == 'url':
+            attrs['type'] = 'url'
+        elif self.field_type == 'textarea':
+            attrs['rows'] = '3'
+        
+        return attrs
 
 class GeneralLedger(models.Model):
     gl_entry_id = models.BigAutoField(primary_key=True)

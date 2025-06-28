@@ -2,7 +2,7 @@ from asyncio.log import logger
 from django.forms import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.views.generic import ListView,  UpdateView, DetailView
+from django.views.generic import ListView,  UpdateView, DetailView, TemplateView, CreateView
 from django.urls import reverse, reverse_lazy
 from django.http import HttpResponseForbidden, HttpResponseServerError, JsonResponse, HttpResponse
 import json
@@ -23,11 +23,11 @@ from .serializers import VoucherModeConfigSerializer
 from .models import (
     FiscalYear, GeneralLedger, Journal, JournalLine, JournalType, ChartOfAccount, 
     AccountingPeriod, TaxCode, Department, Project, CostCenter,
-    VoucherModeConfig, VoucherModeDefault
+    VoucherModeConfig, VoucherModeDefault, VoucherUDFConfig
 )
 from .forms import (
     JournalForm, JournalLineForm, JournalLineFormSet,
-    VoucherModeConfigForm, VoucherModeDefaultForm, AccountingPeriodForm, JournalTypeForm
+    VoucherModeConfigForm, VoucherModeDefaultForm, VoucherUDFConfigForm, AccountingPeriodForm, JournalTypeForm
 )
 
 
@@ -46,6 +46,8 @@ from django.views.decorators.csrf import csrf_exempt
 from utils.form_restore import get_pending_form_initial, clear_pending_form
 from django.db.models import Prefetch
 import logging
+from decimal import Decimal
+from django.db.models import Sum
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +55,7 @@ class HTMXAccountAutocompleteView(LoginRequiredMixin, View):
     def get(self, request):
         query = request.GET.get('query', '')
         accounts = ChartOfAccount.objects.filter(
-            organization=request.user.organization,
+            organization_id=request.user.get_active_organization().id,
             account_code__icontains=query
         )[:10]
         results = [{'id': a.account_id, 'text': f"{a.account_code} - {a.account_name}"} for a in accounts]
@@ -65,10 +67,8 @@ class HTMXJournalLineFormView(LoginRequiredMixin, View):
         form_index = request.GET.get('index', '0') # Get the index for the new form
 
         # Create a single empty form from the formset
-        # We need a dummy instance to create the formset for a single extra form
-        # Or, we can just instantiate JournalLineForm directly with a prefix
-        # form = JournalLineForm(prefix=f'lines-{form_index}', organization=organization)
-        
+        form = JournalLineForm(prefix=f'lines-{form_index}', organization=organization)
+
         # Manually set required attributes for new form for client-side validation
         # These are set in the forms.py now, but can be reinforced here if needed
         # form.fields['account'].widget.attrs['required'] = 'required'
@@ -78,13 +78,14 @@ class HTMXJournalLineFormView(LoginRequiredMixin, View):
         return render(request, 'accounting/partials/journal_line_form.html', {'form': form})
 
 # Voucher Mode Views
-class VoucherModeConfigListView(LoginRequiredMixin, ListView):
+class VoucherModeConfigListView(PermissionRequiredMixin, LoginRequiredMixin, ListView):
     model = VoucherModeConfig
     template_name = 'accounting/voucher_config_list.html'
     context_object_name = 'configs'
+    permission_required = ('accounting', 'vouchermodeconfig', 'view')
     
     def get_queryset(self):
-        return VoucherModeConfig.objects.filter(organization=self.request.user.organization)
+        return VoucherModeConfig.objects.filter(organization_id=self.request.user.get_active_organization().id)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -96,12 +97,11 @@ class VoucherModeConfigListView(LoginRequiredMixin, ListView):
         ]
         return context
 
-
-
-class VoucherModeConfigUpdateView(LoginRequiredMixin, UpdateView):
+class VoucherModeConfigUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = VoucherModeConfig
     form_class = VoucherModeConfigForm
     template_name = 'accounting/voucher_config_form.html'
+    permission_required = ('accounting', 'vouchermodeconfig', 'change')
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -128,13 +128,14 @@ class VoucherModeConfigUpdateView(LoginRequiredMixin, UpdateView):
         })
         return context
 
-class VoucherModeConfigDetailView(LoginRequiredMixin, DetailView):
+class VoucherModeConfigDetailView(PermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = VoucherModeConfig
     template_name = 'accounting/voucher_config_detail.html'
     context_object_name = 'config'
+    permission_required = ('accounting', 'vouchermodeconfig', 'view')
 
     def get_queryset(self):
-        return VoucherModeConfig.objects.filter(organization=self.request.user.get_active_organization())
+        return VoucherModeConfig.objects.filter(organization_id=self.request.user.get_active_organization().id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -148,24 +149,23 @@ class VoucherModeConfigDetailView(LoginRequiredMixin, DetailView):
         })
         return context
 
-
 class VoucherConfigHXView(LoginRequiredMixin, View):
     """Return voucher configuration fragment and layout JSON."""
 
     def get(self, request, type_id: int):
         org = request.user.get_active_organization()
-        config = get_object_or_404(VoucherModeConfig, organization=org, journal_type_id=type_id)
+        config = get_object_or_404(VoucherModeConfig, organization_id=org.id, journal_type_id=type_id)
         layout_cfg = VoucherModeConfigSerializer(config).data
         html = render(request, 'accounting/voucher_fragment.html', {
             'layout_cfg': json.dumps(layout_cfg)
         }).content.decode('utf-8')
         return HttpResponse(html)
 
-
-class VoucherModeDefaultUpdateView(LoginRequiredMixin, UpdateView):
+class VoucherModeDefaultUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = VoucherModeDefault
     form_class = VoucherModeDefaultForm
     template_name = 'accounting/voucher_default_form.html'
+    permission_required = ('accounting', 'vouchermodedefault', 'change')
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -178,7 +178,7 @@ class VoucherModeDefaultUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        config = get_object_or_404(VoucherModeConfig, pk=self.object.config_id, organization=self.request.user.get_active_organization())
+        config = get_object_or_404(VoucherModeConfig, pk=self.object.config_id, organization_id=self.request.user.get_active_organization().id)
         context.update({
             'form_title': f'Update Default Line for {config.name}',
             'page_title': f'Update Default Line: {config.name}',
@@ -190,76 +190,104 @@ class VoucherModeDefaultUpdateView(LoginRequiredMixin, UpdateView):
         })
         return context
 
-class VoucherModeDefaultDeleteView(LoginRequiredMixin, View):
-    @method_decorator(require_permission('accounting','vouchermodedefault','delete'))
+class VoucherModeDefaultDeleteView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    permission_required = ('accounting', 'vouchermodedefault', 'delete')
+    
     def post(self, request, pk):
-        default = get_object_or_404(VoucherModeDefault, pk=pk, config__organization=request.user.get_active_organization())
+        default = get_object_or_404(VoucherModeDefault, pk=pk, config__organization_id=request.user.get_active_organization().id)
         config_id = default.config_id
         default.delete()
         messages.success(request, "Voucher default line deleted successfully.")
         return redirect(reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': config_id}))
 
-class VoucherEntryView(LoginRequiredMixin, View):
-
+class VoucherEntryView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    """Dynamic voucher entry form with UDF support"""
     template_name = 'accounting/voucher_entry.html'
-    
+    permission_required = ('accounting', 'journal', 'add')
+
     def get(self, request, config_id=None):
         organization = request.user.get_active_organization()
+        
+        # Get all voucher configs for selector
+        all_configs = VoucherModeConfig.objects.filter(organization_id=organization.id, is_archived=False)
+        
+        # Get voucher mode configuration
         if config_id:
-            config = get_object_or_404(VoucherModeConfig, pk=config_id, organization=organization)
+            voucher_config = get_object_or_404(
+                VoucherModeConfig, 
+                pk=config_id, 
+                organization_id=organization.id
+            )
         else:
-            config = VoucherModeConfig.objects.filter(
-                organization=organization,
+            # Get default configuration for the organization
+            voucher_config = VoucherModeConfig.objects.filter(
+                organization_id=organization.id,
                 is_default=True
             ).first()
-        
-        if not config:
-            messages.warning(request, "No default voucher configuration found. Please create one.")
-            return redirect('accounting:voucher_config_list')
-        
-        journal_form = JournalForm(organization=organization, initial={
-            'journal_type': config.journal_type,
-            'currency_code': config.default_currency,
-        })
-        
-        # Populate initial lines from defaults
-        initial_lines = []
-        for default in config.defaults.all().order_by('display_order'):
-            initial_lines.append({
-                'account': default.account,
-                'description': default.default_description,
-                'debit_amount': default.default_amount if default.default_debit else 0,
-                'credit_amount': default.default_amount if default.default_credit else 0,
-                'department': default.default_department,
-                'project': default.default_project,
-                'cost_center': default.default_cost_center,
-                'tax_code': default.default_tax_code,
-                'memo': default.default_description,
-            })
-        
-        JournalLineFormSet = inlineformset_factory(
-            Journal, JournalLine,
-            form=JournalLineForm,
-            extra=max(len(initial_lines), 1),
-            can_delete=True,
-            fields=[
-                'account', 'description', 'debit_amount', 
-                'credit_amount', 'department', 'project',
-                'cost_center', 'tax_code', 'memo'
-            ]
-        )
-        lines_formset = JournalLineFormSet(initial=initial_lines, form_kwargs={'organization': organization})
+            
+            if not voucher_config:
+                messages.error(request, "No voucher configuration found. Please contact your administrator.")
+                return redirect('accounting:journal_list')
 
+        # Get current period
+        current_period = AccountingPeriod.objects.filter(
+            fiscal_year__organization_id=organization.id,
+            is_current=True
+        ).first()
+        
+        if not current_period:
+            messages.error(request, "No current accounting period found.")
+            return redirect('accounting:journal_list')
+
+        # Initialize forms
+        journal_form = JournalForm(
+            organization=organization,
+            initial={
+                'journal_type': voucher_config.journal_type,
+                'period': current_period,
+                'journal_date': timezone.now().date(),
+                'currency_code': voucher_config.default_currency,
+            }
+        )
+        
+        # Create formset for journal lines
+        JournalLineFormSet = inlineformset_factory(
+            Journal, JournalLine, 
+            form=JournalLineForm,
+            extra=3, can_delete=True
+        )
+        
+        formset = JournalLineFormSet(
+            prefix='lines',
+            instance=Journal(organization=organization)
+        )
+
+        # Get UDF configurations
+        header_udfs = voucher_config.udf_configs.filter(
+            scope='header', 
+            is_active=True
+        ).order_by('display_order')
+        
+        line_udfs = voucher_config.udf_configs.filter(
+            scope='line', 
+            is_active=True
+        ).order_by('display_order')
+
+        # Get default line items
+        default_lines = voucher_config.defaults.filter(is_archived=False).order_by('display_order')
 
         context = {
-            'config': config,
+            'voucher_config': voucher_config,
+            'voucher_configs': all_configs,  # For selector
             'journal_form': journal_form,
-            'lines': lines_formset,
-            'form_title': f'Voucher Entry: {config.name}',
-            'page_title': f'Voucher Entry: {config.name}',
+            'formset': formset,
+            'header_udfs': header_udfs,
+            'line_udfs': line_udfs,
+            'default_lines': default_lines,
+            'current_period': current_period,
+            'page_title': f'Voucher Entry - {voucher_config.name}',
             'breadcrumbs': [
-                ('Voucher Entry', reverse('accounting:voucher_entry')),
-                (config.name, None)
+                ('Voucher Entry', None),
             ]
         }
         
@@ -267,72 +295,139 @@ class VoucherEntryView(LoginRequiredMixin, View):
 
     def post(self, request, config_id=None):
         organization = request.user.get_active_organization()
+        
+        # Get voucher configuration
         if config_id:
-            config = get_object_or_404(VoucherModeConfig, pk=config_id, organization=organization)
+            voucher_config = get_object_or_404(
+                VoucherModeConfig, 
+                pk=config_id, 
+                organization_id=organization.id
+            )
         else:
-            config = VoucherModeConfig.objects.filter(
-                organization=organization,
+            voucher_config = VoucherModeConfig.objects.filter(
+                organization_id=organization.id,
                 is_default=True
             ).first()
+            
+            if not voucher_config:
+                messages.error(request, "No voucher configuration found.")
+                return redirect('accounting:journal_list')
 
-        if not config:
-            messages.error(request, "No default voucher configuration found. Cannot create voucher.")
-            return redirect('accounting:voucher_config_list')
-
-        journal_form = JournalForm(request.POST, organization=organization)
-
-        JournalLineFormSet = inlineformset_factory(
-            Journal, JournalLine,
-            form=JournalLineForm,
-            extra=0,
-            can_delete=True,
-            fields=[
-                'account', 'description', 'debit_amount', 
-                'credit_amount', 'department', 'project',
-                'cost_center', 'tax_code', 'memo'
-            ]
+        # Process forms
+        journal_form = JournalForm(
+            request.POST, 
+            organization=organization
         )
-        lines_formset = JournalLineFormSet(request.POST, form_kwargs={'organization': organization})
+        
+        JournalLineFormSet = inlineformset_factory(
+            Journal, JournalLine, 
+            form=JournalLineForm,
+            extra=0, can_delete=True
+        )
+        
+        formset = JournalLineFormSet(
+            request.POST,
+            prefix='lines',
+            instance=Journal(organization=organization)
+        )
 
-        if journal_form.is_valid() and lines_formset.is_valid():
+        # Validate UDFs
+        header_udfs = voucher_config.udf_configs.filter(
+            scope='header', 
+            is_active=True
+        ).order_by('display_order')
+        
+        line_udfs = voucher_config.udf_configs.filter(
+            scope='line', 
+            is_active=True
+        ).order_by('display_order')
+
+        udf_errors = []
+        
+        # Validate header UDFs
+        for udf in header_udfs:
+            field_name = f'udf_header_{udf.field_name}'
+            value = request.POST.get(field_name)
+            
+            if udf.is_required and not value:
+                udf_errors.append(f"{udf.display_name} is required.")
+            elif value and udf.validation_regex:
+                import re
+                if not re.match(udf.validation_regex, value):
+                    udf_errors.append(f"{udf.display_name} format is invalid.")
+
+        if journal_form.is_valid() and formset.is_valid() and not udf_errors:
             try:
                 with transaction.atomic():
+                    # Save journal
                     journal = journal_form.save(commit=False)
                     journal.organization = organization
                     journal.created_by = request.user
-                    journal.save()
-
-                    lines = lines_formset.save(commit=False)
-                    for line in lines:
-                        line.journal = journal
-                        line.save()
                     
-                    # Handle deletions in formset
-                    for deleted_form in lines_formset.deleted_forms:
-                        deleted_form.instance.delete()
-
-                messages.success(request, "Voucher entry created successfully.")
-                return redirect('accounting:journal_detail', pk=journal.pk)
-
+                    # Generate journal number
+                    if voucher_config.journal_type:
+                        journal.journal_number = voucher_config.journal_type.get_next_journal_number()
+                    
+                    journal.save()
+                    
+                    # Save journal lines
+                    lines = formset.save(commit=False)
+                    total_debit = Decimal('0')
+                    total_credit = Decimal('0')
+                    
+                    for i, line in enumerate(lines):
+                        line.journal = journal
+                        line.line_number = i + 1
+                        line.created_by = request.user
+                        line.save()
+                        
+                        total_debit += line.debit_amount or Decimal('0')
+                        total_credit += line.credit_amount or Decimal('0')
+                    
+                    # Update journal totals
+                    journal.total_debit = total_debit
+                    journal.total_credit = total_credit
+                    journal.save()
+                    
+                    # Save UDF values (you might want to store these in a separate model)
+                    udf_values = {}
+                    for udf in header_udfs:
+                        field_name = f'udf_header_{udf.field_name}'
+                        value = request.POST.get(field_name)
+                        if value:
+                            udf_values[udf.field_name] = value
+                    
+                    # Store UDF values in journal description or a separate field
+                    if udf_values:
+                        journal.description = f"{journal.description or ''}\nUDF Values: {json.dumps(udf_values)}"
+                        journal.save()
+                    
+                    messages.success(request, f"Journal {journal.journal_number} created successfully.")
+                    return redirect('accounting:journal_detail', pk=journal.pk)
+                    
             except Exception as e:
-                messages.error(request, f"Error saving voucher entry: {e}")
-                logger.error(f"Error saving voucher entry: {e}")
+                messages.error(request, f"Error creating journal: {str(e)}")
+                logger.error(f"Error creating journal: {str(e)}")
         else:
-            messages.error(request, "Please correct the errors in the form.")
+            # Add UDF errors to form errors
+            for error in udf_errors:
+                messages.error(request, error)
 
+        # Re-render form with errors
         context = {
-            'config': config,
+            'voucher_config': voucher_config,
+            'voucher_configs': all_configs,  # For selector
             'journal_form': journal_form,
-            'lines': lines_formset,
-            'form_title': f'Voucher Entry: {config.name}',
-            'page_title': f'Voucher Entry: {config.name}',
+            'formset': formset,
+            'header_udfs': header_udfs,
+            'line_udfs': line_udfs,
+            'page_title': f'Voucher Entry - {voucher_config.name}',
             'breadcrumbs': [
-                ('Voucher Entry', reverse('accounting:voucher_entry')),
-                (config.name, None)
+                ('Voucher Entry', None),
             ]
         }
+        
         return render(request, self.template_name, context)
-
 
 class DepartmentListView(LoginRequiredMixin, ListView):
     model = Department
@@ -383,7 +478,7 @@ class ChartOfAccountListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         # Prefetch parent_account and account_type to avoid N+1
         return ChartOfAccount.objects.filter(
-            organization=self.request.user.organization
+            organization_id=self.request.user.organization.id
         ).select_related('parent_account', 'account_type').order_by('account_code')
 
     def get_context_data(self, **kwargs):
@@ -449,7 +544,7 @@ class ChartOfAccountUpdateView(PermissionRequiredMixin, LoginRequiredMixin, Upda
         return kwargs
 
     def get_queryset(self):
-        return ChartOfAccount.objects.filter(organization=self.request.user.organization)
+        return ChartOfAccount.objects.filter(organization_id=self.request.user.organization.id)
 
     def form_valid(self, form):
         try:
@@ -511,7 +606,7 @@ class ChartOfAccountDeleteView(PermissionRequiredMixin, LoginRequiredMixin, Dele
     permission_required = ('accounting', 'chartofaccount', 'delete')
 
     def get_queryset(self):
-        return ChartOfAccount.objects.filter(organization=self.request.user.organization)
+        return ChartOfAccount.objects.filter(organization_id=self.request.user.organization.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -526,7 +621,7 @@ class ChartOfAccountDeleteView(PermissionRequiredMixin, LoginRequiredMixin, Dele
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        if ChartOfAccount.objects.filter(parent_account=self.object).exists():
+        if ChartOfAccount.objects.filter(parent_account_id=self.object.pk).exists():
             messages.error(request, "Cannot delete an account that has sub-accounts. Please remove or reassign its children first.")
             return redirect(self.success_url)
         return super().delete(request, *args, **kwargs)
@@ -631,7 +726,7 @@ class CurrencyExchangeRateListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return CurrencyExchangeRate.objects.filter(
-            organization=self.request.user.organization
+            organization_id=self.request.user.organization.id
         ).select_related('from_currency', 'to_currency').order_by('-rate_date')
 
     def get_context_data(self, **kwargs):
@@ -675,7 +770,7 @@ class TaxAuthorityListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return TaxAuthority.objects.filter(
-            organization=self.request.user.organization
+            organization_id=self.request.user.organization.id
         ).order_by('code')
 
     def get_context_data(self, **kwargs):
@@ -701,7 +796,7 @@ class TaxAuthorityUpdateView(LoginRequiredMixin, UpdateView):
         return kwargs
 
     def get_queryset(self):
-        return TaxAuthority.objects.filter(organization=self.request.user.organization)
+        return TaxAuthority.objects.filter(organization_id=self.request.user.organization.id)
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
@@ -726,7 +821,7 @@ class TaxTypeListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return TaxType.objects.filter(
-            organization=self.request.user.organization
+            organization_id=self.request.user.organization.id
         ).order_by('code')
 
     def get_context_data(self, **kwargs):
@@ -752,7 +847,7 @@ class TaxTypeUpdateView(LoginRequiredMixin, UpdateView):
         return kwargs
 
     def get_queryset(self):
-        return TaxType.objects.filter(organization=self.request.user.organization)
+        return TaxType.objects.filter(organization_id=self.request.user.organization.id)
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
@@ -777,7 +872,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Project.objects.filter(
-            organization=self.request.user.organization
+            organization_id=self.request.user.organization.id
         ).order_by('code')
 
     def get_context_data(self, **kwargs):
@@ -804,7 +899,7 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
         return kwargs
 
     def get_queryset(self):
-        return Project.objects.filter(organization=self.request.user.organization)
+        return Project.objects.filter(organization_id=self.request.user.organization.id)
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
@@ -859,7 +954,7 @@ class AccountingPeriodUpdateView(PermissionRequiredMixin, LoginRequiredMixin, Us
         return get_object_or_404(
             AccountingPeriod,
             period_id=self.kwargs['period_id'],
-            fiscal_year__organization=self.request.user.get_active_organization()
+            fiscal_year__organization_id=self.request.user.get_active_organization().id
         )
 
     def form_valid(self, form):
@@ -883,26 +978,27 @@ class AccountingPeriodDetailView(LoginRequiredMixin, UserOrganizationMixin, Deta
         return super().get_queryset()
 
 # Journal Type Views
-class JournalTypeListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
+class JournalTypeListView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, ListView):
     model = JournalType
     template_name = 'accounting/journal_type_list.html'
     context_object_name = 'journal_types'
     paginate_by = 20
-    queryset = JournalType.objects.order_by('name')
+    permission_required = ('accounting', 'journaltype', 'view')
    
     def get_queryset(self):
         org = self.get_organization()
         if not org:
             return self.model.objects.none()
-        return super().get_queryset()
+        return JournalType.objects.filter(organization=org).order_by('name')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = self.request.user
-        org = user.get_active_organization()
         context['create_url'] = reverse('accounting:journal_type_create')
         context['create_button_text'] = 'New Journal Type'
         context['page_title'] = 'Journal Types'
+        context['breadcrumbs'] = [
+            ('Journal Types', None),
+        ]
         return context
 
 
@@ -916,13 +1012,13 @@ class JournalTypeUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrg
     slug_url_kwarg = 'journal_type_id'
 
     def get_queryset(self):
-        return super().get_queryset()
+        return JournalType.objects.filter(organization=self.get_organization())
 
     def get_object(self, queryset=None):
         return get_object_or_404(
             JournalType,
             journal_type_id=self.kwargs['journal_type_id'],
-            organization=self.request.user.get_active_organization()
+            organization_id=self.request.user.get_active_organization().id
         )
 
     def form_valid(self, form):
@@ -933,24 +1029,198 @@ class JournalTypeUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrg
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Update Journal Type'
         context['back_url'] = reverse('accounting:journal_type_list')
+        context['breadcrumbs'] = [
+            ('Journal Types', reverse('accounting:journal_type_list')),
+            ('Update Journal Type', None)
+        ]
         return context
 
-class JournalTypeDetailView(LoginRequiredMixin, UserOrganizationMixin, DetailView):
+class JournalTypeDetailView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, DetailView):
     model = JournalType
     template_name = 'accounting/journal_type_detail.html'
     context_object_name = 'journal_type'
     slug_field = 'journal_type_id'
     slug_url_kwarg = 'journal_type_id'
+    permission_required = ('accounting', 'journaltype', 'view')
 
     def get_queryset(self):
-        return super().get_queryset()
-    context_object_name = 'journal_type'
-    slug_field = 'journal_type_id'
-    slug_url_kwarg = 'journal_type_id'
+        return JournalType.objects.filter(organization=self.get_organization())
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'form_title': f'Journal Type Details: {self.object.name}',
+            'page_title': f'Journal Type Details: {self.object.name}',
+            'breadcrumbs': [
+                ('Journal Types', reverse('accounting:journal_type_list')),
+                (f'Details: {self.object.name}', None)
+            ]
+        })
+        return context
+
+
+class JournalTypeCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
+    model = JournalType
+    form_class = JournalTypeForm
+    template_name = 'accounting/journal_type_form.html'
+    success_url = reverse_lazy('accounting:journal_type_list')
+    permission_required = ('accounting', 'journaltype', 'add')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.get_active_organization()
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        form.instance.organization = self.request.user.get_active_organization()
+        messages.success(self.request, "Journal type created successfully.")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'form_title': 'Create New Journal Type',
+            'page_title': 'Create New Journal Type',
+            'breadcrumbs': [
+                ('Journal Types', reverse('accounting:journal_type_list')),
+                ('Create New', None)
+            ]
+        })
+        return context
+
+
+class JournalTypeDeleteView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    permission_required = ('accounting', 'journaltype', 'delete')
+    
+    def post(self, request, journal_type_id):
+        journal_type = get_object_or_404(
+            JournalType, 
+            journal_type_id=journal_type_id,
+            organization_id=request.user.get_active_organization().id
+        )
+        
+        if journal_type.is_system_type:
+            messages.error(request, "System journal types cannot be deleted.")
+            return redirect('accounting:journal_type_list')
+        
+        # Check if there are any journals using this type
+        if journal_type.journals.exists():
+            messages.error(request, f"Cannot delete journal type '{journal_type.name}' because it has associated journals.")
+            return redirect('accounting:journal_type_list')
+        
+        journal_type_name = journal_type.name
+        journal_type.delete()
+        messages.success(request, f"Journal type '{journal_type_name}' deleted successfully.")
+        return redirect('accounting:journal_type_list')
+
+
+class VoucherUDFConfigListView(PermissionRequiredMixin, LoginRequiredMixin, ListView):
+    model = VoucherUDFConfig
+    template_name = 'accounting/voucher_udf_list.html'
+    context_object_name = 'udf_configs'
+    permission_required = ('accounting', 'voucherudfconfig', 'view')
+    
     def get_queryset(self):
-        return super().get_queryset()
+        return VoucherUDFConfig.objects.filter(
+            voucher_mode__organization_id=self.request.user.get_active_organization().id
+        ).select_related('voucher_mode')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'page_title': 'Voucher UDF Configurations',
+            'breadcrumbs': [
+                ('Voucher UDF Configurations', None),
+            ]
+        })
+        return context
 
+
+class VoucherUDFConfigCreateView(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
+    model = VoucherUDFConfig
+    form_class = VoucherUDFConfigForm
+    template_name = 'accounting/voucher_udf_form.html'
+    permission_required = ('accounting', 'voucherudfconfig', 'add')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.get_active_organization()
+        voucher_mode_id = self.request.GET.get('voucher_mode')
+        if voucher_mode_id:
+            kwargs['voucher_mode'] = get_object_or_404(
+                VoucherModeConfig, 
+                pk=voucher_mode_id,
+                organization_id=self.request.user.get_active_organization().id
+            )
+        return kwargs
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, "UDF configuration created successfully.")
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy('accounting:voucher_udf_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'form_title': 'Create New UDF Configuration',
+            'page_title': 'Create New UDF Configuration',
+            'breadcrumbs': [
+                ('Voucher UDF Configurations', reverse('accounting:voucher_udf_list')),
+                ('Create New', None)
+            ]
+        })
+        return context
+
+
+class VoucherUDFConfigUpdateView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
+    model = VoucherUDFConfig
+    form_class = VoucherUDFConfigForm
+    template_name = 'accounting/voucher_udf_form.html'
+    permission_required = ('accounting', 'voucherudfconfig', 'change')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['organization'] = self.request.user.get_active_organization()
+        kwargs['voucher_mode'] = self.object.voucher_mode
+        return kwargs
+    
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+        messages.success(self.request, "UDF configuration updated successfully.")
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy('accounting:voucher_udf_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'form_title': f'Update UDF Configuration: {self.object.display_name}',
+            'page_title': f'Update UDF Configuration: {self.object.display_name}',
+            'breadcrumbs': [
+                ('Voucher UDF Configurations', reverse('accounting:voucher_udf_list')),
+                (f'Update {self.object.display_name}', None)
+            ]
+        })
+        return context
+
+class VoucherUDFConfigDeleteView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    permission_required = ('accounting', 'voucherudfconfig', 'delete')
+    
+    def post(self, request, pk):
+        udf_config = get_object_or_404(
+            VoucherUDFConfig, 
+            pk=pk, 
+            voucher_mode__organization_id=request.user.get_active_organization().id
+        )
+        udf_name = udf_config.display_name
+        udf_config.delete()
+        messages.success(request, f"UDF configuration '{udf_name}' deleted successfully.")
+        return redirect('accounting:voucher_udf_list')
 
 def get_next_account_code(request):
     org_id = request.GET.get("organization")
@@ -1137,3 +1407,386 @@ def chart_of_accounts_create(request):
     if clear_storage_script:
         context['clear_storage_script'] = clear_storage_script
     return render(request, 'accounting/chart_of_accounts_form.html', context)
+
+# Financial Reports Views
+class TrialBalanceView(LoginRequiredMixin, UserOrganizationMixin, TemplateView):
+    template_name = 'accounting/reports/trial_balance.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        organization = self.get_organization()
+        
+        if not organization:
+            context['error'] = 'No active organization found.'
+            return context
+        
+        # Get period from request or use current period
+        period_id = self.request.GET.get('period')
+        if period_id:
+            period = AccountingPeriod.objects.filter(
+                id=period_id,
+                fiscal_year__organization_id=organization.id
+            ).first()
+        else:
+            period = AccountingPeriod.objects.filter(
+                fiscal_year__organization_id=organization.id,
+                is_current=True
+            ).first()
+        
+        if not period:
+            context['error'] = 'No accounting period found.'
+            return context
+        
+        # Get trial balance data
+        trial_balance = self.get_trial_balance(organization, period)
+        
+        context.update({
+            'organization': organization,
+            'period': period,
+            'trial_balance': trial_balance,
+            'page_title': 'Trial Balance',
+            'breadcrumbs': [
+                ('Reports', None),
+                ('Trial Balance', None),
+            ]
+        })
+        
+        return context
+    
+    def get_trial_balance(self, organization, period):
+        """Get trial balance for the period"""
+        # Get all accounts with their balances
+        accounts = ChartOfAccount.objects.filter(
+            organization_id=organization.id,
+            is_active=True
+        ).order_by('account_code')
+        
+        trial_balance = []
+        total_debits = Decimal('0')
+        total_credits = Decimal('0')
+        
+        for account in accounts:
+            # Get account balance from GeneralLedger
+            ledger_entries = GeneralLedger.objects.filter(
+                organization_id=organization.id,
+                period=period,
+                account=account
+            )
+            
+            total_debit = ledger_entries.aggregate(
+                total=Sum('debit_amount')
+            )['total'] or Decimal('0')
+            
+            total_credit = ledger_entries.aggregate(
+                total=Sum('credit_amount')
+            )['total'] or Decimal('0')
+            
+            # Calculate net balance based on account type
+            if account.account_type.nature in ['asset', 'expense']:
+                net_balance = total_debit - total_credit
+                normal_balance = 'Debit'
+            else:
+                net_balance = total_credit - total_debit
+                normal_balance = 'Credit'
+            
+            trial_balance.append({
+                'account_code': account.account_code,
+                'account_name': account.account_name,
+                'account_type': account.account_type.name,
+                'debit_amount': total_debit,
+                'credit_amount': total_credit,
+                'net_balance': net_balance,
+                'normal_balance': normal_balance,
+            })
+            
+            total_debits += total_debit
+            total_credits += total_credit
+        
+        return {
+            'accounts': trial_balance,
+            'total_debits': total_debits,
+            'total_credits': total_credits,
+            'difference': total_debits - total_credits,
+        }
+
+
+class IncomeStatementView(LoginRequiredMixin, UserOrganizationMixin, TemplateView):
+    template_name = 'accounting/reports/income_statement.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        organization = self.get_organization()
+        
+        if not organization:
+            context['error'] = 'No active organization found.'
+            return context
+        
+        # Get period from request or use current period
+        period_id = self.request.GET.get('period')
+        if period_id:
+            period = AccountingPeriod.objects.filter(
+                id=period_id,
+                fiscal_year__organization_id=organization.id
+            ).first()
+        else:
+            period = AccountingPeriod.objects.filter(
+                fiscal_year__organization_id=organization.id,
+                is_current=True
+            ).first()
+        
+        if not period:
+            context['error'] = 'No accounting period found.'
+            return context
+        
+        # Get income statement data
+        income_statement = self.get_income_statement(organization, period)
+        
+        context.update({
+            'organization': organization,
+            'period': period,
+            'income_statement': income_statement,
+            'page_title': 'Income Statement',
+            'breadcrumbs': [
+                ('Reports', None),
+                ('Income Statement', None),
+            ]
+        })
+        
+        return context
+    
+    def get_income_statement(self, organization, period):
+        """Get income statement for the period"""
+        # Get revenue accounts
+        revenue_accounts = ChartOfAccount.objects.filter(
+            organization_id=organization.id,
+            account_type__nature='income',
+            is_active=True
+        )
+        
+        # Get expense accounts
+        expense_accounts = ChartOfAccount.objects.filter(
+            organization_id=organization.id,
+            account_type__nature='expense',
+            is_active=True
+        )
+        
+        # Calculate revenue
+        total_revenue = Decimal('0')
+        revenue_details = []
+        for account in revenue_accounts:
+            credit_amount = GeneralLedger.objects.filter(
+                organization_id=organization.id,
+                period=period,
+                account=account
+            ).aggregate(total=Sum('credit_amount'))['total'] or Decimal('0')
+            
+            revenue_details.append({
+                'account_name': account.account_name,
+                'amount': credit_amount,
+            })
+            total_revenue += credit_amount
+        
+        # Calculate expenses
+        total_expenses = Decimal('0')
+        expense_details = []
+        for account in expense_accounts:
+            debit_amount = GeneralLedger.objects.filter(
+                organization_id=organization.id,
+                period=period,
+                account=account
+            ).aggregate(total=Sum('debit_amount'))['total'] or Decimal('0')
+            
+            expense_details.append({
+                'account_name': account.account_name,
+                'amount': debit_amount,
+            })
+            total_expenses += debit_amount
+        
+        # Calculate net income
+        net_income = total_revenue - total_expenses
+        
+        return {
+            'revenue_details': revenue_details,
+            'total_revenue': total_revenue,
+            'expense_details': expense_details,
+            'total_expenses': total_expenses,
+            'net_income': net_income,
+        }
+
+
+class BalanceSheetView(LoginRequiredMixin, UserOrganizationMixin, TemplateView):
+    template_name = 'accounting/reports/balance_sheet.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        organization = self.get_organization()
+        
+        if not organization:
+            context['error'] = 'No active organization found.'
+            return context
+        
+        # Get period from request or use current period
+        period_id = self.request.GET.get('period')
+        if period_id:
+            period = AccountingPeriod.objects.filter(
+                id=period_id,
+                fiscal_year__organization_id=organization.id
+            ).first()
+        else:
+            period = AccountingPeriod.objects.filter(
+                fiscal_year__organization_id=organization.id,
+                is_current=True
+            ).first()
+        
+        if not period:
+            context['error'] = 'No accounting period found.'
+            return context
+        
+        # Get balance sheet data
+        balance_sheet = self.get_balance_sheet(organization, period)
+        
+        context.update({
+            'organization': organization,
+            'period': period,
+            'balance_sheet': balance_sheet,
+            'page_title': 'Balance Sheet',
+            'breadcrumbs': [
+                ('Reports', None),
+                ('Balance Sheet', None),
+            ]
+        })
+        
+        return context
+    
+    def get_balance_sheet(self, organization, period):
+        """Get balance sheet for the period"""
+        # Get asset accounts
+        asset_accounts = ChartOfAccount.objects.filter(
+            organization_id=organization.id,
+            account_type__nature='asset',
+            is_active=True
+        )
+        
+        # Get liability accounts
+        liability_accounts = ChartOfAccount.objects.filter(
+            organization_id=organization.id,
+            account_type__nature='liability',
+            is_active=True
+        )
+        
+        # Get equity accounts
+        equity_accounts = ChartOfAccount.objects.filter(
+            organization_id=organization.id,
+            account_type__nature='equity',
+            is_active=True
+        )
+        
+        # Calculate assets
+        total_assets = Decimal('0')
+        asset_details = []
+        for account in asset_accounts:
+            debit_amount = GeneralLedger.objects.filter(
+                organization_id=organization.id,
+                period=period,
+                account=account
+            ).aggregate(total=Sum('debit_amount'))['total'] or Decimal('0')
+            
+            credit_amount = GeneralLedger.objects.filter(
+                organization_id=organization.id,
+                period=period,
+                account=account
+            ).aggregate(total=Sum('credit_amount'))['total'] or Decimal('0')
+            
+            balance = debit_amount - credit_amount
+            
+            asset_details.append({
+                'account_name': account.account_name,
+                'balance': balance,
+            })
+            total_assets += balance
+        
+        # Calculate liabilities
+        total_liabilities = Decimal('0')
+        liability_details = []
+        for account in liability_accounts:
+            debit_amount = GeneralLedger.objects.filter(
+                organization_id=organization.id,
+                period=period,
+                account=account
+            ).aggregate(total=Sum('debit_amount'))['total'] or Decimal('0')
+            
+            credit_amount = GeneralLedger.objects.filter(
+                organization_id=organization.id,
+                period=period,
+                account=account
+            ).aggregate(total=Sum('credit_amount'))['total'] or Decimal('0')
+            
+            balance = credit_amount - debit_amount
+            
+            liability_details.append({
+                'account_name': account.account_name,
+                'balance': balance,
+            })
+            total_liabilities += balance
+        
+        # Calculate equity
+        total_equity = Decimal('0')
+        equity_details = []
+        for account in equity_accounts:
+            debit_amount = GeneralLedger.objects.filter(
+                organization_id=organization.id,
+                period=period,
+                account=account
+            ).aggregate(total=Sum('debit_amount'))['total'] or Decimal('0')
+            
+            credit_amount = GeneralLedger.objects.filter(
+                organization_id=organization.id,
+                period=period,
+                account=account
+            ).aggregate(total=Sum('credit_amount'))['total'] or Decimal('0')
+            
+            balance = credit_amount - debit_amount
+            
+            equity_details.append({
+                'account_name': account.account_name,
+                'balance': balance,
+            })
+            total_equity += balance
+        
+        return {
+            'asset_details': asset_details,
+            'total_assets': total_assets,
+            'liability_details': liability_details,
+            'total_liabilities': total_liabilities,
+            'equity_details': equity_details,
+            'total_equity': total_equity,
+            'total_liabilities_equity': total_liabilities + total_equity,
+        }
+
+
+class ReportsListView(LoginRequiredMixin, UserOrganizationMixin, TemplateView):
+    template_name = 'accounting/reports/reports_list.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        organization = self.get_organization()
+        
+        if not organization:
+            context['error'] = 'No active organization found.'
+            return context
+        
+        # Get available periods
+        periods = AccountingPeriod.objects.filter(
+            fiscal_year__organization_id=organization.id
+        ).order_by('-start_date')
+        
+        context.update({
+            'organization': organization,
+            'periods': periods,
+            'page_title': 'Financial Reports',
+            'breadcrumbs': [
+                ('Reports', None),
+            ]
+        })
+        
+        return context

@@ -2841,3 +2841,1709 @@ Default data creation for Nepal completed successfully!
 [2025-06-28 00:26:15,420] WARNING metadata.watcher: Cannot start watcher: watchdog not available
 [2025-06-28 00:26:15,435] INFO metadata.apps: Metadata watcher started in development mode
 [2025-06-28 00:26:15,509] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 00:29:36,637] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 00:29:36,638] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 00:29:36,639] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 00:29:36,639] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 00:29:38,043] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 00:29:38,043] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 00:29:38,043] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 00:29:38,043] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 00:29:38,083] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 01:37:05,994] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 01:37:05,995] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 01:37:05,995] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 01:37:05,995] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 01:37:07,992] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 01:37:07,993] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 01:37:07,993] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 01:37:07,994] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 01:37:08,041] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 01:55:34,625] ERROR django.request: Internal Server Error: /accounting/voucher-configs/1/defaults/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\urls\base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'voucher_config_detail' with arguments '('',)' not found. 1 pattern(s) tried: ['accounting/voucher\\-configs/(?P<pk>[0-9]+)/\\Z']
+[2025-06-28 01:55:35,041] WARNING django.request: Not Found: /favicon.ico
+[2025-06-28 02:33:22,071] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\dashboard\views.py changed, reloading.
+[2025-06-28 02:33:25,272] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 02:33:25,272] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 02:33:25,272] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 02:33:25,272] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 02:33:25,339] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 02:34:36,655] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\scripts\create_accounting_defaults.py changed, reloading.
+[2025-06-28 02:34:38,301] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 02:34:38,302] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 02:34:38,302] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 02:34:38,302] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 02:34:38,341] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 02:35:32,434] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 02:35:34,459] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 02:35:34,460] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 02:35:34,460] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 02:35:34,460] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 02:35:34,506] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 02:36:09,492] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\urls.py changed, reloading.
+[2025-06-28 02:36:11,339] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 02:36:11,339] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 02:36:11,339] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 02:36:11,339] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 02:36:11,409] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:24:46,049] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\forms.py changed, reloading.
+[2025-06-28 03:24:50,873] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:24:50,873] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:24:50,874] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:24:50,874] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:24:50,946] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:25:21,188] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\forms.py changed, reloading.
+[2025-06-28 03:25:24,805] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:25:24,806] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:25:24,806] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:25:24,807] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:25:24,867] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:25:43,626] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\models.py changed, reloading.
+[2025-06-28 03:25:57,947] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:25:57,949] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:25:57,950] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:25:57,952] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:25:58,074] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:26:25,129] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\forms.py changed, reloading.
+[2025-06-28 03:26:29,424] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:26:29,424] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:26:29,425] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:26:29,425] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:26:29,500] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:26:47,045] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\scripts\create_accounting_defaults.py changed, reloading.
+[2025-06-28 03:26:51,797] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:26:51,798] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:26:51,798] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:26:51,798] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:26:51,967] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:27:15,030] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 03:27:19,296] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:27:19,297] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:27:19,300] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:27:19,301] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:27:19,368] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:27:52,547] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 03:27:58,369] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:27:58,372] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:27:58,374] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:27:58,375] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:27:58,479] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:28:26,237] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\urls.py changed, reloading.
+[2025-06-28 03:28:30,611] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:28:30,611] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:28:30,612] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:28:30,612] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:28:30,695] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:28:50,181] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\models.py changed, reloading.
+[2025-06-28 03:28:55,262] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:28:55,263] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:28:55,263] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:28:55,264] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:28:55,377] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:29:39,698] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\forms.py changed, reloading.
+[2025-06-28 03:29:44,795] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:29:44,797] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:29:44,797] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:29:44,798] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:29:44,880] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:31:25,979] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\urls.py changed, reloading.
+[2025-06-28 03:31:31,396] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:31:31,398] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:31:31,398] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:31:31,398] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:31:31,482] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:41:45,099] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\forms.py changed, reloading.
+[2025-06-28 03:41:49,001] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:41:49,003] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:41:49,003] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:41:49,004] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:41:49,131] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:44:41,370] ERROR django.request: Internal Server Error: /
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\contrib\auth\mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 226, in get
+    context = self.get_context_data(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\dashboard\views.py", line 48, in get_context_data
+    account_balances = self.get_account_balances(organization, current_period)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\dashboard\views.py", line 75, in get_account_balances
+    balances = GeneralLedger.objects.filter(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'organization' into field. Choices are: account, account_id, archived_at, balance_after, cost_center, cost_center_id, created_at, credit_amount, currency_code, debit_amount, department, department_id, description, exchange_rate, functional_credit_amount, functional_debit_amount, gl_entry_id, is_adjustment, is_archived, is_closing_entry, journal, journal_id, journal_line, journal_line_id, organization_id, organization_id_id, period, period_id, project, rowversion, source_module, source_reference, transaction_date
+[2025-06-28 03:46:24,233] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 03:46:40,654] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:46:40,665] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:46:40,666] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:46:40,667] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:46:41,079] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:47:41,326] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:47:41,331] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:47:41,331] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:47:41,332] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:47:45,482] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:47:45,483] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:47:45,485] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:47:45,485] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:47:45,572] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:49:00,408] ERROR django.request: Internal Server Error: /
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\contrib\auth\mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 226, in get
+    context = self.get_context_data(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\dashboard\views.py", line 48, in get_context_data
+    account_balances = self.get_account_balances(organization, current_period)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\dashboard\views.py", line 75, in get_account_balances
+    balances = GeneralLedger.objects.filter(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'organization' into field. Choices are: account, account_id, archived_at, balance_after, cost_center, cost_center_id, created_at, credit_amount, currency_code, debit_amount, department, department_id, description, exchange_rate, functional_credit_amount, functional_debit_amount, gl_entry_id, is_adjustment, is_archived, is_closing_entry, journal, journal_id, journal_line, journal_line_id, organization_id, organization_id_id, period, period_id, project, rowversion, source_module, source_reference, transaction_date
+[2025-06-28 03:49:12,879] ERROR django.request: Internal Server Error: /accounting/voucher-entry/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\contrib\auth\mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views.py", line 1156, in get
+    default_lines = voucher_config.defaults.filter(is_active=True).order_by('display_order')
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'is_active' into field. Choices are: account, account_id, account_type, account_type_id, archived_at, archived_by, archived_by_id, config, config_id, created_at, created_by, created_by_id, default_amount, default_cost_center, default_credit, default_debit, default_department, default_description, default_id, default_project, default_tax_code, default_tax_code_id, display_order, is_archived, is_required, updated_at, updated_by, updated_by_id
+[2025-06-28 03:51:25,002] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 03:51:32,156] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:51:32,157] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:51:32,157] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:51:32,159] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:51:32,251] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:51:45,189] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 03:51:53,257] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:51:53,258] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:51:53,259] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:51:53,259] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:51:53,534] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:52:07,813] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 03:52:11,581] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:52:11,582] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:52:11,584] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:52:11,585] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:52:11,679] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:53:22,889] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:53:22,890] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:53:22,890] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:53:22,890] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:53:24,473] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:53:24,474] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:53:24,474] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:53:24,475] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:53:24,525] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:53:35,842] ERROR django.request: Internal Server Error: /
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\contrib\auth\mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 226, in get
+    context = self.get_context_data(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\dashboard\views.py", line 48, in get_context_data
+    account_balances = self.get_account_balances(organization, current_period)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\dashboard\views.py", line 75, in get_account_balances
+    balances = GeneralLedger.objects.filter(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'organization' into field. Choices are: account, account_id, archived_at, balance_after, cost_center, cost_center_id, created_at, credit_amount, currency_code, debit_amount, department, department_id, description, exchange_rate, functional_credit_amount, functional_debit_amount, gl_entry_id, is_adjustment, is_archived, is_closing_entry, journal, journal_id, journal_line, journal_line_id, organization_id, organization_id_id, period, period_id, project, rowversion, source_module, source_reference, transaction_date
+[2025-06-28 03:54:32,215] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\dashboard\views.py changed, reloading.
+[2025-06-28 03:54:35,070] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:54:35,070] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:54:35,071] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:54:35,071] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:54:35,126] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 03:55:14,479] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\dashboard\views.py changed, reloading.
+[2025-06-28 03:55:16,613] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 03:55:16,614] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 03:55:16,614] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 03:55:16,614] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 03:55:16,716] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:01:21,548] ERROR accounting.views_create: Error creating chart of account: {'__all__': ['Chart of account with this Organization and Account code already exists.']}
+[2025-06-28 04:01:21,548] WARNING django.request: Bad Request: /accounting/chart-of-accounts/create/
+[2025-06-28 04:01:23,013] ERROR accounting.views_create: Error creating chart of account: {'__all__': ['Chart of account with this Organization and Account code already exists.']}
+[2025-06-28 04:01:23,018] WARNING django.request: Bad Request: /accounting/chart-of-accounts/create/
+[2025-06-28 04:02:07,706] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 04:02:11,100] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:02:11,100] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:02:11,100] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:02:11,100] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:02:11,263] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:42:39,051] ERROR django.request: Internal Server Error: /accounting/voucher-configs/5/defaults/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\contrib\auth\mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 178, in get
+    return super().get(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 142, in get
+    return self.render_to_response(self.get_context_data())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views_create.py", line 315, in get_context_data
+    context = super().get_context_data(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 72, in get_context_data
+    kwargs["form"] = self.get_form()
+                     ^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 37, in get_form
+    return form_class(**self.get_form_kwargs())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\forms.py", line 1048, in __init__
+    super().__init__(*args, **kwargs)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\forms_mixin.py", line 6, in __init__
+    super().__init__(*args, **kwargs)
+TypeError: BaseModelForm.__init__() got an unexpected keyword argument 'config_id'
+[2025-06-28 04:44:42,452] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 04:44:56,928] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:44:56,931] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:44:56,933] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:44:56,934] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:44:57,134] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:45:10,763] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 04:45:15,497] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:45:15,498] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:45:15,499] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:45:15,499] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:45:15,587] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:45:25,763] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 04:45:32,093] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:45:32,096] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:45:32,097] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:45:32,098] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:45:32,399] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:45:41,775] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\urls.py changed, reloading.
+[2025-06-28 04:45:45,123] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:45:45,125] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:45:45,127] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:45:45,128] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:45:45,196] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:46:17,480] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_create.py changed, reloading.
+[2025-06-28 04:46:20,359] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:46:20,360] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:46:20,360] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:46:20,361] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:46:20,437] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:46:32,063] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_create.py changed, reloading.
+[2025-06-28 04:46:36,083] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:46:36,084] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:46:36,084] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:46:36,084] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:46:36,143] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:46:47,523] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_list.py changed, reloading.
+[2025-06-28 04:46:50,469] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:46:50,470] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:46:50,470] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:46:50,471] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:46:50,569] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:52:06,655] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 04:52:10,407] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:52:10,407] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:52:10,407] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:52:10,408] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:52:10,566] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:52:28,741] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_create.py changed, reloading.
+[2025-06-28 04:52:33,350] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:52:33,351] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:52:33,352] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:52:33,352] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:52:33,460] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:52:39,853] ERROR django.request: Internal Server Error: /accounting/voucher-configs/5/defaults/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views_mixins.py", line 38, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\contrib\auth\mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 178, in get
+    return super().get(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 142, in get
+    return self.render_to_response(self.get_context_data())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views_create.py", line 317, in get_context_data
+    context = super().get_context_data(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 72, in get_context_data
+    kwargs["form"] = self.get_form()
+                     ^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 37, in get_form
+    return form_class(**self.get_form_kwargs())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\forms.py", line 1048, in __init__
+    super().__init__(*args, **kwargs)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\forms_mixin.py", line 6, in __init__
+    super().__init__(*args, **kwargs)
+TypeError: BaseModelForm.__init__() got an unexpected keyword argument 'config_id'
+[2025-06-28 04:52:53,938] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_create.py changed, reloading.
+[2025-06-28 04:52:58,539] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:52:58,540] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:52:58,541] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:52:58,541] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:52:58,973] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:53:00,835] ERROR django.request: Internal Server Error: /accounting/voucher-configs/5/defaults/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views_mixins.py", line 38, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\contrib\auth\mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 178, in get
+    return super().get(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 142, in get
+    return self.render_to_response(self.get_context_data())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views_create.py", line 317, in get_context_data
+    context = super().get_context_data(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 72, in get_context_data
+    kwargs["form"] = self.get_form()
+                     ^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 37, in get_form
+    return form_class(**self.get_form_kwargs())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\forms.py", line 1055, in __init__
+    self.fields['account_type'].queryset = AccountType.objects.filter(
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'is_active' into field. Choices are: account_type_id, archived_at, archived_by, archived_by_id, balance_sheet_category, cash_flow_category, chartofaccount, classification, code, created_at, created_by, created_by_id, display_order, income_statement_category, is_archived, name, nature, root_code_prefix, root_code_step, rowversion, system_type, updated_at, updated_by, updated_by_id, vouchermodedefault
+[2025-06-28 04:55:56,820] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 04:55:59,834] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:55:59,834] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:55:59,834] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:55:59,834] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:55:59,915] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:56:06,914] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_list.py changed, reloading.
+[2025-06-28 04:56:09,558] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:56:09,558] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:56:09,559] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:56:09,559] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:56:09,627] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:56:21,754] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_list.py changed, reloading.
+[2025-06-28 04:56:26,786] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:56:26,786] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:56:26,786] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:56:26,786] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:56:26,891] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:56:54,863] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_list.py changed, reloading.
+[2025-06-28 04:56:57,672] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:56:57,673] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:56:57,673] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:56:57,673] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:56:57,743] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:57:22,213] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 04:57:30,028] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:57:30,029] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:57:30,030] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:57:30,030] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:57:30,168] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:57:41,786] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\urls.py changed, reloading.
+[2025-06-28 04:57:48,388] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:57:48,391] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:57:48,394] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:57:48,395] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:57:48,521] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:58:16,299] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 04:58:21,552] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:58:21,553] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:58:21,554] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:58:21,554] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:58:21,666] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:58:31,792] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\urls.py changed, reloading.
+[2025-06-28 04:58:35,973] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 04:58:35,974] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 04:58:35,974] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 04:58:35,974] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 04:58:36,039] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 04:58:52,994] ERROR django.request: Internal Server Error: /accounting/voucher-configs/1/defaults/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views_mixins.py", line 38, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\contrib\auth\mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 178, in get
+    return super().get(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 142, in get
+    return self.render_to_response(self.get_context_data())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views_create.py", line 317, in get_context_data
+    context = super().get_context_data(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 72, in get_context_data
+    kwargs["form"] = self.get_form()
+                     ^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 37, in get_form
+    return form_class(**self.get_form_kwargs())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\forms.py", line 1055, in __init__
+    self.fields['account_type'].queryset = AccountType.objects.filter(
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'is_active' into field. Choices are: account_type_id, archived_at, archived_by, archived_by_id, balance_sheet_category, cash_flow_category, chartofaccount, classification, code, created_at, created_by, created_by_id, display_order, income_statement_category, is_archived, name, nature, root_code_prefix, root_code_step, rowversion, system_type, updated_at, updated_by, updated_by_id, vouchermodedefault
+[2025-06-28 04:59:57,866] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-06-28 05:00:01,218] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-06-28 05:05:12,808] ERROR django.request: Internal Server Error: /accounting/voucher-configs/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedTable: relation "accounting_voucherudfconfig" does not exist
+LINE 1: SELECT COUNT(*) AS "__count" FROM "accounting_voucherudfconf...
+                                          ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\defaulttags.py", line 326, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\defaulttags.py", line 242, in render
+    nodelist.append(node.render_annotated(context))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\defaulttags.py", line 547, in render
+    values = {key: val.resolve(context) for key, val in self.extra_context.items()}
+                   ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 710, in resolve
+    obj = self.var.resolve(context)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 842, in resolve
+    value = self._resolve_lookup(context)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 909, in _resolve_lookup
+    current = current()
+              ^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 620, in count
+    return self.query.get_count(using=self.db)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 629, in get_count
+    return obj.get_aggregation(using, {"__count": Count("*")})["__count"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 615, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: relation "accounting_voucherudfconfig" does not exist
+LINE 1: SELECT COUNT(*) AS "__count" FROM "accounting_voucherudfconf...
+                                          ^
+
+[2025-06-28 05:05:45,963] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:05:45,964] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:05:45,964] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:05:45,964] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:05:53,155] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:05:53,157] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:05:53,157] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:05:53,157] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:06:03,033] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:06:03,034] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:06:03,035] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:06:03,036] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:06:11,128] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:06:11,129] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:06:11,129] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:06:11,129] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:06:12,831] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:06:12,832] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:06:12,833] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:06:12,833] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:06:12,879] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 05:06:36,602] ERROR django.request: Internal Server Error: /accounting/voucher-configs/1/defaults/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views_mixins.py", line 38, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\contrib\auth\mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 178, in get
+    return super().get(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 142, in get
+    return self.render_to_response(self.get_context_data())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views_create.py", line 317, in get_context_data
+    context = super().get_context_data(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 72, in get_context_data
+    kwargs["form"] = self.get_form()
+                     ^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\views\generic\edit.py", line 37, in get_form
+    return form_class(**self.get_form_kwargs())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\forms.py", line 1055, in __init__
+    self.fields['account_type'].queryset = AccountType.objects.filter(
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\db\models\sql\query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'is_active' into field. Choices are: account_type_id, archived_at, archived_by, archived_by_id, balance_sheet_category, cash_flow_category, chartofaccount, classification, code, created_at, created_by, created_by_id, display_order, income_statement_category, is_archived, name, nature, root_code_prefix, root_code_step, rowversion, system_type, updated_at, updated_by, updated_by_id, vouchermodedefault
+[2025-06-28 05:07:16,391] ERROR django.request: Internal Server Error: /accounting/voucher-udfs/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader.py", line 47, in select_template
+    raise TemplateDoesNotExist(", ".join(template_name_list), chain=chain)
+django.template.exceptions.TemplateDoesNotExist: accounting/voucher_udf_form.html
+[2025-06-28 05:07:24,691] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\forms.py changed, reloading.
+[2025-06-28 05:07:29,526] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:07:29,530] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:07:29,535] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:07:29,536] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:07:29,695] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 05:07:54,342] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\forms.py changed, reloading.
+[2025-06-28 05:07:58,268] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:07:58,269] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:07:58,269] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:07:58,269] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:07:58,357] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 05:08:11,121] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:08:11,123] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:08:11,124] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:08:11,125] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:08:24,448] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:08:24,449] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:08:24,450] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:08:24,451] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:08:40,590] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:08:40,590] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:08:40,611] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:08:40,613] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:09:01,488] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:09:01,488] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:09:01,488] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:09:01,489] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:10:10,309] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:10:10,315] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:10:10,316] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:10:10,316] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:10:16,934] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:10:16,935] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:10:16,935] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:10:16,937] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:10:17,070] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 05:29:01,916] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:29:01,916] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:29:01,916] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:29:01,917] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:29:03,535] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:29:03,536] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:29:03,536] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:29:03,536] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:29:03,580] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 05:31:08,309] ERROR django.request: Internal Server Error: /accounting/journal-types/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 134, in render
+    compiled_parent = self.get_parent(context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 131, in get_parent
+    return self.find_template(parent, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 109, in find_template
+    template, origin = context.template.engine.find_template(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\engine.py", line 163, in find_template
+    raise TemplateDoesNotExist(name, tried=tried)
+django.template.exceptions.TemplateDoesNotExist: partils/base.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 63, in render
+    reraise(exc, self.backend)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 84, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: partils/base.html
+[2025-06-28 05:31:44,089] ERROR django.request: Internal Server Error: /accounting/journal-types/8/edit/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 134, in render
+    compiled_parent = self.get_parent(context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 131, in get_parent
+    return self.find_template(parent, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 109, in find_template
+    template, origin = context.template.engine.find_template(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\engine.py", line 163, in find_template
+    raise TemplateDoesNotExist(name, tried=tried)
+django.template.exceptions.TemplateDoesNotExist: partials/base.htmlbase.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 63, in render
+    reraise(exc, self.backend)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 84, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: partials/base.htmlbase.html
+[2025-06-28 05:31:50,233] ERROR django.request: Internal Server Error: /accounting/journal-types/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 134, in render
+    compiled_parent = self.get_parent(context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 131, in get_parent
+    return self.find_template(parent, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 109, in find_template
+    template, origin = context.template.engine.find_template(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\engine.py", line 163, in find_template
+    raise TemplateDoesNotExist(name, tried=tried)
+django.template.exceptions.TemplateDoesNotExist: partials/base.htmlbase.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 63, in render
+    reraise(exc, self.backend)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 84, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: partials/base.htmlbase.html
+[2025-06-28 05:34:11,914] ERROR django.request: Internal Server Error: /accounting/journal-types/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 134, in render
+    compiled_parent = self.get_parent(context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 131, in get_parent
+    return self.find_template(parent, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 109, in find_template
+    template, origin = context.template.engine.find_template(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\engine.py", line 163, in find_template
+    raise TemplateDoesNotExist(name, tried=tried)
+django.template.exceptions.TemplateDoesNotExist: _form_base.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 63, in render
+    reraise(exc, self.backend)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 84, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: _form_base.html
+[2025-06-28 05:36:10,970] ERROR django.request: Internal Server Error: /accounting/journal-types/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 502, in parse
+    compile_func = self.tags[command]
+                   ~~~~~~~~~^^^^^^^^^
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    return parser.parse()
+           ^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 510, in parse
+    raise self.error(token, e)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 510, in parse
+    raise self.error(token, e)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 123: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-06-28 05:42:55,665] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:42:55,669] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:42:55,670] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:42:55,670] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:42:57,768] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:42:57,768] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:42:57,769] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:42:57,769] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:42:57,819] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 05:43:23,560] ERROR django.request: Internal Server Error: /accounting/journal-types/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 502, in parse
+    compile_func = self.tags[command]
+                   ~~~~~~~~~^^^^^^^^^
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    return parser.parse()
+           ^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 510, in parse
+    raise self.error(token, e)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 510, in parse
+    raise self.error(token, e)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 127: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-06-28 05:44:12,867] ERROR django.request: Internal Server Error: /accounting/journal-types/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 502, in parse
+    compile_func = self.tags[command]
+                   ~~~~~~~~~^^^^^^^^^
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\backends\django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    return parser.parse()
+           ^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 510, in parse
+    raise self.error(token, e)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 510, in parse
+    raise self.error(token, e)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\venv\Lib\site-packages\django\template\base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 143: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-06-28 05:46:05,082] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:46:05,084] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:46:05,084] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:46:05,084] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:46:06,964] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 05:46:06,964] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 05:46:06,964] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 05:46:06,965] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 05:46:07,005] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:04:03,016] ERROR django.request: Internal Server Error: /accounting/voucher-configs/1/defaults/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\base.py", line 961, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\urls\base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'voucher_config_detail' with arguments '('',)' not found. 1 pattern(s) tried: ['accounting/voucher\\-configs/(?P<pk>[0-9]+)/\\Z']
+[2025-06-28 06:05:18,094] ERROR django.request: Internal Server Error: /accounting/voucher-udfs/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\loader.py", line 47, in select_template
+    raise TemplateDoesNotExist(", ".join(template_name_list), chain=chain)
+django.template.exceptions.TemplateDoesNotExist: accounting/voucher_udf_form.html
+[2025-06-28 06:05:26,663] ERROR django.request: Internal Server Error: /accounting/voucher-udfs/create/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\template\loader.py", line 47, in select_template
+    raise TemplateDoesNotExist(", ".join(template_name_list), chain=chain)
+django.template.exceptions.TemplateDoesNotExist: accounting/voucher_udf_form.html
+[2025-06-28 06:05:31,501] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_create.py changed, reloading.
+[2025-06-28 06:05:40,696] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:05:40,703] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:05:40,704] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:05:40,708] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:05:40,988] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:06:46,360] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_update.py changed, reloading.
+[2025-06-28 06:06:54,795] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:06:54,796] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:06:54,796] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:06:54,797] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:06:55,007] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:07:30,082] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_create.py changed, reloading.
+[2025-06-28 06:07:38,003] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:07:38,003] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:07:38,003] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:07:38,005] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:07:38,242] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:08:34,978] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:08:34,979] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:08:34,980] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:08:34,980] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:08:38,295] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:08:38,296] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:08:38,296] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:08:38,296] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:08:38,382] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:21:42,746] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-06-28 06:22:37,895] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-06-28 06:25:37,433] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-06-28 06:33:14,271] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 06:33:21,756] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:33:21,758] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:33:21,758] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:33:21,758] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:33:21,925] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:35:18,518] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_create.py changed, reloading.
+[2025-06-28 06:35:22,958] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:35:22,959] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:35:22,960] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:35:22,960] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:35:23,076] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:35:28,989] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_update.py changed, reloading.
+[2025-06-28 06:35:31,977] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:35:31,988] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:35:31,988] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:35:31,988] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:35:32,051] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:37:37,788] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views.py changed, reloading.
+[2025-06-28 06:37:40,067] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:37:40,068] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:37:40,068] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:37:40,069] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:37:40,126] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:37:53,302] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\views_create.py changed, reloading.
+[2025-06-28 06:37:56,324] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:37:56,324] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:37:56,325] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:37:56,325] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:37:56,381] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:38:54,442] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:38:54,445] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:38:54,446] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:38:54,446] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:38:56,241] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:38:56,242] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:38:56,242] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:38:56,242] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:38:56,282] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:39:20,848] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\urls.py changed, reloading.
+[2025-06-28 06:39:24,600] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:39:24,601] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:39:24,602] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:39:24,602] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:39:24,716] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:39:30,703] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\urls.py changed, reloading.
+[2025-06-28 06:39:34,098] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:39:34,099] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:39:34,099] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:39:34,099] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:39:34,139] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:39:47,688] INFO django.utils.autoreload: C:\PythonProjects\ERPCURSOR\Himalytix\ERP\accounting\urls.py changed, reloading.
+[2025-06-28 06:39:49,692] WARNING metadata.watcher: watchdog package not available. File watching will be disabled. Error: No module named 'watchdog'
+[2025-06-28 06:39:49,692] WARNING metadata.watcher: MetadataWatcher initialized without watchdog support
+[2025-06-28 06:39:49,693] WARNING metadata.watcher: Cannot start watcher: watchdog not available
+[2025-06-28 06:39:49,693] INFO metadata.apps: Metadata watcher started in development mode
+[2025-06-28 06:39:49,727] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-06-28 06:39:58,805] ERROR django.request: Internal Server Error: /accounting/journals/
+Traceback (most recent call last):
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\contrib\auth\mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\views\generic\base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\views\generic\list.py", line 174, in get
+    context = self.get_context_data()
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\erp\accounting\views_list.py", line 87, in get_context_data
+    context['create_url'] = reverse('accounting:journal_create')
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\urls\base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonProjects\ERPCURSOR\Himalytix\ERP\venv\Lib\site-packages\django\urls\resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'journal_create' not found. 'journal_create' is not a valid view function or pattern name.

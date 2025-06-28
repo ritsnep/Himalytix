@@ -1,0 +1,135 @@
+{% extends 'accounting/_list_base.html' %}
+{% load static %}
+
+{% block title %}Income Statement{% endblock %}
+{% block breadcrumb %}Income Statement{% endblock %}
+
+{% block list_header %}
+<div class="d-flex justify-content-between align-items-center">
+    <h4 class="card-title">Income Statement</h4>
+    <div>
+        <a href="{% url 'accounting:reports_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Reports
+        </a>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="fas fa-print me-1"></i>Print
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% if error %}
+<div class="alert alert-warning" role="alert">
+    {{ error }}
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h5>Organization: {{ organization.name }}</h5>
+                        <p class="text-muted">Period: {{ period.name }}</p>
+                        <p class="text-muted">Date: {{ period.start_date|date:"M d, Y" }} - {{ period.end_date|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <p class="text-muted">Generated: {% now "M d, Y H:i" %}</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8 mx-auto">
+                        <div class="text-center mb-4">
+                            <h3>INCOME STATEMENT</h3>
+                            <p class="text-muted">For the period ended {{ period.end_date|date:"M d, Y" }}</p>
+                        </div>
+
+                        <!-- Revenue Section -->
+                        <div class="card border-success mb-3">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">REVENUE</h5>
+                            </div>
+                            <div class="card-body">
+                                {% for revenue in income_statement.revenue_details %}
+                                {% if revenue.amount > 0 %}
+                                <div class="row">
+                                    <div class="col-8">{{ revenue.account_name }}</div>
+                                    <div class="col-4 text-end">${{ revenue.amount|floatformat:2 }}</div>
+                                </div>
+                                {% endif %}
+                                {% empty %}
+                                <div class="text-muted">No revenue recorded</div>
+                                {% endfor %}
+                                <hr>
+                                <div class="row fw-bold">
+                                    <div class="col-8">Total Revenue</div>
+                                    <div class="col-4 text-end">${{ income_statement.total_revenue|floatformat:2 }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Expenses Section -->
+                        <div class="card border-danger mb-3">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0">EXPENSES</h5>
+                            </div>
+                            <div class="card-body">
+                                {% for expense in income_statement.expense_details %}
+                                {% if expense.amount > 0 %}
+                                <div class="row">
+                                    <div class="col-8">{{ expense.account_name }}</div>
+                                    <div class="col-4 text-end">${{ expense.amount|floatformat:2 }}</div>
+                                </div>
+                                {% endif %}
+                                {% empty %}
+                                <div class="text-muted">No expenses recorded</div>
+                                {% endfor %}
+                                <hr>
+                                <div class="row fw-bold">
+                                    <div class="col-8">Total Expenses</div>
+                                    <div class="col-4 text-end">${{ income_statement.total_expenses|floatformat:2 }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Net Income Section -->
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">NET INCOME</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row fw-bold fs-5">
+                                    <div class="col-8">Net Income (Loss)</div>
+                                    <div class="col-4 text-end {% if income_statement.net_income < 0 %}text-danger{% else %}text-success{% endif %}">
+                                        ${{ income_statement.net_income|floatformat:2 }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary -->
+                        <div class="mt-4">
+                            {% if income_statement.net_income > 0 %}
+                            <div class="alert alert-success" role="alert">
+                                <strong>Net Income:</strong> The organization generated a profit of ${{ income_statement.net_income|floatformat:2 }} during this period.
+                            </div>
+                            {% elif income_statement.net_income < 0 %}
+                            <div class="alert alert-danger" role="alert">
+                                <strong>Net Loss:</strong> The organization incurred a loss of ${{ income_statement.net_income|floatformat:2|slice:"1:" }} during this period.
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info" role="alert">
+                                <strong>Break Even:</strong> Revenue equals expenses for this period.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

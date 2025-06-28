@@ -259,10 +259,11 @@ class CurrencyExchangeRateCreateView(LoginRequiredMixin, CreateView):
         ]
         return context
 
-class VoucherModeConfigCreateView(LoginRequiredMixin, CreateView):
+class VoucherModeConfigCreateView(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = VoucherModeConfig
     form_class = VoucherModeConfigForm
     template_name = 'accounting/voucher_config_form.html'
+    permission_required = ('accounting', 'vouchermodeconfig', 'add')
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -291,15 +292,16 @@ class VoucherModeConfigCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class VoucherModeDefaultCreateView(LoginRequiredMixin, CreateView):
+class VoucherModeDefaultCreateView(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = VoucherModeDefault
     form_class = VoucherModeDefaultForm
     template_name = 'accounting/voucher_default_form.html'
+    permission_required = ('accounting', 'vouchermodedefault', 'add')
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organization'] = self.request.user.get_active_organization()
-        kwargs['config_id'] = self.kwargs['config_id']
+        # kwargs['config_id'] = self.kwargs['config_id']
         return kwargs
     
     def form_valid(self, form):
@@ -315,6 +317,7 @@ class VoucherModeDefaultCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         config = get_object_or_404(VoucherModeConfig, pk=self.kwargs['config_id'], organization=self.request.user.get_active_organization())
         context.update({
+            'config_id': self.kwargs['config_id'],
             'form_title': f'Add Default Line to {config.name}',
             'page_title': f'Add Default Line: {config.name}',
             'breadcrumbs': [
@@ -394,88 +397,6 @@ class DepartmentCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class JournalCreateView(LoginRequiredMixin, CreateView):
-    model = Journal
-    form_class = JournalForm
-    template_name = 'accounting/journal_form.html'
-    success_url = reverse_lazy('accounting:journal_list')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['organization'] = self.request.user.get_active_organization()
-        return kwargs
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context['lines'] = JournalLineFormSet(self.request.POST, instance=self.object)
-        else:
-            context['lines'] = JournalLineFormSet(instance=self.object)
-        
-        context.update({
-            'form_title': 'Create Journal',
-            'page_title': 'Create Journal',
-            'breadcrumbs': [
-                ('Journals', reverse('accounting:journal_list')),
-                ('Create Journal', None)
-            ]
-        })
-        return context
-    
-   
-    def form_valid(self, form):
-        try:
-            context = self.get_context_data()
-            lines = context['lines']
-            
-            with transaction.atomic():
-                form.instance.organization = self.request.user.get_active_organization()
-                form.instance.created_by = self.request.user
-                self.object = form.save()
-                
-                if lines.is_valid():
-                    lines.instance = self.object
-                    lines.save()
-                    for lf in lines.forms:
-                        if lf.cleaned_data.get("DELETE"):
-                            continue
-                        if lf.cleaned_data.get("save_as_default"):
-                            jt = form.cleaned_data.get("journal_type")
-                            org = self.request.user.get_active_organization()
-                            config = VoucherModeConfig.objects.filter(
-                                organization=org,
-                                journal_type=jt,
-                                is_default=True,
-                            ).first()
-                            if config:
-                                order = config.defaults.count() + 1
-                                VoucherModeDefault.objects.create(
-                                    config=config,
-                                    account=lf.cleaned_data.get("account"),
-                                    default_debit=lf.cleaned_data.get("debit_amount", 0) > 0,
-                                    default_credit=lf.cleaned_data.get("credit_amount", 0) > 0,
-                                    default_amount=lf.cleaned_data.get("debit_amount") or lf.cleaned_data.get("credit_amount"),
-                                    default_tax_code=lf.cleaned_data.get("tax_code"),
-                                    default_department=lf.cleaned_data.get("department").pk if lf.cleaned_data.get("department") else 0,
-                                    default_project=lf.cleaned_data.get("project").pk if lf.cleaned_data.get("project") else 0,
-                                    default_cost_center=lf.cleaned_data.get("cost_center").pk if lf.cleaned_data.get("cost_center") else 0,
-                                    default_description=lf.cleaned_data.get("description"),
-                                    display_order=order,
-                                    created_by=self.request.user,
-                                )
-                else:
-                    # If line forms are invalid, return form_invalid
-                    messages.error(self.request, "Please correct the errors in the journal lines.")
-                    return self.form_invalid(form)  # Re-render with errors
-
-            messages.success(self.request, "Journal created successfully.")
-            return super().form_valid(form)
-        except Exception as e:
-            logger.error(f"Error creating journal: {e}")
-            messages.error(self.request, f"An error occurred while creating the journal: {e}")
-            return HttpResponseServerError("Internal Server Error") # More informative error
-        
-        
 class JournalTypeCreateView(PermissionRequiredMixin, LoginRequiredMixin, UserOrganizationMixin, CreateView):
     model = JournalType
     form_class = JournalTypeForm

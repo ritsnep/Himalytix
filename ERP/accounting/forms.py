@@ -4,13 +4,14 @@ from django.forms import inlineformset_factory
 from .models import (
     AccountType, CostCenter, Currency, Department, Journal, JournalLine, JournalType, ChartOfAccount,
     AccountingPeriod, Project, TaxAuthority, TaxCode, TaxType, VoucherModeConfig, VoucherModeDefault, CurrencyExchangeRate,
-    GeneralLedger
+    GeneralLedger, VoucherUDFConfig
 )
 from django import forms
 from .models import FiscalYear
 from .utils import get_active_currency_choices
 from .forms_mixin import BootstrapFormMixin
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -566,36 +567,78 @@ class JournalTypeForm(BootstrapFormMixin, forms.ModelForm):
             'is_system_type',
             'requires_approval',
             'is_active',
-            'is_archived',
-            'archived_at',
-            'archived_by',
-            'created_at',
-            'created_by',
-            'updated_at',
-            'updated_by',
         )
         widgets = {
-            'code': forms.TextInput(attrs={'class': 'form-control'}),
+            'code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'maxlength': '20',
+                'pattern': '^[A-Z0-9_-]+$',
+                'title': 'Code must contain only uppercase letters, numbers, hyphens, and underscores'
+            }),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'auto_numbering_prefix': forms.TextInput(attrs={'class': 'form-control'}),
-            'auto_numbering_suffix': forms.TextInput(attrs={'class': 'form-control'}),
-            'auto_numbering_next': forms.NumberInput(attrs={'class': 'form-control'}),
+            'auto_numbering_prefix': forms.TextInput(attrs={
+                'class': 'form-control',
+                'maxlength': '10',
+                'placeholder': 'e.g., GJ, CR, CP'
+            }),
+            'auto_numbering_suffix': forms.TextInput(attrs={
+                'class': 'form-control',
+                'maxlength': '10',
+                'placeholder': 'e.g., -2024'
+            }),
+            'auto_numbering_next': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1',
+                'step': '1'
+            }),
             'is_system_type': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'requires_approval': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'is_archived': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'archived_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'archived_by': forms.Select(attrs={'class': 'form-select'}),
-            'created_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'created_by': forms.Select(attrs={'class': 'form-select'}),
-            'updated_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'updated_by': forms.Select(attrs={'class': 'form-select'}),
         }
         
     def __init__(self, *args, **kwargs):
         self.organization = kwargs.pop('organization', None)
         super().__init__(*args, **kwargs)
+        
+        # Set initial auto_numbering_next if creating new
+        if not self.instance.pk and not self.initial.get('auto_numbering_next'):
+            self.initial['auto_numbering_next'] = 1
+            
+    def clean_code(self):
+        code = self.cleaned_data.get('code')
+        if not code:
+            raise forms.ValidationError("Code is required.")
+        
+        # Check for valid characters
+        if not re.match(r'^[A-Z0-9_-]+$', code):
+            raise forms.ValidationError("Code must contain only uppercase letters, numbers, hyphens, and underscores.")
+        
+        # Check uniqueness per organization
+        if self.organization:
+            existing = JournalType.objects.filter(
+                organization=self.organization,
+                code=code
+            )
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            
+            if existing.exists():
+                raise forms.ValidationError(f"A journal type with code '{code}' already exists in this organization.")
+        
+        return code.upper()
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Ensure at least one of prefix or suffix is provided
+        prefix = cleaned_data.get('auto_numbering_prefix')
+        suffix = cleaned_data.get('auto_numbering_suffix')
+        
+        if not prefix and not suffix:
+            raise forms.ValidationError("Either auto numbering prefix or suffix must be provided.")
+        
+        return cleaned_data
             
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -604,6 +647,26 @@ class JournalTypeForm(BootstrapFormMixin, forms.ModelForm):
         if commit:
             instance.save()
         return instance
+    
+    def get_next_journal_number(self):
+        """Generate the next journal number for this journal type"""
+        if not self.instance.pk:
+            return None
+        
+        prefix = self.instance.auto_numbering_prefix or ''
+        suffix = self.instance.auto_numbering_suffix or ''
+        next_num = self.instance.auto_numbering_next
+        
+        # Format the number with leading zeros (e.g., 0001, 0002)
+        formatted_num = f"{next_num:04d}"
+        
+        journal_number = f"{prefix}{formatted_num}{suffix}"
+        
+        # Increment the next number
+        self.instance.auto_numbering_next += 1
+        self.instance.save(update_fields=['auto_numbering_next'])
+        
+        return journal_number
 
 class TaxAuthorityForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
@@ -952,9 +1015,11 @@ class VoucherModeDefaultForm(BootstrapFormMixin, forms.ModelForm):
     account_code = forms.CharField(required=False)
     account_type = forms.ModelChoiceField(
         queryset=AccountType.objects.all(),
-        required=False
+        required=False,
+        empty_label="Select Account Type",
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
+
     class Meta:
         model = VoucherModeDefault
         fields = [
@@ -964,54 +1029,167 @@ class VoucherModeDefaultForm(BootstrapFormMixin, forms.ModelForm):
             'is_required', 'display_order'
         ]
         widgets = {
-            'account': forms.HiddenInput(),
-            'default_description': forms.TextInput(),
+            'account': forms.Select(attrs={'class': 'form-select'}),
+            'default_debit': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'default_credit': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'default_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'default_tax_code': forms.Select(attrs={'class': 'form-select'}),
+            'default_department': forms.NumberInput(attrs={'class': 'form-control'}),
+            'default_project': forms.NumberInput(attrs={'class': 'form-control'}),
+            'default_cost_center': forms.NumberInput(attrs={'class': 'form-control'}),
+            'default_description': forms.TextInput(attrs={'class': 'form-control'}),
+            'is_required': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'display_order': forms.NumberInput(attrs={'class': 'form-control'}),
         }
-    
+
     def __init__(self, *args, **kwargs):
-        organization = kwargs.pop('organization', None)
-        config_id = kwargs.pop('config_id', None)
+        self.organization = kwargs.pop('organization', None)
+        self.voucher_mode = kwargs.pop('voucher_mode', None)
         super().__init__(*args, **kwargs)
-        self.organization = organization
-        
-        if organization:
-            self.fields['default_department'].queryset = Department.objects.filter(
-                organization=organization
-            )
-            self.fields['default_project'].queryset = Project.objects.filter(
-                organization=organization
-            )
-            self.fields['default_cost_center'].queryset = CostCenter.objects.filter(
-                organization=organization
-            )
-            self.fields['default_tax_code'].queryset = TaxCode.objects.filter(
-                organization=organization,
+
+        if self.organization:
+            self.fields['account'].queryset = ChartOfAccount.objects.filter(
+                organization=self.organization,
                 is_active=True
             )
-            
-            if config_id:
-                config = VoucherModeConfig.objects.get(pk=config_id)
-                self.fields['account_type'].queryset = AccountType.objects.filter(
-                    chartofaccount__organization=organization
-                ).distinct()
-
-        # Prepopulate account_code for existing instances
-        if self.instance.pk and self.instance.account:
-            self.fields['account_code'].initial = self.instance.account.account_code
+            self.fields['account_type'].queryset = AccountType.objects.filter(
+                is_archived=False
+            )
+            self.fields['default_tax_code'].queryset = TaxCode.objects.filter(
+                organization=self.organization,
+                is_active=True
+            )
 
     def clean(self):
         cleaned_data = super().clean()
-        account_code = cleaned_data.get('account_code')
-        if account_code and self.organization:
-            try:
-                account = ChartOfAccount.objects.get(
-                    organization=self.organization,
-                    account_code=account_code
-                )
-                cleaned_data['account'] = account
-            except ChartOfAccount.DoesNotExist:
-                self.add_error('account_code', 'Invalid account code.')
+        account = cleaned_data.get('account')
+        account_type = cleaned_data.get('account_type')
+        default_debit = cleaned_data.get('default_debit')
+        default_credit = cleaned_data.get('default_credit')
+
+        # Either account or account_type must be specified
+        if not account and not account_type:
+            raise forms.ValidationError("Either account or account type must be specified.")
+
+        # Cannot have both debit and credit checked
+        if default_debit and default_credit:
+            raise forms.ValidationError("Cannot have both debit and credit checked.")
+
         return cleaned_data
+
+class VoucherUDFConfigForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = VoucherUDFConfig
+        fields = [
+            'field_name', 'display_name', 'field_type', 'scope', 'is_required',
+            'is_active', 'default_value', 'choices', 'min_value', 'max_value',
+            'min_length', 'max_length', 'validation_regex', 'help_text', 'display_order'
+        ]
+        widgets = {
+            'field_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'maxlength': '50',
+                'pattern': '^[a-z][a-z0-9_]*$',
+                'title': 'Field name must start with a letter and contain only lowercase letters, numbers, and underscores'
+            }),
+            'display_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'field_type': forms.Select(attrs={'class': 'form-select'}),
+            'scope': forms.Select(attrs={'class': 'form-select'}),
+            'is_required': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'default_value': forms.TextInput(attrs={'class': 'form-control'}),
+            'choices': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': '3',
+                'placeholder': 'Enter choices as JSON array: ["Option 1", "Option 2", "Option 3"]'
+            }),
+            'min_value': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'max_value': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'min_length': forms.NumberInput(attrs={'class': 'form-control'}),
+            'max_length': forms.NumberInput(attrs={'class': 'form-control'}),
+            'validation_regex': forms.TextInput(attrs={'class': 'form-control'}),
+            'help_text': forms.Textarea(attrs={'class': 'form-control', 'rows': '2'}),
+            'display_order': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.organization = kwargs.pop('organization', None)
+        self.voucher_mode = kwargs.pop('voucher_mode', None)
+        super().__init__(*args, **kwargs)
+
+    def clean_field_name(self):
+        field_name = self.cleaned_data.get('field_name')
+        if not field_name:
+            raise forms.ValidationError("Field name is required.")
+
+        # Check for valid characters
+        if not re.match(r'^[a-z][a-z0-9_]*$', field_name):
+            raise forms.ValidationError("Field name must start with a letter and contain only lowercase letters, numbers, and underscores.")
+
+        # Check uniqueness within the voucher mode
+        if self.voucher_mode:
+            existing = VoucherUDFConfig.objects.filter(
+                voucher_mode=self.voucher_mode,
+                field_name=field_name
+            )
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+
+            if existing.exists():
+                raise forms.ValidationError(f"A field with name '{field_name}' already exists in this voucher mode.")
+
+        return field_name
+
+    def clean_choices(self):
+        choices = self.cleaned_data.get('choices')
+        field_type = self.cleaned_data.get('field_type')
+
+        if field_type in ['select', 'multiselect'] and not choices:
+            raise forms.ValidationError("Choices are required for select and multiselect fields.")
+
+        if choices:
+            try:
+                import json
+                choices_list = json.loads(choices)
+                if not isinstance(choices_list, list):
+                    raise forms.ValidationError("Choices must be a valid JSON array.")
+                if not choices_list:
+                    raise forms.ValidationError("Choices array cannot be empty.")
+            except json.JSONDecodeError:
+                raise forms.ValidationError("Choices must be valid JSON format.")
+
+        return choices
+
+    def clean(self):
+        cleaned_data = super().clean()
+        field_type = cleaned_data.get('field_type')
+        min_value = cleaned_data.get('min_value')
+        max_value = cleaned_data.get('max_value')
+        min_length = cleaned_data.get('min_length')
+        max_length = cleaned_data.get('max_length')
+
+        # Validate numeric constraints
+        if field_type in ['number', 'decimal']:
+            if min_value is not None and max_value is not None:
+                if min_value > max_value:
+                    raise forms.ValidationError("Minimum value cannot be greater than maximum value.")
+
+        # Validate length constraints
+        if min_length is not None and max_length is not None:
+            if min_length > max_length:
+                raise forms.ValidationError("Minimum length cannot be greater than maximum length.")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.organization:
+            instance.organization = self.organization
+        if self.voucher_mode:
+            instance.voucher_mode = self.voucher_mode
+        if commit:
+            instance.save()
+        return instance
 
 class GeneralLedgerForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:

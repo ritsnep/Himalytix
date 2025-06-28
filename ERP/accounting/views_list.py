@@ -92,13 +92,14 @@ class JournalListView(LoginRequiredMixin, ListView):
         ]
         return context
 
-class VoucherModeConfigListView(LoginRequiredMixin, ListView):
+class VoucherModeConfigListView(PermissionRequiredMixin, LoginRequiredMixin, ListView):
     model = VoucherModeConfig
     template_name = 'accounting/voucher_config_list.html'
     context_object_name = 'configs'
+    permission_required = ('accounting', 'vouchermodeconfig', 'view')
     
     def get_queryset(self):
-        return VoucherModeConfig.objects.filter(organization=self.request.user.organization)
+        return VoucherModeConfig.objects.filter(organization=self.request.user.get_active_organization())
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -289,28 +290,6 @@ class AccountingPeriodListView(LoginRequiredMixin, UserOrganizationMixin, ListVi
         context['create_url'] = reverse('accounting:accounting_period_create')
         context['create_button_text'] = 'New Accounting Period'
         context['page_title'] = 'Accounting Periods'
-        return context
-
-class JournalTypeListView(LoginRequiredMixin, UserOrganizationMixin, ListView):
-    model = JournalType
-    template_name = 'accounting/journal_type_list.html'
-    context_object_name = 'journal_types'
-    paginate_by = 20
-    queryset = JournalType.objects.order_by('name')
-   
-    def get_queryset(self):
-        org = self.get_organization()
-        if not org:
-            return self.model.objects.none()
-        return super().get_queryset()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        org = user.get_active_organization()
-        context['create_url'] = reverse('accounting:journal_type_create')
-        context['create_button_text'] = 'New Journal Type'
-        context['page_title'] = 'Journal Types'
         return context
 
 class JournalDetailView(LoginRequiredMixin, DetailView):

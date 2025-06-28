@@ -7,9 +7,8 @@ app_name = "accounting"
 urlpatterns = [
     # Journal URLs
     path('journals/', views.JournalListView.as_view(), name='journal_list'),
-    path('journals/create/', views.JournalCreateView.as_view(), name='journal_create'),
     path('journals/<int:pk>/', views.JournalDetailView.as_view(), name='journal_detail'),
-    path('journals/<int:pk>/edit/', views.JournalUpdateView.as_view(), name='journal_update'),
+    # path('journals/<int:pk>/edit/', views.JournalUpdateView.as_view(), name='journal_update'),
     path('journals/<int:pk>/post/', views.JournalPostView.as_view(), name='journal_post'),
     
     # HTMX Partial URLs
@@ -27,6 +26,12 @@ urlpatterns = [
     path('voucher-configs/<int:config_id>/defaults/create/', views.VoucherModeDefaultCreateView.as_view(), name='voucher_default_create'),
     path('voucher-defaults/<int:pk>/edit/', views.VoucherModeDefaultUpdateView.as_view(), name='voucher_default_update'),
     path('voucher-defaults/<int:pk>/delete/', views.VoucherModeDefaultDeleteView.as_view(), name='voucher_default_delete'),
+    
+    # Voucher UDF URLs
+    path('voucher-udfs/', views.VoucherUDFConfigListView.as_view(), name='voucher_udf_list'),
+    path('voucher-udfs/create/', views.VoucherUDFConfigCreateView.as_view(), name='voucher_udf_create'),
+    path('voucher-udfs/<int:pk>/edit/', views.VoucherUDFConfigUpdateView.as_view(), name='voucher_udf_update'),
+    path('voucher-udfs/<int:pk>/delete/', views.VoucherUDFConfigDeleteView.as_view(), name='voucher_udf_delete'),
     
     path('voucher-entry/', views.VoucherEntryView.as_view(), name='voucher_entry'),
     path('voucher-entry/<int:config_id>/', views.VoucherEntryView.as_view(), name='voucher_entry_config'),
@@ -97,6 +102,13 @@ urlpatterns = [
     path('journal-types/create/', views.JournalTypeCreateView.as_view(), name='journal_type_create'),
     path('journal-types/<int:journal_type_id>/', views.JournalTypeDetailView.as_view(), name='journal_type_detail'),
     path('journal-types/<int:journal_type_id>/edit/', views.JournalTypeUpdateView.as_view(), name='journal_type_update'),
+    path('journal-types/<int:journal_type_id>/delete/', views.JournalTypeDeleteView.as_view(), name='journal_type_delete'),
+
+    # Financial Reports URLs
+    path('reports/', views.ReportsListView.as_view(), name='reports_list'),
+    path('reports/trial-balance/', views.TrialBalanceView.as_view(), name='trial_balance'),
+    path('reports/income-statement/', views.IncomeStatementView.as_view(), name='income_statement'),
+    path('reports/balance-sheet/', views.BalanceSheetView.as_view(), name='balance_sheet'),
 
     # AJAX URLs
     path('ajax/get-next-account-code/', views.get_next_account_code, name='get_next_account_code'),

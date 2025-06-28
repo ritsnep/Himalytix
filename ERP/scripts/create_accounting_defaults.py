@@ -14,12 +14,11 @@ from accounting.models import (
 
 def create_defaults():
     # First check if organization exists
-    org = Organization.objects.first()
+    org = Organization.objects.filter(code="DEFAULT").first()
     
     if not org:
         # Create default organization
         org = Organization.objects.create(
-            tenant=1,
             name="Default Organization",
             code="DEFAULT",
             type="company",
@@ -29,6 +28,9 @@ def create_defaults():
             base_currency_code="USD",
             status="active"
         )
+        logger.info(f"Created default organization: {org.name}")
+    else:
+        logger.info(f"Using existing organization: {org.name}")
 
     # Create default account types
     account_types = {
@@ -41,7 +43,7 @@ def create_defaults():
 
     created_types = {}
     for code, (name, nature, classification, order) in account_types.items():
-        at, _ = AccountType.objects.get_or_create(
+        at, created = AccountType.objects.get_or_create(
             code=code,
             defaults={
                 'name': name,
@@ -51,6 +53,8 @@ def create_defaults():
                 'system_type': True
             }
         )
+        if created:
+            logger.info(f"Created account type: {at.name}")
         created_types[code] = at
 
     # Create basic chart of accounts
@@ -65,7 +69,7 @@ def create_defaults():
     }
 
     for code, (name, type_code, active) in accounts.items():
-        ChartOfAccount.objects.get_or_create(
+        account, created = ChartOfAccount.objects.get_or_create(
             organization=org,
             account_code=code,
             defaults={
@@ -75,6 +79,8 @@ def create_defaults():
                 'allow_manual_journal': True
             }
         )
+        if created:
+            logger.info(f"Created account: {account.account_name}")
 
     # Create journal types
     journal_types = {
@@ -87,7 +93,7 @@ def create_defaults():
 
     created_journals = {}
     for code, (name, desc, prefix) in journal_types.items():
-        jt, _ = JournalType.objects.get_or_create(
+        jt, created = JournalType.objects.get_or_create(
             organization=org,
             code=code,
             defaults={
@@ -98,6 +104,8 @@ def create_defaults():
                 'is_active': True
             }
         )
+        if created:
+            logger.info(f"Created journal type: {jt.name}")
         created_journals[code] = jt
 
     # Create voucher configurations
@@ -110,7 +118,7 @@ def create_defaults():
     }
 
     for code, (name, jtype, is_default) in voucher_configs.items():
-        config, _ = VoucherModeConfig.objects.get_or_create(
+        config, created = VoucherModeConfig.objects.get_or_create(
             organization=org,
             code=code,
             defaults={
@@ -125,6 +133,8 @@ def create_defaults():
                 'default_currency': 'USD'
             }
         )
+        if created:
+            logger.info(f"Created voucher config: {config.name}")
 
         # Create default lines based on voucher type
         if code == 'GV':
@@ -168,6 +178,8 @@ def create_defaults():
                     'default_description': 'Cash Receipt'
                 }
             )
+
+    logger.info("Generic accounting defaults created successfully!")
 
 if __name__ == '__main__':
     create_defaults()
