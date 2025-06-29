@@ -5,6 +5,12 @@ from .models import (
     TaxAuthority, TaxType, TaxCode, VoucherModeConfig, VoucherModeDefault, GeneralLedger
 )
 
+@admin.register(Journal)
+class JournalAdmin(admin.ModelAdmin):
+    list_display = ('journal_number', 'journal_type', 'period', 'status', 'created_at')
+    search_fields = ('journal_number', 'description')
+    list_filter = ('journal_type', 'status', 'period')
+
 admin.site.register(FiscalYear)
 admin.site.register(AccountingPeriod)
 admin.site.register(Department)
@@ -15,7 +21,6 @@ admin.site.register(ChartOfAccount)
 admin.site.register(Currency)
 admin.site.register(CurrencyExchangeRate)
 admin.site.register(JournalType)
-admin.site.register(Journal)
 admin.site.register(JournalLine)
 admin.site.register(TaxAuthority)
 admin.site.register(TaxType)

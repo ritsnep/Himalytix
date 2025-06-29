@@ -1,10 +1,11 @@
-{% comment %} Journal Lines Table and Add/Remove Logic {% endcomment %}
+{% comment %} Journal Lines Table and Add/Remove Logic (HTMX) {% endcomment %}
 <div class="row mt-4">
     <div class="col-12">
         <div class="table-responsive">
             <table class="table table-bordered" id="journalLines">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>Account</th>
                         <th>Description</th>
                         <th>Debit</th>
@@ -27,32 +28,19 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th colspan="2" class="text-end">Totals:</th>
+                        <th colspan="3" class="text-end">Totals:</th>
                         <th class="debit-total">0.00</th>
                         <th class="credit-total">0.00</th>
                         <th colspan="5"></th>
                     </tr>
                 </tfoot>
             </table>
-            <button type="button" class="btn btn-add-line mt-2" id="add-journal-line">Add Line</button>
+            <button type="button" class="btn btn-add-line mt-2" id="add-journal-line"
+                hx-get="{% url 'accounting:htmx_journal_line_form' %}?index={{ formset.total_form_count }}"
+                hx-target="#journal-lines-body" hx-swap="afterend">
+                Add Line
+            </button>
+            {# The Add Line button uses HTMX to fetch a new row from the server #}
         </div>
     </div>
-</div>
-
-<template id="journal-line-template">
-<tr class="journal-line">
-    <td><select class="form-select" name="account"><option value="">Select Account</option></select></td>
-    <td><input type="text" class="form-control" name="description"></td>
-    <td><input type="number" class="form-control" name="debit_amount" step="0.01" min="0"></td>
-    <td><input type="number" class="form-control" name="credit_amount" step="0.01" min="0"></td>
-    {% if voucher_config.show_dimensions %}
-    <td><select class="form-select" name="department"><option value="">Select Department</option></select></td>
-    <td><select class="form-select" name="project"><option value="">Select Project</option></select></td>
-    <td><select class="form-select" name="cost_center"><option value="">Select Cost Center</option></select></td>
-    {% endif %}
-    {% if voucher_config.show_tax_details %}
-    <td><select class="form-select" name="tax_code"><option value="">Select Tax Code</option></select></td>
-    {% endif %}
-    <td><button type="button" class="btn btn-remove-line">Remove</button></td>
-</tr>
-</template> 
+</div> 

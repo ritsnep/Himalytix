@@ -9,6 +9,7 @@ import logging
 from django.core.exceptions import ValidationError
 from django.db import transaction
 import re
+from django.db.models import JSONField  # If using Django 3.1+, else use from django.contrib.postgres.fields import JSONField
 
 logger = logging.getLogger(__name__)
 
@@ -752,6 +753,12 @@ class Journal(models.Model):
         unique_together = ('organization', 'journal_number')
         ordering = ['-journal_date', '-journal_number']
         # For DBA: Partition monthly by journal_date
+        permissions = [
+            ("add_voucher_entry", "Can add voucher entry"),
+            ("change_voucher_entry", "Can change voucher entry"),
+            ("delete_voucher_entry", "Can delete voucher entry"),
+            ("view_voucher_entry", "Can view voucher entry"),
+        ]
     def __str__(self):
         return f"{self.journal_number} - {self.journal_type.name}"
 
@@ -922,6 +929,182 @@ class TaxCode(models.Model):
             self.code = code_generator.generate_code()
         super(TaxCode, self).save(*args, **kwargs)
 
+def default_ui_schema():
+    """
+    Returns a default UI schema for voucher entry forms.
+    This schema can be extended or overridden per VoucherModeConfig.
+    """
+    return {
+        "header": {
+            "journal_date": {
+                "type": "date",
+                "label": "Date",
+                "required": True,
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control datepicker"
+                        }
+                    }
+                }
+            },
+            "journal_type": {
+                "type": "select",
+                "label": "Journal Type",
+                "required": True,
+                "choices": "JournalType",  # Reference to model or dynamic choices
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control"
+                        }
+                    }
+                }
+            },
+            "reference_number": {
+                "type": "text",
+                "label": "Reference Number",
+                "required": False,
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control"
+                        }
+                    }
+                }
+            },
+            "description": {
+                "type": "textarea",
+                "label": "Description",
+                "required": False,
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control"
+                        }
+                    }
+                }
+            },
+            "currency": {
+                "type": "select",
+                "label": "Currency",
+                "required": True,
+                "choices": "Currency",  # Reference to model or dynamic choices
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control"
+                        }
+                    }
+                }
+            },
+        },
+        "lines": {
+            "account": {
+                "type": "autocomplete",
+                "label": "Account",
+                "required": True,
+                "choices": "ChartOfAccount",  # Reference to model or dynamic choices
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control account-autocomplete"
+                        }
+                    }
+                }
+            },
+            "description": {
+                "type": "text",
+                "label": "Line Description",
+                "required": False,
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control"
+                        }
+                    }
+                }
+            },
+            "debit_amount": {
+                "type": "decimal",
+                "label": "Debit",
+                "required": False,
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control amount-field"
+                        }
+                    }
+                }
+            },
+            "credit_amount": {
+                "type": "decimal",
+                "label": "Credit",
+                "required": False,
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control amount-field"
+                        }
+                    }
+                }
+            },
+            "tax_code": {
+                "type": "select",
+                "label": "Tax Code",
+                "required": False,
+                "choices": "TaxCode",  # Reference to model or dynamic choices
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control"
+                        }
+                    }
+                }
+            },
+            "department": {
+                "type": "select",
+                "label": "Department",
+                "required": False,
+                "choices": "Department",  # Reference to model or dynamic choices
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control"
+                        }
+                    }
+                }
+            },
+            "project": {
+                "type": "select",
+                "label": "Project",
+                "required": False,
+                "choices": "Project",  # Reference to model or dynamic choices
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control"
+                        }
+                    }
+                }
+            },
+            "cost_center": {
+                "type": "select",
+                "label": "Cost Center",
+                "required": False,
+                "choices": "CostCenter",  # Reference to model or dynamic choices
+                "kwargs": {
+                    "widget": {
+                        "attrs": {
+                            "class": "form-control"
+                        }
+                    }
+                }
+            },
+        }
+    }
+    
+
 class VoucherModeConfig(models.Model):
     LAYOUT_CHOICES = [
         ('standard', 'Standard'),
@@ -957,6 +1140,18 @@ class VoucherModeConfig(models.Model):
     archived_at = models.DateTimeField(null=True, blank=True)
     archived_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_voucher_configs')
     rowversion = models.BinaryField(editable=False, null=True, blank=True, help_text="For MSSQL: ROWVERSION for optimistic concurrency.")
+    ui_schema = models.JSONField(
+        default=default_ui_schema,
+        blank=True
+    )
+    validation_rules = models.JSONField(default=dict, blank=True)
+
+    def resolve_ui(self):
+        """Return cleaned schema merged with system defaults."""
+        default = {"header": {}, "lines": {}}
+        merged = {**default, **(self.ui_schema or {})}
+        # Add any implicit fields your engine always needs here if required
+        return merged
     
     class Meta:
         unique_together = ('organization', 'code')

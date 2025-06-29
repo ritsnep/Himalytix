@@ -6,6 +6,12 @@ from .models import (
     Organization, OrganizationAddress, OrganizationContact,
     Permission, Role, UserOrganization, UserRole, UserPermission
 )
+from django.contrib.auth.models import User, Group, Permission as AuthPermission
+from django.urls import path
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from usermanagement.models import Permission as CustomPermission
+
 @admin.register(UserOrganization)
 class UserOrganizationAdmin(admin.ModelAdmin):
     list_display = ('user', 'organization', 'is_owner', 'is_active', 'role', 'date_joined')
@@ -103,3 +109,32 @@ admin.site.register(Permission, PermissionAdmin)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(UserRole, UserRoleAdmin)
 admin.site.register(UserPermission, UserPermissionAdmin)
+
+class UnifiedPermissionAssignmentAdmin(admin.ModelAdmin):
+    change_list_template = "admin/unified_permission_assignment.html"
+    model = AuthPermission  # Dummy, not actually used for CRUD
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('unified-permissions/', self.admin_site.admin_view(self.unified_permissions_view), name='unified-permissions'),
+        ]
+        return custom_urls + urls
+
+    def unified_permissions_view(self, request):
+        users = User.objects.all()
+        groups = Group.objects.all()
+        roles = Role.objects.all()
+        auth_permissions = AuthPermission.objects.all().select_related('content_type')
+        custom_permissions = CustomPermission.objects.all().select_related('entity', 'module')
+        context = dict(
+            self.admin_site.each_context(request),
+            users=users,
+            groups=groups,
+            roles=roles,
+            auth_permissions=auth_permissions,
+            custom_permissions=custom_permissions,
+        )
+        return render(request, "admin/unified_permission_assignment.html", context)
+
+admin.site.register(AuthPermission, UnifiedPermissionAssignmentAdmin)

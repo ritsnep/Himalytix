@@ -1,5 +1,6 @@
-{% comment %} Single Journal Line Row {% endcomment %}
+{% comment %} Single Journal Line Row (HTMX-ready) {% endcomment %}
 <tr class="journal-line">
+    <td><span class="line-number"></span></td>
     <td>{{ form.account }}</td>
     <td>{{ form.description }}</td>
     <td>{{ form.debit_amount }}</td>
@@ -13,6 +14,7 @@
     <td>{{ form.tax_code }}</td>
     {% endif %}
     <td>
-        <button type="button" class="btn btn-remove-line">Remove</button>
+        {{ form.DELETE }}
+        <button type="button" class="btn btn-remove-line" onclick="this.closest('tr').remove();">Remove</button>
     </td>
 </tr> 

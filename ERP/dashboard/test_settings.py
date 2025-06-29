@@ -17,7 +17,10 @@ class DisableMigrations(dict):
 
 MIGRATION_MODULES = DisableMigrations()
 
-INSTALLED_APPS += ['rest_framework', 'api']
+if 'rest_framework' not in INSTALLED_APPS:
+    INSTALLED_APPS += ['rest_framework']
+if 'api' not in INSTALLED_APPS:
+    INSTALLED_APPS += ['api']
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 100,

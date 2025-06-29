@@ -50,7 +50,9 @@
 
 
     {% block right_sidebar %}
-        {% include 'partials/right-sidebar.html'%}
+        {% if user.is_staff and not voucher_entry_page %}
+            {% include 'partials/right-sidebar.html' %}
+        {% endif %}
     {% endblock right_sidebar %}
 
 

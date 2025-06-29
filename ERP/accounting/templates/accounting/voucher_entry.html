@@ -149,75 +149,135 @@
 
 {% block content %}
 <div class="main-content">
-  <div class="page-content">
-<div class="container-fluid">
-    <!-- Breadcrumbs -->
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            {% for breadcrumb in breadcrumbs %}
-                {% if breadcrumb.1 %}
-                    <li class="breadcrumb-item"><a href="{{ breadcrumb.1 }}">{{ breadcrumb.0 }}</a></li>
-                {% else %}
-                    <li class="breadcrumb-item active">{{ breadcrumb.0 }}</li>
-                {% endif %}
-            {% endfor %}
-        </ol>
-    </nav>
+    <div class="page-content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-body">
+                    <h1>Voucher Entry ({{ config.name }})</h1>
+                    <form id="voucher-form" method="post" novalidate>
+                        {% csrf_token %}
+                        <h4>Header</h4>
+                        {% for field in header_form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        {# Render UDFs for header if present #}
+                        {% if config.udf_configs.all %}
+                            {% for udf in config.udf_configs.all %}
+                                {% if udf.scope == 'header' %}
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ udf.display_name }}</label>
+                                        <input type="text" name="udf_{{ udf.field_name }}" class="form-control" {% if udf.is_required %}required{% endif %}>
+                                        {% if udf.help_text %}
+                                            <small class="form-text text-muted">{{ udf.help_text }}</small>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
 
-    {% include 'accounting/vouchers/voucher_header.html' %}
-
-    <form method="post" id="voucher-form" class="needs-validation" novalidate enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="form-section">
-            <h5><i class="fas fa-file-alt me-2"></i>Journal Header</h5>
-            {% include 'accounting/vouchers/voucher_form_header_fields.html' %}
-            {% if header_udfs %}
-                {% include 'accounting/vouchers/voucher_form_udfs.html' with udfs=header_udfs scope='header' %}
-            {% endif %}
-        </div>
-
-        {% include 'accounting/vouchers/voucher_form_lines.html' %}
-
-        {% if line_udfs %}
-            <div class="form-section">
-                <h5>Line UDFs</h5>
-                {% include 'accounting/vouchers/voucher_form_udfs.html' with udfs=line_udfs scope='line' %}
+                        <h4>Lines</h4>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    {% for field in line_formset.empty_form %}
+                                        <th>{{ field.label }}</th>
+                                    {% endfor %}
+                                    {# Render UDFs for lines if present #}
+                                    {% if config.udf_configs.all %}
+                                        {% for udf in config.udf_configs.all %}
+                                            {% if udf.scope == 'line' %}
+                                                <th>{{ udf.display_name }}</th>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    <th>Delete?</th>
+                                </tr>
+                            </thead>
+                            <tbody id="journal-lines-body">
+                                {% for form in line_formset.forms %}
+                                    <tr>
+                                        {% for field in form %}
+                                            <td>
+                                                {{ field }}
+                                                {% for error in field.errors %}
+                                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                                {% endfor %}
+                                            </td>
+                                        {% endfor %}
+                                        {# Render UDFs for lines if present #}
+                                        {% if config.udf_configs.all %}
+                                            {% for udf in config.udf_configs.all %}
+                                                {% if udf.scope == 'line' %}
+                                                    <td>
+                                                        <input type="text" name="udf_{{ udf.field_name }}_{{ forloop.counter0 }}" class="form-control" {% if udf.is_required %}required{% endif %}>
+                                                    </td>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                        <td>
+                                            {% if form.can_delete %}
+                                                {{ form.DELETE }}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <button id="add-journal-line" type="button" class="btn btn-primary" {% if not user_perms.can_edit %}disabled{% endif %}>Add Line</button>
+                        <button id="submit-btn" type="submit" class="btn btn-success" {% if not user_perms.can_edit %}disabled{% endif %}>Save</button>
+                    </form>
+                </div>
             </div>
-        {% endif %}
-
-        {% include 'accounting/vouchers/voucher_form_totals.html' %}
-        {% include 'accounting/vouchers/voucher_form_attachments.html' %}
-        {% include 'accounting/vouchers/voucher_form_actions.html' %}
-    </form>
-
-    <div id="voucher-preview-modal" style="display:none;">
-        {% include 'accounting/vouchers/voucher_form_preview.html' %}
+        </div>
     </div>
-</div>
-</div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'libs/jquery.repeater/jquery.repeater.min.js' %}"></script>
+<script id="user-perms" type="application/json">{{ user_perms|json_script:"user-perms" }}</script>
 <script>
 // --- ENHANCED VOUCHER ENTRY JS ---
 
-// 1. Add/Remove Lines (Component Structure)
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('add-journal-line').addEventListener('click', addJournalLine);
-    document.querySelector('#journal-lines-body').addEventListener('click', function(e) {
-        if (e.target.classList.contains('btn-remove-line')) {
-            removeJournalLine(e.target);
-        }
-    });
+    const addBtn = document.getElementById('add-journal-line');
+    if (addBtn) {
+        addBtn.addEventListener('click', addJournalLine);
+    }
+    const linesBody = document.getElementById('journal-lines-body');
+    if (linesBody) {
+        linesBody.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-remove-line')) {
+                removeJournalLine(e.target);
+            }
+        });
+    }
+    initializeAutocomplete();
+    calculateTotals();
+    // Permissions
+    const userPerms = JSON.parse(document.getElementById('user-perms').textContent);
+    applyPermissions(userPerms);
 });
 
 function addJournalLine() {
+    // You may want to use AJAX/HTMX to get a new line row if using dynamic forms
+    // For now, just clone the last row
     const tbody = document.getElementById('journal-lines-body');
-    const template = document.getElementById('journal-line-template');
-    if (template && tbody) {
-        const clone = template.content.cloneNode(true);
+    if (!tbody) return;
+    const lastRow = tbody.querySelector('tr:last-child');
+    if (lastRow) {
+        const clone = lastRow.cloneNode(true);
+        // Clear input values
+        clone.querySelectorAll('input, select, textarea').forEach(el => el.value = '');
         tbody.appendChild(clone);
         updateLineNumbers();
         initializeAutocomplete();
@@ -241,8 +301,8 @@ function updateLineNumbers() {
     });
 }
 
-// 2. Inline Validation and Error Display
 function validateField(field) {
+    if (!field) return true;
     const isRequired = field.hasAttribute('required');
     const value = field.value.trim();
     field.classList.remove('is-invalid');
@@ -265,35 +325,18 @@ document.addEventListener('blur', function(e) {
     }
 }, true);
 
-document.getElementById('voucher-form').addEventListener('submit', function(e) {
-    let valid = true;
-    this.querySelectorAll('[required]').forEach(field => {
-        if (!validateField(field)) valid = false;
+const voucherForm = document.getElementById('voucher-form');
+if (voucherForm) {
+    voucherForm.addEventListener('submit', function(e) {
+        let valid = true;
+        this.querySelectorAll('[required]').forEach(field => {
+            if (!validateField(field)) valid = false;
+        });
+        if (!validateBalance()) valid = false;
+        if (!valid) e.preventDefault();
     });
-    if (!validateBalance()) valid = false;
-    if (!valid) e.preventDefault();
-});
-
-// 3. Preview Modal Before Submission
-function showPreview() {
-    const modal = document.getElementById('voucher-preview-modal');
-    if (modal) {
-        // Fill modal with summary (implement as needed)
-        modal.style.display = 'block';
-    }
 }
-document.getElementById('submit-btn')?.addEventListener('click', function(e) {
-    e.preventDefault();
-    showPreview();
-});
-document.getElementById('edit-voucher')?.addEventListener('click', function() {
-    document.getElementById('voucher-preview-modal').style.display = 'none';
-});
-document.getElementById('confirm-submit')?.addEventListener('click', function() {
-    document.getElementById('voucher-form').submit();
-});
 
-// 4. Sticky Totals Bar & Calculation
 function calculateTotals() {
     let debit = 0, credit = 0;
     document.querySelectorAll('input[name$="debit_amount"]').forEach(input => {
@@ -302,9 +345,12 @@ function calculateTotals() {
     document.querySelectorAll('input[name$="credit_amount"]').forEach(input => {
         credit += parseFloat(input.value) || 0;
     });
-    document.getElementById('total-debit').textContent = debit.toFixed(2);
-    document.getElementById('total-credit').textContent = credit.toFixed(2);
-    document.getElementById('total-balance').textContent = (debit-credit).toFixed(2);
+    const totalDebit = document.getElementById('total-debit');
+    const totalCredit = document.getElementById('total-credit');
+    const totalBalance = document.getElementById('total-balance');
+    if (totalDebit) totalDebit.textContent = debit.toFixed(2);
+    if (totalCredit) totalCredit.textContent = credit.toFixed(2);
+    if (totalBalance) totalBalance.textContent = (debit-credit).toFixed(2);
     validateBalance();
 }
 
@@ -315,41 +361,33 @@ document.addEventListener('input', function(e) {
 });
 
 function validateBalance() {
-    const debit = parseFloat(document.getElementById('total-debit').textContent) || 0;
-    const credit = parseFloat(document.getElementById('total-credit').textContent) || 0;
+    const debit = parseFloat(document.getElementById('total-debit')?.textContent) || 0;
+    const credit = parseFloat(document.getElementById('total-credit')?.textContent) || 0;
     const balance = debit - credit;
     const balanceRow = document.querySelector('.total-row.balance');
-    if (Math.abs(balance) > 0.01) {
-        balanceRow.classList.add('text-danger');
-        return false;
-    } else {
-        balanceRow.classList.remove('text-danger');
-        return true;
+    if (balanceRow) {
+        if (Math.abs(balance) > 0.01) {
+            balanceRow.classList.add('text-danger');
+            return false;
+        } else {
+            balanceRow.classList.remove('text-danger');
+            return true;
+        }
     }
+    return true;
 }
 
-// 5. Autocomplete for Accounts, Departments, etc. (Placeholder)
 function initializeAutocomplete() {
     // Example: Use a library or AJAX for account field autocomplete
     document.querySelectorAll('select[name$="account"]').forEach(select => {
         // Implement AJAX/autocomplete logic as needed
     });
 }
-document.addEventListener('DOMContentLoaded', initializeAutocomplete);
 
-// 6. Permission-based UI (disable/hide actions as needed)
 function applyPermissions(perms) {
-    if (!perms.includes('accounting.journal_add')) {
-        document.querySelectorAll('button[type="submit"]').forEach(btn => btn.disabled = true);
+    if (!perms.can_edit) {
+        document.querySelectorAll('button[type="submit"], #add-journal-line').forEach(btn => btn.disabled = true);
     }
 }
-// Pass permissions from Django context as a JS variable if needed
-// Example:
-// <script id="user-perms" type="application/json">{{ perms|json_script:"user-perms" }}</script>
-// const userPerms = JSON.parse(document.getElementById('user-perms').textContent);
-// applyPermissions(userPerms);
-
-// 7. Initial calculations
-calculateTotals();
 </script>
 {% endblock %} 

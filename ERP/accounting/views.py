@@ -36,7 +36,7 @@ from utils.htmx import require_htmx
 from usermanagement.utils import require_permission
 from usermanagement.utils import PermissionUtils
 from django.forms import inlineformset_factory
-from .views_mixins import UserOrganizationMixin, PermissionRequiredMixin
+from .views_mixins import UserOrganizationMixin, PermissionRequiredMixin, VoucherConfigMixin
 from .views_list import *
 from .views_create import *
 from .views_update import *
@@ -48,6 +48,8 @@ from django.db.models import Prefetch
 import logging
 from decimal import Decimal
 from django.db.models import Sum
+from .forms_factory import build_form
+from django.forms import formset_factory
 
 logger = logging.getLogger(__name__)
 
@@ -200,247 +202,81 @@ class VoucherModeDefaultDeleteView(PermissionRequiredMixin, LoginRequiredMixin, 
         messages.success(request, "Voucher default line deleted successfully.")
         return redirect(reverse_lazy('accounting:voucher_config_detail', kwargs={'pk': config_id}))
 
-class VoucherEntryView(PermissionRequiredMixin, LoginRequiredMixin, View):
-    """Dynamic voucher entry form with UDF support"""
+class VoucherEntryView(VoucherConfigMixin, PermissionRequiredMixin, LoginRequiredMixin, View):
     template_name = 'accounting/voucher_entry.html'
     permission_required = ('accounting', 'journal', 'add')
+    config_pk_kwarg = "config_id"
 
-    def get(self, request, config_id=None):
-        organization = request.user.get_active_organization()
-        
-        # Get all voucher configs for selector
-        all_configs = VoucherModeConfig.objects.filter(organization_id=organization.id, is_archived=False)
-        
-        # Get voucher mode configuration
-        if config_id:
-            voucher_config = get_object_or_404(
-                VoucherModeConfig, 
-                pk=config_id, 
-                organization_id=organization.id
-            )
-        else:
-            # Get default configuration for the organization
-            voucher_config = VoucherModeConfig.objects.filter(
-                organization_id=organization.id,
-                is_default=True
-            ).first()
-            
-            if not voucher_config:
-                messages.error(request, "No voucher configuration found. Please contact your administrator.")
-                return redirect('accounting:journal_list')
-
-        # Get current period
-        current_period = AccountingPeriod.objects.filter(
-            fiscal_year__organization_id=organization.id,
-            is_current=True
-        ).first()
-        
-        if not current_period:
-            messages.error(request, "No current accounting period found.")
-            return redirect('accounting:journal_list')
-
-        # Initialize forms
-        journal_form = JournalForm(
-            organization=organization,
-            initial={
-                'journal_type': voucher_config.journal_type,
-                'period': current_period,
-                'journal_date': timezone.now().date(),
-                'currency_code': voucher_config.default_currency,
-            }
-        )
-        
-        # Create formset for journal lines
-        JournalLineFormSet = inlineformset_factory(
-            Journal, JournalLine, 
-            form=JournalLineForm,
-            extra=3, can_delete=True
-        )
-        
-        formset = JournalLineFormSet(
-            prefix='lines',
-            instance=Journal(organization=organization)
-        )
-
-        # Get UDF configurations
-        header_udfs = voucher_config.udf_configs.filter(
-            scope='header', 
-            is_active=True
-        ).order_by('display_order')
-        
-        line_udfs = voucher_config.udf_configs.filter(
-            scope='line', 
-            is_active=True
-        ).order_by('display_order')
-
-        # Get default line items
-        default_lines = voucher_config.defaults.filter(is_archived=False).order_by('display_order')
-
-        context = {
-            'voucher_config': voucher_config,
-            'voucher_configs': all_configs,  # For selector
-            'journal_form': journal_form,
-            'formset': formset,
-            'header_udfs': header_udfs,
-            'line_udfs': line_udfs,
-            'default_lines': default_lines,
-            'current_period': current_period,
-            'page_title': f'Voucher Entry - {voucher_config.name}',
-            'breadcrumbs': [
-                ('Voucher Entry', None),
-            ],
-            'perms': list(request.user.get_all_permissions()),
+    def get_user_perms(self, request):
+        return {
+            "can_edit": request.user.has_perm("accounting.change_journal"),
+            "can_add": request.user.has_perm("accounting.add_journal"),
+            "can_delete": request.user.has_perm("accounting.delete_journal"),
         }
-        
+
+    def get(self, request, *args, **kwargs):
+        config = self.get_config()
+        ui_schema = config.ui_schema or {}
+        organization = request.user.get_active_organization()
+        HeaderForm = build_form(ui_schema.get("header", {}), organization=organization, prefix="header", model=Journal)
+        header_form = HeaderForm()
+        LineForm = build_form(ui_schema.get("lines", {}), organization=organization, prefix="line", model=JournalLine)
+        LineFormSet = formset_factory(LineForm, extra=2, can_delete=True)
+        line_formset = LineFormSet()
+        user_perms = self.get_user_perms(request)
+        # Pass UDFs to template
+        context = {
+            "config": config,
+            "header_form": header_form,
+            "line_formset": line_formset,
+            "user_perms": user_perms,
+        }
         return render(request, self.template_name, context)
 
-    def post(self, request, config_id=None):
+    def post(self, request, *args, **kwargs):
+        config = self.get_config()
+        ui_schema = config.ui_schema or {}
         organization = request.user.get_active_organization()
-        
-        # Get voucher configuration
-        if config_id:
-            voucher_config = get_object_or_404(
-                VoucherModeConfig, 
-                pk=config_id, 
-                organization_id=organization.id
+        HeaderForm = build_form(ui_schema.get("header", {}), organization=organization, prefix="header", model=Journal)
+        header_form = HeaderForm(request.POST)
+        LineForm = build_form(ui_schema.get("lines", {}), organization=organization, prefix="line", model=JournalLine)
+        LineFormSet = formset_factory(LineForm, can_delete=True)
+        line_formset = LineFormSet(request.POST)
+        user_perms = self.get_user_perms(request)
+
+        if header_form.is_valid() and line_formset.is_valid():
+            header_data = header_form.cleaned_data
+            lines_data = [f.cleaned_data for f in line_formset.forms if f.cleaned_data and not f.cleaned_data.get('DELETE', False)]
+            # Extract UDFs
+            udf_header = {}
+            udf_lines = []
+            for udf in config.udf_configs.all():
+                if udf.scope == 'header':
+                    udf_header[udf.field_name] = request.POST.get(f'udf_{udf.field_name}')
+                elif udf.scope == 'line':
+                    udf_line_values = []
+                    for i, form in enumerate(line_formset.forms):
+                        udf_line_values.append(request.POST.get(f'udf_{udf.field_name}_{i}'))
+                    udf_lines.append({udf.field_name: udf_line_values})
+            # Pass UDFs to create_voucher or save as needed
+            from .services import create_voucher
+            journal = create_voucher(
+                user=request.user,
+                config_id=config.pk,
+                header_data=header_data,
+                lines_data=lines_data,
+                udf_header=udf_header,
+                udf_lines=udf_lines,
             )
-        else:
-            voucher_config = VoucherModeConfig.objects.filter(
-                organization_id=organization.id,
-                is_default=True
-            ).first()
-            
-            if not voucher_config:
-                messages.error(request, "No voucher configuration found.")
-                return redirect('accounting:journal_list')
+            messages.success(request, "Voucher created successfully.")
+            return redirect('accounting:voucher_entry')  # Or wherever you want to redirect
 
-        # Get all voucher configs for selector
-        all_configs = VoucherModeConfig.objects.filter(organization_id=organization.id, is_archived=False)
-        # Get current period
-        current_period = AccountingPeriod.objects.filter(
-            fiscal_year__organization_id=organization.id,
-            is_current=True
-        ).first()
-        # Get default line items
-        default_lines = voucher_config.defaults.filter(is_archived=False).order_by('display_order')
-
-        # Process forms
-        journal_form = JournalForm(
-            request.POST, 
-            organization=organization
-        )
-        
-        JournalLineFormSet = inlineformset_factory(
-            Journal, JournalLine, 
-            form=JournalLineForm,
-            extra=0, can_delete=True
-        )
-        
-        formset = JournalLineFormSet(
-            request.POST,
-            prefix='lines',
-            instance=Journal(organization=organization)
-        )
-
-        # Validate UDFs
-        header_udfs = voucher_config.udf_configs.filter(
-            scope='header', 
-            is_active=True
-        ).order_by('display_order')
-        
-        line_udfs = voucher_config.udf_configs.filter(
-            scope='line', 
-            is_active=True
-        ).order_by('display_order')
-
-        udf_errors = []
-        
-        # Validate header UDFs
-        for udf in header_udfs:
-            field_name = f'udf_header_{udf.field_name}'
-            value = request.POST.get(field_name)
-            
-            if udf.is_required and not value:
-                udf_errors.append(f"{udf.display_name} is required.")
-            elif value and udf.validation_regex:
-                import re
-                if not re.match(udf.validation_regex, value):
-                    udf_errors.append(f"{udf.display_name} format is invalid.")
-
-        if journal_form.is_valid() and formset.is_valid() and not udf_errors:
-            try:
-                with transaction.atomic():
-                    # Save journal
-                    journal = journal_form.save(commit=False)
-                    journal.organization = organization
-                    journal.created_by = request.user
-                    
-                    # Generate journal number
-                    if voucher_config.journal_type:
-                        journal.journal_number = voucher_config.journal_type.get_next_journal_number()
-                    
-                    journal.save()
-                    
-                    # Save journal lines
-                    lines = formset.save(commit=False)
-                    total_debit = Decimal('0')
-                    total_credit = Decimal('0')
-                    
-                    for i, line in enumerate(lines):
-                        line.journal = journal
-                        line.line_number = i + 1
-                        line.created_by = request.user
-                        line.save()
-                        
-                        total_debit += line.debit_amount or Decimal('0')
-                        total_credit += line.credit_amount or Decimal('0')
-                    
-                    # Update journal totals
-                    journal.total_debit = total_debit
-                    journal.total_credit = total_credit
-                    journal.save()
-                    
-                    # Save UDF values (you might want to store these in a separate model)
-                    udf_values = {}
-                    for udf in header_udfs:
-                        field_name = f'udf_header_{udf.field_name}'
-                        value = request.POST.get(field_name)
-                        if value:
-                            udf_values[udf.field_name] = value
-                    
-                    # Store UDF values in journal description or a separate field
-                    if udf_values:
-                        journal.description = f"{journal.description or ''}\nUDF Values: {json.dumps(udf_values)}"
-                        journal.save()
-                    
-                    messages.success(request, f"Journal {journal.journal_number} created successfully.")
-                    return redirect('accounting:journal_detail', pk=journal.pk)
-                    
-            except Exception as e:
-                messages.error(request, f"Error creating journal: {str(e)}")
-                logger.error(f"Error creating journal: {str(e)}")
-        else:
-            # Add UDF errors to form errors
-            for error in udf_errors:
-                messages.error(request, error)
-
-        # Re-render form with errors
         context = {
-            'voucher_config': voucher_config,
-            'voucher_configs': all_configs,  # For selector
-            'journal_form': journal_form,
-            'formset': formset,
-            'header_udfs': header_udfs,
-            'line_udfs': line_udfs,
-            'default_lines': default_lines,
-            'current_period': current_period,
-            'page_title': f'Voucher Entry - {voucher_config.name}',
-            'breadcrumbs': [
-                ('Voucher Entry', None),
-            ],
-            'perms': list(request.user.get_all_permissions()),
+            "config": config,
+            "header_form": header_form,
+            "line_formset": line_formset,
+            "user_perms": user_perms,
         }
-        
         return render(request, self.template_name, context)
 
 class DepartmentListView(LoginRequiredMixin, ListView):
